@@ -19,8 +19,14 @@ const navLinks = [
 
 export function HeroDesktop() {
   return (
-    <section className="hidden bg-[#08080d] md:block">
-      <div className="relative aspect-[1440/1024] w-full overflow-hidden [container-type:inline-size]">
+    <section className="hidden justify-center bg-[#08080d] md:flex">
+      {/* The frame is 1.40625:1, far taller than a typical desktop viewport, so
+          the scene is sized off the viewport height and centred. That keeps the
+          whole composition — CTA included — on screen without scrolling. */}
+      <div
+        className="relative aspect-[1440/1024] overflow-hidden [container-type:inline-size]"
+        style={{ width: "min(100%, calc(100svh * 1.40625))" }}
+      >
         {/* Background pixel dots */}
         {pixelDots.map((d, i) => (
           <span
