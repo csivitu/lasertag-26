@@ -16,6 +16,16 @@
       "persistent": true
     },
     "lint": {},
-    "typecheck": {}
+    "typecheck": {},
+    "db:push": {
+      "cache": false
+    },
+    "db:studio": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:generate": {
+      "cache": false
+    }
   }
 }
