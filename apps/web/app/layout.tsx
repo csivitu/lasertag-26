@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bungee, Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
+import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,12 +18,6 @@ const pressStart2P = Press_Start_2P({
   subsets: ["latin"],
 });
 
-const bungee = Bungee({
-  variable: "--font-arcade",
-  weight: "400",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "LaserTag",
   description: "From Pixels to Pew Pew",
@@ -33,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} ${bungee.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${pressStart2P.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
