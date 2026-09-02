@@ -24,7 +24,7 @@ import { pixelDots, sparkles } from "./heroDecor";
 const NAV_GUTTER = "0px";
 
 // The content column still keeps its inset so the text never touches the edge.
-const GUTTER_R = "clamp(24px, 3.4028vw, 72px)";
+const GUTTER_R = "var(--gutter-r)";
 
 // Everything is measured off the hero's *height*, in `cqh` (1cqh = 1% of hero
 // height), because that is the dimension the frame is composed against. The
@@ -40,15 +40,18 @@ const NAV_FONT = "max(13px, 1.9531cqh)";
 
 // Left edge of the content column (design x=511), tied to height so the column
 // tracks the gun. Centring the block here puts it at x=951, as in the frame.
-const COLUMN_L = "49.902cqh";
+const COLUMN_L = "var(--column-l)";
 
 // The wordmark's width drives the whole content block: 812px in the frame, from
 // which the tagline (28px) and CTA (399px) are derived proportionally.
 //
 // The second term keeps it inside the content column on narrow-but-tall
 // windows. Both terms are absolute units — a percentage here would resolve
-// against font-size rather than width where `--cw` feeds the tagline.
-const WORDMARK_W = `min(79.297cqh, calc(100cqw - ${COLUMN_L} - ${GUTTER_R}))`;
+// against font-size rather than width, and `--cw` feeds the tagline's.
+//
+// These compose through CSS custom properties rather than by interpolating one
+// JS constant into another, so the declarations carry no ordering hazard.
+const WORDMARK_W = "min(79.297cqh, calc(100cqw - var(--column-l) - var(--gutter-r)))";
 
 const navLinks = [
   { label: "HOME", href: "#", active: false },
@@ -61,7 +64,13 @@ export function HeroDesktop() {
   return (
     <section
       className="relative hidden h-[100svh] min-h-[640px] overflow-hidden bg-[#08080d] lg:block"
-      style={{ containerType: "size" }}
+      style={
+        {
+          containerType: "size",
+          "--gutter-r": "clamp(24px, 3.4028vw, 72px)",
+          "--column-l": "49.902cqh",
+        } as CSSProperties
+      }
     >
       {/* Background pixel dots. Positions stretch across the hero; sizes are
           height-driven so the marks stay square at any aspect ratio. */}
