@@ -26,22 +26,29 @@ const NAV_GUTTER = "0px";
 // The content column still keeps its inset so the text never touches the edge.
 const GUTTER_R = "clamp(24px, 3.4028vw, 72px)";
 
-// 20px at 1440. Everything else in the header is sized in `em` off this, so the
-// bar scales as one unit: logo 4em (80px), link gap 3.865em (77.3px).
-const NAV_FONT = "clamp(16px, 1.3889vw, 24px)";
-
-// The wordmark's width drives the whole content block: 812px at 1440, from
-// which the tagline (28px) and CTA (399px) are derived proportionally.
+// Everything is measured off the hero's *height*, in `cqh` (1cqh = 1% of hero
+// height), because that is the dimension the frame is composed against. The
+// artwork is height-driven too, so the whole scene scales as a single unit and
+// keeps the frame's internal proportions at any viewport. Extra width simply
+// becomes breathing room between the gun and the text.
 //
-// Capped at 1000px. The exported rasters are stored at 3x (2436px wide), so
-// even at the cap on a 3x display the browser is downsampling rather than
-// stretching — enlarging pixel art past its native resolution is what made the
-// lettering look uneven.
-const WORDMARK_W = "clamp(560px, 56.3889vw, 1000px)";
+// 1 design px = (100/1024)cqh = 0.09766cqh.
+
+// 20px in the frame. The rest of the header is sized in `em` off this, so the
+// bar scales as one unit: logo 4em (80px), link gap 3.865em (77.3px).
+const NAV_FONT = "max(13px, 1.9531cqh)";
 
 // Left edge of the content column (design x=511), tied to height so the column
 // tracks the gun. Centring the block here puts it at x=951, as in the frame.
 const COLUMN_L = "49.902cqh";
+
+// The wordmark's width drives the whole content block: 812px in the frame, from
+// which the tagline (28px) and CTA (399px) are derived proportionally.
+//
+// The second term keeps it inside the content column on narrow-but-tall
+// windows. Both terms are absolute units — a percentage here would resolve
+// against font-size rather than width where `--cw` feeds the tagline.
+const WORDMARK_W = `min(79.297cqh, calc(100cqw - ${COLUMN_L} - ${GUTTER_R}))`;
 
 const navLinks = [
   { label: "HOME", href: "#", active: false },
