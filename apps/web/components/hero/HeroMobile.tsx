@@ -6,15 +6,16 @@ import Image from "next/image";
  */
 export function HeroMobile() {
   return (
-    <section className="relative overflow-hidden bg-[#08080d] px-6 pb-10 pt-14 md:hidden">
+    <section className="relative overflow-hidden bg-[#08080d] px-6 pb-10 pt-14 lg:hidden">
       <div className="relative mx-auto w-[92%]">
         <Image
           src="/hero/title-wordmark.png"
           alt="LaserTag"
-          width={812}
-          height={102}
+          width={2436}
+          height={309}
           priority
-          className="h-auto w-full [image-rendering:pixelated]"
+          unoptimized
+          className="h-auto w-full"
         />
       </div>
       <p className="mt-5 text-center font-pixel text-[3.2vw] text-[#23eff1]">

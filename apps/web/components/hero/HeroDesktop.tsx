@@ -1,70 +1,104 @@
+import type { CSSProperties } from "react";
 import Image from "next/image";
 
 import { pixelDots, sparkles } from "./heroDecor";
 
 /**
- * Traced 1:1 from the Figma "Landing - Hero" frame (1440 x 1024).
+ * Fluid desktop hero, calibrated against the Figma "Landing - Hero" frame.
  *
- * Every element is positioned as a percentage of the canvas and every type size
- * is expressed in `cqw`, so the whole scene scales as one piece at any width
- * instead of reflowing. The canvas is the container query root.
+ * At a 1440x1024 viewport this renders identically to the frame; wider or
+ * shorter viewports redistribute the extra space rather than letterboxing.
+ *
+ * Two independent scales drive the layout:
+ *   - artwork and background scale with hero *height* (via `cqh`), so the gun
+ *     never bloats on ultrawide and the scene always fills exactly one screen;
+ *   - type and the content block scale with *width*, clamped at both ends.
+ *
+ * Design values are quoted in frame pixels: 1 design px = (100/1024)cqh
+ * vertically, and horizontal percentages are of the 1440px-wide frame.
  */
 
+// The header runs edge to edge with no side padding, so the logo and the last
+// nav link sit flush against the viewport. This is a deliberate departure from
+// the frame, which insets them by 38px / 49px.
+const NAV_GUTTER = "0px";
+
+// The content column still keeps its inset so the text never touches the edge.
+const GUTTER_R = "clamp(24px, 3.4028vw, 72px)";
+
+// 20px at 1440. Everything else in the header is sized in `em` off this, so the
+// bar scales as one unit: logo 4em (80px), link gap 3.865em (77.3px).
+const NAV_FONT = "clamp(16px, 1.3889vw, 24px)";
+
+// The wordmark's width drives the whole content block: 812px at 1440, from
+// which the tagline (28px) and CTA (399px) are derived proportionally.
+//
+// Capped at 1000px. The exported rasters are stored at 3x (2436px wide), so
+// even at the cap on a 3x display the browser is downsampling rather than
+// stretching — enlarging pixel art past its native resolution is what made the
+// lettering look uneven.
+const WORDMARK_W = "clamp(560px, 56.3889vw, 1000px)";
+
+// Left edge of the content column (design x=511), tied to height so the column
+// tracks the gun. Centring the block here puts it at x=951, as in the frame.
+const COLUMN_L = "49.902cqh";
+
 const navLinks = [
-  { label: "HOME", href: "#", left: 47.85, width: 6.5, color: "#ffffff" },
-  { label: "ABOUT", href: "#about", left: 59.71, width: 8.17, color: "#01daec" },
-  { label: "FAQs", href: "#faqs", left: 73.24, width: 6.5, color: "#ffffff" },
-  { label: "SIGN IN", href: "#sign-in", left: 85.11, width: 11.49, color: "#ffffff" },
+  { label: "HOME", href: "#", active: false },
+  { label: "ABOUT", href: "#about", active: true },
+  { label: "FAQs", href: "#faqs", active: false },
+  { label: "SIGN IN", href: "#sign-in", active: false },
 ];
 
 export function HeroDesktop() {
   return (
-    <section className="hidden justify-center bg-[#08080d] md:flex">
-      {/* The frame is 1.40625:1, far taller than a typical desktop viewport, so
-          the scene is sized off the viewport height and centred. That keeps the
-          whole composition — CTA included — on screen without scrolling. */}
-      <div
-        className="relative aspect-[1440/1024] overflow-hidden [container-type:inline-size]"
-        style={{ width: "min(100%, calc(100svh * 1.40625))" }}
-      >
-        {/* Background pixel dots */}
-        {pixelDots.map((d, i) => (
-          <span
-            key={`dot-${i}`}
-            aria-hidden
-            className="absolute"
-            style={{
-              left: `${d.l}%`,
-              top: `${d.t}%`,
-              width: `${d.w}%`,
-              height: `${d.h}%`,
-              backgroundColor: d.c,
-            }}
-          />
-        ))}
-
-        {/* Vector sparkles */}
-        {sparkles.map((s, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={`sparkle-${i}`}
-            src={`/hero/${s.src}.svg`}
-            alt=""
-            aria-hidden
-            className="absolute block max-w-none"
-            style={{
-              left: `${s.l}%`,
-              top: `${s.t}%`,
-              width: `${s.w}%`,
-              height: `${s.h}%`,
-            }}
-          />
-        ))}
-
-        {/* Laser gun artwork — reproduces the Figma group transform exactly */}
-        <div
+    <section
+      className="relative hidden h-[100svh] min-h-[640px] overflow-hidden bg-[#08080d] lg:block"
+      style={{ containerType: "size" }}
+    >
+      {/* Background pixel dots. Positions stretch across the hero; sizes are
+          height-driven so the marks stay square at any aspect ratio. */}
+      {pixelDots.map((d, i) => (
+        <span
+          key={`dot-${i}`}
           aria-hidden
-          className="pointer-events-none absolute flex items-center justify-center"
+          className="absolute"
+          style={{
+            left: `${d.l}%`,
+            top: `${d.t}%`,
+            width: `${(d.w * 1.40625).toFixed(4)}cqh`,
+            height: `${d.h}cqh`,
+            backgroundColor: d.c,
+          }}
+        />
+      ))}
+
+      {sparkles.map((s, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={`sparkle-${i}`}
+          src={`/hero/${s.src}.svg`}
+          alt=""
+          aria-hidden
+          className="absolute block max-w-none"
+          style={{
+            left: `${s.l}%`,
+            top: `${s.t}%`,
+            width: `${(s.w * 1.40625).toFixed(4)}cqh`,
+            height: `${s.h}cqh`,
+          }}
+        />
+      ))}
+
+      {/* Artwork layer. This box is the frame's own coordinate space scaled to
+          the hero height, so the gun keeps its designed size and position and
+          the arm is cut by the bottom edge exactly as in Figma. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-0 top-0 aspect-[1440/1024] h-full"
+      >
+        <div
+          className="absolute flex items-center justify-center"
           style={{
             left: "-20.3639%",
             top: "-47.4922%",
@@ -85,7 +119,7 @@ export function HeroDesktop() {
                 src="/hero/gun.png"
                 alt=""
                 fill
-                sizes="130vw"
+                sizes="70vw"
                 priority
                 className="object-fill"
               />
@@ -94,8 +128,7 @@ export function HeroDesktop() {
         </div>
 
         <div
-          aria-hidden
-          className="pointer-events-none absolute flex items-center justify-center"
+          className="absolute flex items-center justify-center"
           style={{
             left: "8.0819%",
             top: "94.3184%",
@@ -115,102 +148,126 @@ export function HeroDesktop() {
             <img src="/hero/gun-spark.svg" alt="" className="block size-full max-w-none" />
           </div>
         </div>
+      </div>
 
-        {/* Logo */}
+      {/* Header: logo hard left, links hard right */}
+      <div
+        className="absolute flex items-center justify-between"
+        style={{
+          left: NAV_GUTTER,
+          right: NAV_GUTTER,
+          top: "1.4648%",
+          fontSize: NAV_FONT,
+        }}
+      >
         <a
           href="#"
-          className="absolute"
-          style={{ left: "2.6389%", top: "1.4648%", width: "5.5556%", height: "7.8125%" }}
+          aria-label="LaserTag home"
+          className="block shrink-0 rounded-sm outline-offset-4 focus-visible:outline-2 focus-visible:outline-[#01daec]"
+          style={{ width: "4em", height: "4em" }}
         >
           <Image
             src="/hero/logo-badge.png"
-            alt="LaserTag home"
-            fill
-            sizes="10vw"
+            alt=""
+            width={240}
+            height={240}
             priority
-            className="object-contain [image-rendering:pixelated]"
+            unoptimized
+            className="size-full object-contain"
           />
         </a>
 
-        {/* Nav */}
-        <nav>
-          <span
-            aria-hidden
-            className="absolute"
-            style={{ left: "57.2917%", top: "3.9063%", width: "1.6667%", height: "2.9297%" }}
-          >
-            <Image
-              src="/hero/nav-arrow.png"
-              alt=""
-              fill
-              sizes="5vw"
-              className="object-contain [image-rendering:pixelated]"
-            />
-          </span>
+        <nav className="flex items-center" style={{ gap: "3.865em" }}>
           {navLinks.map((link) => (
             <a
               key={link.label}
               href={link.href}
-              className="absolute flex items-center justify-center whitespace-nowrap font-pixel leading-[1.338]"
-              style={{
-                left: `${link.left}%`,
-                top: "4.1%",
-                width: `${link.width}%`,
-                height: "2.64%",
-                color: link.color,
-                fontSize: "1.3889cqw",
-                letterSpacing: "0.1389cqw",
-              }}
+              aria-current={link.active ? "page" : undefined}
+              className={`relative whitespace-nowrap font-pixel leading-[1.338] outline-offset-4 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#01daec] motion-reduce:transition-none ${
+                link.active ? "text-[#01daec]" : "text-white hover:text-[#01daec]"
+              }`}
+              style={{ letterSpacing: "0.1em" }}
             >
+              {link.active && (
+                <Image
+                  src="/hero/nav-arrow.png"
+                  alt=""
+                  aria-hidden
+                  width={72}
+                  height={90}
+                  unoptimized
+                  className="absolute top-1/2 -translate-y-1/2 object-contain"
+                  style={{
+                    right: "100%",
+                    marginRight: "0.5435em",
+                    width: "1.2em",
+                    height: "1.5em",
+                  }}
+                />
+              )}
               {link.label}
             </a>
           ))}
         </nav>
+      </div>
 
-        {/* Title wordmark — ArcadeClassic is not a web font, so the lettering is
-            exported from Figma; the accessible name lives on the heading. */}
-        <h1
-          className="absolute m-0"
-          style={{ left: "37.8472%", top: "41.9922%", width: "56.3889%", height: "9.9609%" }}
-        >
+      {/* Content block, centred in the column between the gun and the right
+          gutter. `--cw` drives the wordmark, tagline and CTA together. */}
+      <div
+        className="absolute flex flex-col items-center"
+        style={
+          {
+            left: COLUMN_L,
+            right: GUTTER_R,
+            top: "60.205%",
+            transform: "translateY(-50%)",
+            "--cw": WORDMARK_W,
+          } as CSSProperties
+        }
+      >
+        {/* ArcadeClassic is not a web font, so the lettering is exported from
+            Figma; the accessible name lives on the heading. */}
+        <h1 className="m-0 w-full">
           <Image
             src="/hero/title-wordmark.png"
             alt="LaserTag"
-            fill
-            sizes="60vw"
+            width={2436}
+            height={309}
             priority
-            className="object-fill [image-rendering:pixelated]"
+            unoptimized
+            className="mx-auto h-auto max-w-full"
+            style={{ width: "var(--cw)" }}
           />
         </h1>
 
-        {/* Tagline */}
         <p
-          className="absolute flex items-center justify-center text-center font-pixel text-[#23eff1]"
+          className="flex items-center justify-center text-center font-pixel text-[#23eff1]"
           style={{
-            left: "43.611%",
-            top: "53.2227%",
-            width: "45.4167%",
-            height: "6.4453%",
-            fontSize: "1.9444cqw",
-            lineHeight: "2.7778cqw",
+            fontSize: "calc(var(--cw) * 0.034483)",
+            marginTop: "max(6px, 1.2695cqh)",
+            height: "max(2.357em, 6.4453cqh)",
           }}
         >
           From Pixels to Pew Pew
         </p>
 
-        {/* Register CTA */}
         <a
           href="#register"
-          className="absolute transition-transform hover:scale-[1.03]"
-          style={{ left: "52.4306%", top: "69.1406%", width: "27.7083%", height: "9.2773%" }}
+          className="block rounded-full outline-offset-4 transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          style={{
+            marginTop: "max(28px, 9.4727cqh)",
+            width: "calc(var(--cw) * 0.491379)",
+            maxWidth: "100%",
+          }}
         >
           <Image
             src="/hero/register-button.png"
             alt="Register now"
-            fill
-            sizes="30vw"
+            width={1197}
+            height={285}
             priority
-            className="object-fill [image-rendering:pixelated]"
+            unoptimized
+            className="h-auto w-full"
           />
         </a>
       </div>
