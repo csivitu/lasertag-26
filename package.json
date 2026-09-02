@@ -2,18 +2,14 @@
   "name": "lasertag-26",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
   "packageManager": "bun@1.3.6",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "db:generate": "drizzle-kit generate"
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
