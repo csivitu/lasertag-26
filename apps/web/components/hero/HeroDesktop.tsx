@@ -18,12 +18,10 @@ import { pixelDots, sparkles } from "./heroDecor";
  * vertically, and horizontal percentages are of the 1440px-wide frame.
  */
 
-// The header runs edge to edge with no side padding, so the logo and the last
-// nav link sit flush against the viewport. This is a deliberate departure from
-// the frame, which insets them by 38px / 49px.
-const NAV_GUTTER = "0px";
-
-// The content column still keeps its inset so the text never touches the edge.
+// The header keeps a real inset from the screen edges — this is no longer
+// tied to the Figma frame's own 38px/49px values, just a sensible gutter
+// for a full-width site header. The content column reuses the same value
+// so the whole hero reads as one consistent rhythm.
 const GUTTER_R = "var(--gutter-r)";
 
 // Everything is measured off the hero's *height*, in `cqh` (1cqh = 1% of hero
@@ -34,17 +32,19 @@ const GUTTER_R = "var(--gutter-r)";
 //
 // 1 design px = (100/1024)cqh = 0.09766cqh.
 
-// 20px in the frame. The rest of the header is sized in `em` off this, so the
-// bar scales as one unit: logo 4em (80px), link gap 3.865em (77.3px).
+// 20px at the reference size. The rest of the header is sized in `em` off
+// this, so the bar scales as one unit: logo 4em, link gap 3.865em.
 //
-// The header has no side gutter (NAV_GUTTER = 0), so on a tall-but-narrow
-// viewport the height-driven size alone can demand more width than the
-// section has — the nav is nowrap and can't shrink, so it would overflow
-// past the right edge. The 2.6316cqw term is a measured width ceiling (nav
-// content plus the 4em logo is 37.5868em wide; font-size <= 100cqw/38 keeps
-// a small safety margin) that only engages when height and width diverge
-// this far; it is inert at the 1440x1024 reference ratio and at 1920x1080.
-const NAV_FONT = "max(13px, min(1.9531cqh, 2.6316cqw))";
+// On a tall-but-narrow viewport the height-driven size alone can demand
+// more width than is available inside the two gutters — the nav is nowrap
+// and can't shrink, so it would overflow past the edge. The second min()
+// term is a solved width ceiling: nav content plus the 4em logo is
+// 37.5868em wide, so font-size <= (100cqw - 2*gutter) / 38 (38 instead of
+// the exact 37.5868 leaves a small safety margin) always leaves the row
+// fitting between the gutters. It only engages when height and width
+// diverge this far — inert at the 1440x1024 reference ratio and 1920x1080.
+const NAV_FONT =
+  "max(13px, min(1.9531cqh, calc((100cqw - 2 * var(--gutter-r)) / 38)))";
 
 // Left edge of the content column (design x=511), tied to height so the column
 // tracks the gun. Centring the block here puts it at x=951, as in the frame.
@@ -178,8 +178,8 @@ export function HeroDesktop() {
       <div
         className="absolute flex items-center justify-between"
         style={{
-          left: NAV_GUTTER,
-          right: NAV_GUTTER,
+          left: GUTTER_R,
+          right: GUTTER_R,
           top: "1.4648%",
           fontSize: NAV_FONT,
         }}
