@@ -193,7 +193,10 @@ export function HeroDesktop() {
           />
         </a>
 
-        <nav className="flex items-center" style={{ gap: "3.865em" }}>
+        <nav
+          className="flex items-center"
+          style={{ gap: "3.865em", marginRight: "-0.1em" }}
+        >
           {navLinks.map((link) => (
             <a
               key={link.label}
