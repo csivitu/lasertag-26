@@ -29,12 +29,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# editor / OS
+# editor / OS / local tooling
 .DS_Store
 Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+.claude/
 
 # deployment
 .vercel
