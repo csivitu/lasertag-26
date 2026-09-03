@@ -154,6 +154,49 @@ export function HeroMobile() {
             style={{ width: "0.55em", height: "0.85em" }}
           />
         </p>
+
+        {/* CTA sits right after the tagline, above the gun art — matches the
+            reference layout rather than the gun-then-button order this had
+            before. */}
+        <div className="mt-6 flex justify-center">
+          <a
+            href="#register"
+            className="group relative block w-[72%] max-w-xs overflow-hidden rounded-full outline-offset-4 transition-[transform,filter] duration-150 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 motion-reduce:transition-none"
+          >
+            {/* Same real pressed-state export as desktop (399x87 vs resting
+                399x95), bottom-anchored and cross-faded on :active so the
+                button's own footprint never shifts when pressed. */}
+            <Image
+              src="/hero/register-button.png"
+              alt="Register now"
+              width={1197}
+              height={285}
+              priority
+              unoptimized
+              className="h-auto w-full opacity-100 transition-opacity duration-75 group-active:opacity-0"
+            />
+            <Image
+              src="/hero/register-button-pressed.png"
+              alt=""
+              aria-hidden
+              width={1197}
+              height={261}
+              unoptimized
+              className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-75 group-active:opacity-100"
+            />
+            {/* Same arcade shine as desktop — inert on pure touch (no hover),
+                free for hybrid mouse+touch devices. */}
+            <span
+              aria-hidden
+              className="button-shine pointer-events-none absolute inset-y-0 left-0 w-1/3"
+              style={{
+                background:
+                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.15) 55%, transparent)",
+                transform: "translateX(-160%) skewX(-20deg)",
+              }}
+            />
+          </a>
+        </div>
       </div>
 
       <div
@@ -179,35 +222,6 @@ export function HeroMobile() {
             />
           </div>
         </div>
-      </div>
-
-      <div className="relative z-10 flex justify-center px-6 pb-10">
-        <a
-          href="#register"
-          className="group relative block w-[72%] max-w-xs outline-offset-4 transition-[transform,filter] duration-150 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 motion-reduce:transition-none"
-        >
-          {/* Same real pressed-state export as desktop (399x87 vs resting
-              399x95), bottom-anchored and cross-faded on :active so the
-              button's own footprint never shifts when pressed. */}
-          <Image
-            src="/hero/register-button.png"
-            alt="Register now"
-            width={1197}
-            height={285}
-            priority
-            unoptimized
-            className="h-auto w-full opacity-100 transition-opacity duration-75 group-active:opacity-0"
-          />
-          <Image
-            src="/hero/register-button-pressed.png"
-            alt=""
-            aria-hidden
-            width={1197}
-            height={261}
-            unoptimized
-            className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-75 group-active:opacity-100"
-          />
-        </a>
       </div>
     </section>
   );
