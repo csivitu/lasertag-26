@@ -2,6 +2,7 @@
   "name": "@lasertag/api",
   "private": true,
   "dependencies": {
+    "@lasertag-26/database": "workspace:*",
     "better-auth": "^1.7.2",
     "express": "^5.2.1"
   },
