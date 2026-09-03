@@ -161,11 +161,14 @@ export function HeroMobile() {
         <div className="mt-6 flex justify-center">
           <a
             href="#register"
-            className="group relative block w-[72%] max-w-xs overflow-hidden outline-offset-4 transition-[transform,filter] duration-150 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 motion-reduce:transition-none"
+            className="group relative block w-[72%] max-w-xs overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:scale-y-[0.94] motion-reduce:transition-none"
+            style={{ transformOrigin: "bottom" }}
           >
             {/* Same real pressed-state export as desktop (399x87 vs resting
                 399x95), bottom-anchored and cross-faded on :active so the
-                button's own footprint never shifts when pressed. */}
+                button's own footprint never shifts when pressed. A slower,
+                eased crossfade plus the container's own active:scale-y
+                squash reads as one continuous press, not a flicker. */}
             <Image
               src="/hero/register-button.png"
               alt="Register now"
@@ -173,7 +176,7 @@ export function HeroMobile() {
               height={285}
               priority
               unoptimized
-              className="h-auto w-full opacity-100 transition-opacity duration-75 group-active:opacity-0"
+              className="h-auto w-full opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
             />
             <Image
               src="/hero/register-button-pressed.png"
@@ -182,16 +185,15 @@ export function HeroMobile() {
               width={1197}
               height={261}
               unoptimized
-              className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-75 group-active:opacity-100"
+              className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
             />
             {/* Same arcade shine as desktop — inert on pure touch (no hover),
-                free for hybrid mouse+touch devices. Masked to the button's
-                real pixel-art silhouette (see HeroDesktop for why), not an
-                approximated CSS shape; the mask stays static, only the
-                inner gradient band animates. */}
+                free for hybrid mouse+touch devices. Two masked layers, one
+                per button state, crossfading in sync with the button images
+                (see HeroDesktop for the full reasoning). */}
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-0 overflow-hidden"
+              className="pointer-events-none absolute inset-0 overflow-hidden opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
               style={{
                 maskImage: "url(/hero/register-button-mask.png)",
                 maskSize: "100% 100%",
@@ -204,8 +206,32 @@ export function HeroMobile() {
               <span
                 className="button-shine block h-full w-1/3"
                 style={{
+                  // Single smooth peak — see HeroDesktop for why (a two-stop
+                  // version left a visible seam over the button's border).
                   background:
-                    "linear-gradient(75deg, transparent, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.15) 55%, transparent)",
+                    "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
+                  transform: "translateX(-160%) skewX(-20deg)",
+                }}
+              />
+            </span>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
+              style={{
+                aspectRatio: "1197 / 261",
+                maskImage: "url(/hero/register-button-pressed-mask.png)",
+                maskSize: "100% 100%",
+                maskRepeat: "no-repeat",
+                WebkitMaskImage: "url(/hero/register-button-pressed-mask.png)",
+                WebkitMaskSize: "100% 100%",
+                WebkitMaskRepeat: "no-repeat",
+              }}
+            >
+              <span
+                className="button-shine block h-full w-1/3"
+                style={{
+                  background:
+                    "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
                   transform: "translateX(-160%) skewX(-20deg)",
                 }}
               />

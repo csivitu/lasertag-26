@@ -301,18 +301,22 @@ export function HeroDesktop() {
 
         <a
           href="#register"
-          className="group relative block overflow-hidden outline-offset-4 transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="group relative block overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 active:scale-y-[0.94] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           style={{
             marginTop: "max(28px, 9.4727cqh)",
             width: "calc(var(--cw) * 0.491379)",
             maxWidth: "100%",
+            transformOrigin: "bottom",
           }}
         >
           {/* Two real Figma exports, not a filter approximation — the pressed
               state (399x87) is 8px shorter than resting (399x95), so it's
               anchored to the bottom edge and cross-faded in on :active. The
               container keeps the resting (taller) image's footprint so the
-              button's own layout/position never shifts when pressed. */}
+              button's own layout/position never shifts when pressed. A
+              slower, eased crossfade (200ms) plus the container's own
+              active:scale-y squash reads as one continuous press motion
+              rather than the images just flicking between each other. */}
           <Image
             src="/hero/register-button.png"
             alt="Register now"
@@ -320,7 +324,7 @@ export function HeroDesktop() {
             height={285}
             priority
             unoptimized
-            className="h-auto w-full opacity-100 transition-opacity duration-75 group-active:opacity-0"
+            className="h-auto w-full opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
           />
           <Image
             src="/hero/register-button-pressed.png"
@@ -329,19 +333,20 @@ export function HeroDesktop() {
             width={1197}
             height={261}
             unoptimized
-            className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-75 group-active:opacity-100"
+            className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
           />
           {/* Arcade-cabinet shine: a diagonal light band that sweeps across
-              on hover, looping for as long as the pointer stays. The OUTER
-              span is a static mask matching register-button-mask.png — the
-              button's own true pixel-art silhouette (traced from the resting
-              asset's real alpha shape) — rather than an approximated CSS
-              rounded-full clip, which cut a smooth pill that didn't match
-              the button's actual jagged stair-stepped corners. The INNER
-              span is what actually animates; the mask never moves. */}
+              on hover, looping for as long as the pointer stays. Two masked
+              layers, one per button state, crossfading in sync with the
+              button images above — each mask traces that state's own real
+              pixel-art silhouette (register-button-mask.png for resting,
+              register-button-pressed-mask.png for the shorter, bottom-
+              anchored pressed shape) rather than one approximated CSS clip,
+              which mismatched both states to some degree. Only the inner
+              gradient band animates; the masks themselves never move. */}
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-0 overflow-hidden"
+            className="pointer-events-none absolute inset-0 overflow-hidden opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
             style={{
               maskImage: "url(/hero/register-button-mask.png)",
               maskSize: "100% 100%",
@@ -354,8 +359,35 @@ export function HeroDesktop() {
             <span
               className="button-shine block h-full w-1/3"
               style={{
+                // A single smooth peak, not two close stops — an earlier version
+                // (0.6 at 45%, 0.15 at 55%) rasterised as a visible seam/Mach-band
+                // over the button's dark purple border, confirmed by swapping in
+                // this simpler gradient at the same frozen sweep position and
+                // watching the line disappear.
                 background:
-                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.15) 55%, transparent)",
+                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
+                transform: "translateX(-160%) skewX(-20deg)",
+              }}
+            />
+          </span>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
+            style={{
+              aspectRatio: "1197 / 261",
+              maskImage: "url(/hero/register-button-pressed-mask.png)",
+              maskSize: "100% 100%",
+              maskRepeat: "no-repeat",
+              WebkitMaskImage: "url(/hero/register-button-pressed-mask.png)",
+              WebkitMaskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
+            }}
+          >
+            <span
+              className="button-shine block h-full w-1/3"
+              style={{
+                background:
+                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
                 transform: "translateX(-160%) skewX(-20deg)",
               }}
             />
