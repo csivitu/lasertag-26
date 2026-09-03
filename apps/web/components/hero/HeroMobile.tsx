@@ -184,8 +184,11 @@ export function HeroMobile() {
       <div className="relative z-10 flex justify-center px-6 pb-10">
         <a
           href="#register"
-          className="block w-[72%] max-w-xs outline-offset-4 transition-[transform,filter] duration-150 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:brightness-110 motion-reduce:transition-none"
+          className="group relative block w-[72%] max-w-xs outline-offset-4 transition-[transform,filter] duration-150 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 motion-reduce:transition-none"
         >
+          {/* Same real pressed-state export as desktop (399x87 vs resting
+              399x95), bottom-anchored and cross-faded on :active so the
+              button's own footprint never shifts when pressed. */}
           <Image
             src="/hero/register-button.png"
             alt="Register now"
@@ -193,7 +196,16 @@ export function HeroMobile() {
             height={285}
             priority
             unoptimized
-            className="h-auto w-full"
+            className="h-auto w-full opacity-100 transition-opacity duration-75 group-active:opacity-0"
+          />
+          <Image
+            src="/hero/register-button-pressed.png"
+            alt=""
+            aria-hidden
+            width={1197}
+            height={261}
+            unoptimized
+            className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-75 group-active:opacity-100"
           />
         </a>
       </div>

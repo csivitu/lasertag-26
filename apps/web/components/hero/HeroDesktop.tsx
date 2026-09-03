@@ -301,13 +301,18 @@ export function HeroDesktop() {
 
         <a
           href="#register"
-          className="block rounded-full outline-offset-4 transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="group relative block rounded-full outline-offset-4 transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           style={{
             marginTop: "max(28px, 9.4727cqh)",
             width: "calc(var(--cw) * 0.491379)",
             maxWidth: "100%",
           }}
         >
+          {/* Two real Figma exports, not a filter approximation — the pressed
+              state (399x87) is 8px shorter than resting (399x95), so it's
+              anchored to the bottom edge and cross-faded in on :active. The
+              container keeps the resting (taller) image's footprint so the
+              button's own layout/position never shifts when pressed. */}
           <Image
             src="/hero/register-button.png"
             alt="Register now"
@@ -315,7 +320,16 @@ export function HeroDesktop() {
             height={285}
             priority
             unoptimized
-            className="h-auto w-full"
+            className="h-auto w-full opacity-100 transition-opacity duration-75 group-active:opacity-0"
+          />
+          <Image
+            src="/hero/register-button-pressed.png"
+            alt=""
+            aria-hidden
+            width={1197}
+            height={261}
+            unoptimized
+            className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-75 group-active:opacity-100"
           />
         </a>
       </div>
