@@ -208,7 +208,7 @@ export function HeroDesktop() {
             <a
               key={link.label}
               href={link.href}
-              className="group relative whitespace-nowrap font-pixel leading-[1.338] text-white outline-offset-4 transition-colors duration-150 hover:text-[#01daec] focus-visible:text-[#01daec] focus-visible:outline-2 focus-visible:outline-[#01daec] motion-reduce:transition-none"
+              className="group relative inline-flex items-center whitespace-nowrap font-pixel leading-[1.338] text-white outline-offset-4 transition-colors duration-150 hover:text-[#01daec] focus-visible:text-[#01daec] focus-visible:outline-2 focus-visible:outline-[#01daec] motion-reduce:transition-none"
               style={{ letterSpacing: "0.1em" }}
             >
               <Image
