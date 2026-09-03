@@ -234,29 +234,35 @@ export function HeroMobile() {
         </div>
       </div>
 
+      {/* Gun art is a plain horizontal mirror of the source asset (laser
+          exits up-left, hand grips bottom-right in the original) — no
+          rotation needed, since that mirror alone already points the laser
+          up-right with the hand at bottom-left, matching the reference
+          mobile layout at lasertag.csivit.in. Sized and offset (in vw,
+          capped in px past the ~375px baseline so it doesn't keep growing
+          into the tablet zone) so the beam reaches toward the top-right
+          corner and the hand stays fully in frame instead of being cropped
+          by the old rotate+overflow-hidden box. */}
       <div
         aria-hidden
-        className="pointer-events-none relative z-10 mt-2 flex h-[min(95vw,420px)] items-center justify-center overflow-hidden"
+        className="pointer-events-none relative z-10 mt-2 overflow-hidden"
+        style={{ height: "min(128vw, 480px)" }}
       >
-        <div
-          className="relative flex-none overflow-hidden"
+        <Image
+          src="/hero/gun.png"
+          alt=""
+          width={4096}
+          height={3119}
+          priority
+          sizes="620px"
+          className="absolute h-auto max-w-none"
           style={{
-            width: "175%",
-            height: "175%",
-            transform: "rotate(166.1deg) scaleY(-1)",
+            width: "min(165.333vw, 620px)",
+            left: "max(-24vw, -90px)",
+            top: "max(-10.667vw, -40px)",
+            transform: "scaleX(-1)",
           }}
-        >
-          <div className="absolute left-0 top-0 h-[100.38%] w-[102.13%]">
-            <Image
-              src="/hero/gun.png"
-              alt=""
-              fill
-              sizes="180vw"
-              priority
-              className="object-fill"
-            />
-          </div>
-        </div>
+        />
       </div>
     </section>
   );
