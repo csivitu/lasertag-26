@@ -36,7 +36,15 @@ const GUTTER_R = "var(--gutter-r)";
 
 // 20px in the frame. The rest of the header is sized in `em` off this, so the
 // bar scales as one unit: logo 4em (80px), link gap 3.865em (77.3px).
-const NAV_FONT = "max(13px, 1.9531cqh)";
+//
+// The header has no side gutter (NAV_GUTTER = 0), so on a tall-but-narrow
+// viewport the height-driven size alone can demand more width than the
+// section has — the nav is nowrap and can't shrink, so it would overflow
+// past the right edge. The 2.6316cqw term is a measured width ceiling (nav
+// content plus the 4em logo is 37.5868em wide; font-size <= 100cqw/38 keeps
+// a small safety margin) that only engages when height and width diverge
+// this far; it is inert at the 1440x1024 reference ratio and at 1920x1080.
+const NAV_FONT = "max(13px, min(1.9531cqh, 2.6316cqw))";
 
 // Left edge of the content column (design x=511), tied to height so the column
 // tracks the gun. Centring the block here puts it at x=951, as in the frame.
@@ -193,10 +201,7 @@ export function HeroDesktop() {
           />
         </a>
 
-        <nav
-          className="flex items-center"
-          style={{ gap: "3.865em", marginRight: "-0.1em" }}
-        >
+        <nav className="flex items-center" style={{ gap: "3.865em" }}>
           {navLinks.map((link) => (
             <a
               key={link.label}
