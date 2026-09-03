@@ -189,11 +189,15 @@ export function HeroMobile() {
             />
             {/* Same arcade shine as desktop — inert on pure touch (no hover),
                 free for hybrid mouse+touch devices. Two masked layers, one
-                per button state, crossfading in sync with the button images
-                (see HeroDesktop for the full reasoning). */}
+                per button state, crossfading in sync with the button images.
+                The gradient band is the masked element's own background,
+                animated via background-position rather than transforming a
+                separate child (see HeroDesktop for why — a transformed
+                child inside a masked parent left a white notch artifact at
+                one corner). */}
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-0 overflow-hidden opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
+              className="button-shine pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
               style={{
                 maskImage: "url(/hero/register-button-mask.png)",
                 maskSize: "100% 100%",
@@ -201,22 +205,16 @@ export function HeroMobile() {
                 WebkitMaskImage: "url(/hero/register-button-mask.png)",
                 WebkitMaskSize: "100% 100%",
                 WebkitMaskRepeat: "no-repeat",
+                background:
+                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
+                backgroundSize: "250% 100%",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "-60% 0",
               }}
-            >
-              <span
-                className="button-shine block h-full w-1/3"
-                style={{
-                  // Single smooth peak — see HeroDesktop for why (a two-stop
-                  // version left a visible seam over the button's border).
-                  background:
-                    "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
-                  transform: "translateX(-160%) skewX(-20deg)",
-                }}
-              />
-            </span>
+            />
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
+              className="button-shine pointer-events-none absolute inset-x-0 bottom-0 opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
               style={{
                 aspectRatio: "1197 / 261",
                 maskImage: "url(/hero/register-button-pressed-mask.png)",
@@ -225,17 +223,13 @@ export function HeroMobile() {
                 WebkitMaskImage: "url(/hero/register-button-pressed-mask.png)",
                 WebkitMaskSize: "100% 100%",
                 WebkitMaskRepeat: "no-repeat",
+                background:
+                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
+                backgroundSize: "250% 100%",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "-60% 0",
               }}
-            >
-              <span
-                className="button-shine block h-full w-1/3"
-                style={{
-                  background:
-                    "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
-                  transform: "translateX(-160%) skewX(-20deg)",
-                }}
-              />
-            </span>
+            />
           </a>
         </div>
       </div>

@@ -175,15 +175,21 @@ body {
 /* Arcade cabinet "shine" on the Register button: a diagonal light band
    sweeps across on hover, looping as long as the pointer stays there —
    the classic shiny-marquee-button glint, not a pixel-stepped effect (a
-   reflection reads as a shine only if it glides smoothly). Clipped to the
-   button by the parent's overflow-hidden, so it never spills past the
-   pill's edge even though that edge is baked into the PNG, not drawn by CSS. */
+   reflection reads as a shine only if it glides smoothly). The band is
+   painted directly as the masked element's own background (angled via the
+   gradient's own angle) and animated via background-position, rather than
+   transforming a separate skewed child inside the mask: a transformed child
+   inside a masked parent can leave a thin sliver of unmasked content
+   visible at some sub-pixel positions (composited on separate GPU layers,
+   the mask and the transformed content can rasterize with slightly
+   different rounding). Animating the background of the masked element
+   itself avoids that combination entirely. */
 @keyframes button-shine {
   0% {
-    transform: translateX(-160%) skewX(-20deg);
+    background-position: -60% 0;
   }
   100% {
-    transform: translateX(260%) skewX(-20deg);
+    background-position: 160% 0;
   }
 }
 

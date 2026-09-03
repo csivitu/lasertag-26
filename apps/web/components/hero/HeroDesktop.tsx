@@ -342,11 +342,17 @@ export function HeroDesktop() {
               pixel-art silhouette (register-button-mask.png for resting,
               register-button-pressed-mask.png for the shorter, bottom-
               anchored pressed shape) rather than one approximated CSS clip,
-              which mismatched both states to some degree. Only the inner
-              gradient band animates; the masks themselves never move. */}
+              which mismatched both states to some degree. The gradient band
+              is the masked element's own background, animated via
+              background-position — not a separately transformed child —
+              because a transformed child inside a masked parent can leave a
+              thin sliver of unmasked content visible at some sub-pixel
+              positions (confirmed live: a white notch at the resting
+              button's bottom-right corner during the sweep, gone once the
+              transform+mask-on-child combination was removed). */}
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-0 overflow-hidden opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
+            className="button-shine pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
             style={{
               maskImage: "url(/hero/register-button-mask.png)",
               maskSize: "100% 100%",
@@ -354,25 +360,21 @@ export function HeroDesktop() {
               WebkitMaskImage: "url(/hero/register-button-mask.png)",
               WebkitMaskSize: "100% 100%",
               WebkitMaskRepeat: "no-repeat",
+              // A single smooth peak, not two close stops — an earlier version
+              // (0.6 at 45%, 0.15 at 55%) rasterised as a visible seam/Mach-band
+              // over the button's dark purple border, confirmed by swapping in
+              // this simpler gradient at the same frozen sweep position and
+              // watching the line disappear.
+              background:
+                "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
+              backgroundSize: "250% 100%",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "-60% 0",
             }}
-          >
-            <span
-              className="button-shine block h-full w-1/3"
-              style={{
-                // A single smooth peak, not two close stops — an earlier version
-                // (0.6 at 45%, 0.15 at 55%) rasterised as a visible seam/Mach-band
-                // over the button's dark purple border, confirmed by swapping in
-                // this simpler gradient at the same frozen sweep position and
-                // watching the line disappear.
-                background:
-                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
-                transform: "translateX(-160%) skewX(-20deg)",
-              }}
-            />
-          </span>
+          />
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
+            className="button-shine pointer-events-none absolute inset-x-0 bottom-0 opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
             style={{
               aspectRatio: "1197 / 261",
               maskImage: "url(/hero/register-button-pressed-mask.png)",
@@ -381,17 +383,13 @@ export function HeroDesktop() {
               WebkitMaskImage: "url(/hero/register-button-pressed-mask.png)",
               WebkitMaskSize: "100% 100%",
               WebkitMaskRepeat: "no-repeat",
+              background:
+                "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
+              backgroundSize: "250% 100%",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "-60% 0",
             }}
-          >
-            <span
-              className="button-shine block h-full w-1/3"
-              style={{
-                background:
-                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
-                transform: "translateX(-160%) skewX(-20deg)",
-              }}
-            />
-          </span>
+          />
         </a>
       </div>
     </section>
