@@ -234,20 +234,22 @@ export function HeroMobile() {
         </div>
       </div>
 
-      {/* Gun art is a plain horizontal mirror of the source asset (laser
-          exits up-left, hand grips bottom-right in the original) — no
-          rotation needed, since that mirror alone already points the laser
-          up-right with the hand at bottom-left, matching the reference
-          mobile layout at lasertag.csivit.in. Sized (in vw, capped in px
-          past the ~375px baseline so it doesn't keep growing into the
-          tablet zone) with a small left/top margin so the whole hand stays
-          inside the frame — not touching the edges — the same as the
-          reference, instead of being cropped by the old rotate+
-          overflow-hidden box. */}
+      {/* Gun art starts from a horizontal mirror of the source asset (laser
+          exits up-left, hand grips bottom-right in the original — mirroring
+          alone already puts the laser up-right and the hand at bottom-left)
+          plus a mild extra rotation so the beam exits nearer the top edge
+          rather than the side wall of this box, which read as an accidental
+          crop through the beam rather than the art's own edges. Sized (in
+          vw, capped in px past the ~375px baseline so it doesn't keep
+          growing into the tablet zone) and shifted right just enough that
+          the hand's own silhouette never touches the box edges either —
+          only the beam is allowed to run past the top/right, which matches
+          the reference at lasertag.csivit.in and reads as the beam
+          continuing off-screen rather than being clipped. */}
       <div
         aria-hidden
         className="pointer-events-none relative z-10 mt-2 overflow-hidden"
-        style={{ height: "min(149.333vw, 560px)" }}
+        style={{ height: "min(112vw, 420px)" }}
       >
         <Image
           src="/hero/gun.png"
@@ -259,9 +261,9 @@ export function HeroMobile() {
           className="absolute h-auto max-w-none"
           style={{
             width: "min(117.333vw, 440px)",
-            left: "min(6.667vw, 25px)",
-            top: "min(2.667vw, 10px)",
-            transform: "scaleX(-1)",
+            left: "min(11.733vw, 44px)",
+            top: 0,
+            transform: "scaleX(-1) rotate(20deg)",
           }}
         />
       </div>
