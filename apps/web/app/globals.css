@@ -28,19 +28,22 @@ body {
 
 /* Arcade-style nudge for the nav's ▶ selector marker: a blocky, stepped
    left-right jab (not an eased glide) while its link is hovered/focused,
-   evoking a classic arcade menu cursor pointing at the selection. Idle
-   (unhovered) state matches the marker's static -translate-y-1/2 position
-   exactly, so the animation starting/stopping never causes a visual jump. */
+   evoking a classic arcade menu cursor pointing at the selection.
+   Vertical centring is handled entirely by top/margin-top on the marker
+   itself (not transform), so this animation only ever touches translateX —
+   there is no translateY here to be briefly wrong for a frame while the
+   animation engine spins up, which is what caused the flash of correct
+   position immediately snapping back to a vertical offset on hover. */
 @keyframes nav-arrow-nudge {
   0%,
   20% {
-    transform: translateY(-50%) translateX(0);
+    transform: translateX(0);
   }
   60% {
-    transform: translateY(-50%) translateX(4px);
+    transform: translateX(4px);
   }
   100% {
-    transform: translateY(-50%) translateX(0);
+    transform: translateX(0);
   }
 }
 

@@ -217,11 +217,14 @@ export function HeroDesktop() {
                 aria-hidden
                 width={72}
                 height={90}
+                priority
                 unoptimized
-                className="nav-arrow-marker pointer-events-none absolute top-1/2 -translate-y-1/2 object-contain opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                className="nav-arrow-marker pointer-events-none absolute object-contain opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
                 style={{
                   right: "100%",
                   marginRight: "0.5435em",
+                  top: "50%",
+                  marginTop: "-0.75em",
                   width: "1.2em",
                   height: "1.5em",
                 }}
