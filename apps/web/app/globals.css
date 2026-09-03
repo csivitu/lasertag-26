@@ -136,48 +136,36 @@ body {
   animation: cursor-blink 1s linear infinite;
 }
 
-/* Wordmark attract-mode reveal: a one-time stepped wipe (8 steps, one per
-   letter of LASERTAG) on mount rather than a fade-in. animation-fill-mode:
-   forwards holds the fully-revealed end state; it does not loop. */
-@keyframes wordmark-reveal {
+/* One-time terminal typewriter for "Pew Pew" on mount: width animates 0 ->
+   7ch (Press Start 2P is monospace, so ch is an exact per-character unit),
+   stepped one character at a time, rather than a fade or clip-path. Growing
+   the box's real layout width (not just its painted content) is what lets
+   the cursor positioned right after it get pushed along by ordinary reflow
+   as each letter "lands", instead of sitting at its final position from
+   mount. forwards holds the fully-typed state; it does not loop. The
+   infinite CRT glitch (on the parent <p>) and cursor blink run
+   independently and are unaffected by this finishing. */
+@keyframes pew-pew-typewriter {
   from {
-    clip-path: inset(0 100% 0 0);
+    width: 0ch;
   }
   to {
-    clip-path: inset(0 0% 0 0);
+    width: 7ch;
   }
 }
 
-.wordmark-reveal {
-  animation: wordmark-reveal 0.9s steps(8, jump-none) forwards;
-}
-
-/* CTA marquee chase lights: each bulb is mostly dim and briefly flashes full
-   brightness once per cycle; staggering every bulb's animation-delay by an
-   even fraction of the cycle (see ctaLightPositions in HeroDesktop) makes a
-   single point of light appear to travel around the button's border. */
-@keyframes cta-chase-light {
-  0%,
-  91% {
-    opacity: 0.18;
-  }
-  95% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.18;
-  }
+.pew-pew-typewriter {
+  animation: pew-pew-typewriter 0.9s steps(7, jump-none) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tagline-crt-glitch,
   .cursor-blink,
-  .wordmark-reveal,
-  [style*="cta-chase-light"] {
+  .pew-pew-typewriter {
     animation: none !important;
   }
-  .wordmark-reveal {
-    clip-path: none !important;
+  .pew-pew-typewriter {
+    width: 7ch !important;
   }
   .cursor-blink {
     opacity: 1 !important;
