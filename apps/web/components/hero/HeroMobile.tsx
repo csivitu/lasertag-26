@@ -238,15 +238,16 @@ export function HeroMobile() {
           exits up-left, hand grips bottom-right in the original) — no
           rotation needed, since that mirror alone already points the laser
           up-right with the hand at bottom-left, matching the reference
-          mobile layout at lasertag.csivit.in. Sized and offset (in vw,
-          capped in px past the ~375px baseline so it doesn't keep growing
-          into the tablet zone) so the beam reaches toward the top-right
-          corner and the hand stays fully in frame instead of being cropped
-          by the old rotate+overflow-hidden box. */}
+          mobile layout at lasertag.csivit.in. Sized (in vw, capped in px
+          past the ~375px baseline so it doesn't keep growing into the
+          tablet zone) with a small left/top margin so the whole hand stays
+          inside the frame — not touching the edges — the same as the
+          reference, instead of being cropped by the old rotate+
+          overflow-hidden box. */}
       <div
         aria-hidden
         className="pointer-events-none relative z-10 mt-2 overflow-hidden"
-        style={{ height: "min(128vw, 480px)" }}
+        style={{ height: "min(149.333vw, 560px)" }}
       >
         <Image
           src="/hero/gun.png"
@@ -254,12 +255,12 @@ export function HeroMobile() {
           width={4096}
           height={3119}
           priority
-          sizes="620px"
+          sizes="440px"
           className="absolute h-auto max-w-none"
           style={{
-            width: "min(165.333vw, 620px)",
-            left: "max(-24vw, -90px)",
-            top: "max(-10.667vw, -40px)",
+            width: "min(117.333vw, 440px)",
+            left: "min(6.667vw, 25px)",
+            top: "min(2.667vw, 10px)",
             transform: "scaleX(-1)",
           }}
         />
