@@ -251,7 +251,7 @@ export function HeroMobile() {
       <div
         aria-hidden
         className="pointer-events-none relative z-10 mt-2"
-        style={{ height: "min(101.333vw, 380px)" }}
+        style={{ height: "min(112vw, 420px)" }}
       >
         <Image
           src="/hero/gun.png"
@@ -259,11 +259,11 @@ export function HeroMobile() {
           width={4096}
           height={3119}
           priority
-          sizes="500px"
+          sizes="550px"
           className="absolute h-auto max-w-none"
           style={{
-            width: "min(133.333vw, 500px)",
-            left: "max(-6.667vw, -25px)",
+            width: "min(146.667vw, 550px)",
+            left: "min(1.333vw, 5px)",
             top: 0,
             transform: "scaleX(-1)",
           }}
