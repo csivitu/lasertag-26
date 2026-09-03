@@ -234,21 +234,21 @@ export function HeroMobile() {
         </div>
       </div>
 
-      {/* Gun art starts from a horizontal mirror of the source asset (laser
-          exits up-left, hand grips bottom-right in the original — mirroring
-          alone already puts the laser up-right and the hand at bottom-left)
-          plus a mild extra rotation so the beam exits nearer the top edge
-          rather than the side wall of this box, which read as an accidental
-          crop through the beam rather than the art's own edges. Sized (in
-          vw, capped in px past the ~375px baseline so it doesn't keep
-          growing into the tablet zone) and shifted right just enough that
-          the hand's own silhouette never touches the box edges either —
-          only the beam is allowed to run past the top/right, which matches
-          the reference at lasertag.csivit.in and reads as the beam
-          continuing off-screen rather than being clipped. */}
+      {/* Gun art is a plain horizontal mirror of the source asset — no
+          rotation. Rotating a pixel-art PNG by an arbitrary CSS angle forces
+          the browser to interpolate it, which blurs/aliases the crisp pixel
+          edges and reads as an ugly artificial "cut" through the art itself
+          (worse than any container clip). A pure mirror needs no
+          interpolation, so every edge stays exactly as crisp as the source.
+          The wrapper below has no overflow-hidden of its own either — the
+          only clip boundary is the section's true edge, so nothing ever
+          slices through the gun or hand; only the plain-coloured beam can
+          run past that edge, which reads as continuing off-screen rather
+          than being cropped. Sized in vw, capped in px past the ~375px
+          baseline so it doesn't keep growing into the tablet zone. */}
       <div
         aria-hidden
-        className="pointer-events-none relative z-10 mt-2 overflow-hidden"
+        className="pointer-events-none relative z-10 mt-2"
         style={{ height: "min(112vw, 420px)" }}
       >
         <Image
@@ -261,9 +261,9 @@ export function HeroMobile() {
           className="absolute h-auto max-w-none"
           style={{
             width: "min(117.333vw, 440px)",
-            left: "min(11.733vw, 44px)",
-            top: 0,
-            transform: "scaleX(-1) rotate(20deg)",
+            left: "min(6.667vw, 25px)",
+            top: "min(2.667vw, 10px)",
+            transform: "scaleX(-1)",
           }}
         />
       </div>
