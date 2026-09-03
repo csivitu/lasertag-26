@@ -3,6 +3,25 @@ import Image from "next/image";
 
 import { pixelDots, sparkles } from "./heroDecor";
 
+// Deterministic pseudo-random in [min, max), seeded by index so every star
+// gets a fixed but varied twinkle timing (same on every render, no client/
+// server mismatch risk) instead of all 169 marks flickering in lockstep.
+function seededRange(seed: number, min: number, max: number) {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  const frac = x - Math.floor(x);
+  return min + frac * (max - min);
+}
+
+// Blocky, stepped opacity flicker — steps() rather than an eased fade, to
+// match the arcade/pixel-art treatment used elsewhere (nav marker, etc.)
+// rather than a smooth "modern web" twinkle.
+function twinkleStyle(seed: number): CSSProperties {
+  return {
+    animation: `star-twinkle ${seededRange(seed, 1.6, 3.6).toFixed(2)}s steps(4, jump-none) infinite`,
+    animationDelay: `${seededRange(seed * 7.3 + 1, 0, 3).toFixed(2)}s`,
+  };
+}
+
 /**
  * Fluid desktop hero, calibrated against the Figma "Landing - Hero" frame.
  *
@@ -93,6 +112,7 @@ export function HeroDesktop() {
             width: `${(d.w * 1.40625).toFixed(4)}cqh`,
             height: `${d.h}cqh`,
             backgroundColor: d.c,
+            ...twinkleStyle(i),
           }}
         />
       ))}
@@ -110,6 +130,7 @@ export function HeroDesktop() {
             top: `${s.t}%`,
             width: `${(s.w * 1.40625).toFixed(4)}cqh`,
             height: `${s.h}cqh`,
+            ...twinkleStyle(pixelDots.length + i),
           }}
         />
       ))}

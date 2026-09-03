@@ -57,3 +57,26 @@ body {
     animation: none !important;
   }
 }
+
+/* Background starfield twinkle. A blocky, stepped flicker (steps(4), not an
+   eased fade) so it reads as pixel-art rather than a smooth modern glow.
+   Each dot/sparkle gets its own duration + delay (seeded per-item in
+   HeroDesktop) so the whole field flickers asynchronously instead of in
+   lockstep, which is what actually reads as a starfield rather than a
+   single blinking light source. */
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [style*="star-twinkle"] {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
