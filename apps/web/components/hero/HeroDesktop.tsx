@@ -285,15 +285,24 @@ export function HeroDesktop() {
           />
         </h1>
 
+        {/* Plain block, not flex/grid: both wrap mixed text + inline-block
+            children into separate anonymous items per contiguous run (one
+            per spec for BOTH layout modes — grid does not merge them into a
+            single box the way it might look like it should), and a purely-
+            whitespace run between two such items collapses to nothing. That
+            silently ate the space before "Pew Pew". Plain inline flow does
+            not have this behaviour. Single-line vertical centring instead
+            comes from line-height === height (classic single-line trick). */}
         <p
-          className="tagline-crt-glitch relative flex items-center justify-center text-center font-pixel text-[#23eff1]"
+          className="tagline-crt-glitch relative whitespace-nowrap text-center font-pixel text-[#23eff1]"
           style={{
             fontSize: "calc(var(--cw) * 0.034483)",
             marginTop: "max(6px, 1.2695cqh)",
             height: "max(2.357em, 6.4453cqh)",
+            lineHeight: "max(2.357em, 6.4453cqh)",
           }}
         >
-          From Pixels to{" "}
+          {"From Pixels to "}
           {/* Only "Pew Pew" types out — width animates 0 -> 7ch (Press
               Start 2P is monospace, so ch is exact) rather than clip-path,
               because growing the box's real layout width is what makes the
@@ -301,12 +310,12 @@ export function HeroDesktop() {
               sitting fixed at its final position from mount. One-time; the
               CRT glitch on the parent <p> and the cursor blink are both
               independent infinite animations unaffected by this finishing. */}
-          <span className="pew-pew-typewriter inline-block overflow-hidden whitespace-nowrap">
+          <span className="pew-pew-typewriter inline-block overflow-hidden whitespace-nowrap align-middle">
             Pew Pew
           </span>
           {/* Terminal-style blinking cursor block, pushed along by the
               typewriter span's growing width so it tracks the reveal. */}
-          <span aria-hidden className="cursor-blink ml-[0.25em] inline-block bg-[#23eff1]" style={{ width: "0.55em", height: "0.85em" }} />
+          <span aria-hidden className="cursor-blink ml-[0.25em] inline-block align-middle bg-[#23eff1]" style={{ width: "0.55em", height: "0.85em" }} />
         </p>
 
         <a
