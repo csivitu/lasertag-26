@@ -301,7 +301,7 @@ export function HeroDesktop() {
 
         <a
           href="#register"
-          className="group relative block overflow-hidden rounded-full outline-offset-4 transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="group relative block overflow-hidden outline-offset-4 transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           style={{
             marginTop: "max(28px, 9.4727cqh)",
             width: "calc(var(--cw) * 0.491379)",
@@ -332,17 +332,34 @@ export function HeroDesktop() {
             className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-75 group-active:opacity-100"
           />
           {/* Arcade-cabinet shine: a diagonal light band that sweeps across
-              on hover, looping for as long as the pointer stays. Clipped by
-              the parent's overflow-hidden so it never spills past the pill. */}
+              on hover, looping for as long as the pointer stays. The OUTER
+              span is a static mask matching register-button-mask.png — the
+              button's own true pixel-art silhouette (traced from the resting
+              asset's real alpha shape) — rather than an approximated CSS
+              rounded-full clip, which cut a smooth pill that didn't match
+              the button's actual jagged stair-stepped corners. The INNER
+              span is what actually animates; the mask never moves. */}
           <span
             aria-hidden
-            className="button-shine pointer-events-none absolute inset-y-0 left-0 w-1/3"
+            className="pointer-events-none absolute inset-0 overflow-hidden"
             style={{
-              background:
-                "linear-gradient(75deg, transparent, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.15) 55%, transparent)",
-              transform: "translateX(-160%) skewX(-20deg)",
+              maskImage: "url(/hero/register-button-mask.png)",
+              maskSize: "100% 100%",
+              maskRepeat: "no-repeat",
+              WebkitMaskImage: "url(/hero/register-button-mask.png)",
+              WebkitMaskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
             }}
-          />
+          >
+            <span
+              className="button-shine block h-full w-1/3"
+              style={{
+                background:
+                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.15) 55%, transparent)",
+                transform: "translateX(-160%) skewX(-20deg)",
+              }}
+            />
+          </span>
         </a>
       </div>
     </section>
