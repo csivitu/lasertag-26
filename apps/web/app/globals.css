@@ -80,3 +80,106 @@ body {
     opacity: 1 !important;
   }
 }
+
+/* Tagline CRT glitch: text-shadow RGB split + a small position jitter,
+   crammed into a short window near the end of a long cycle so it reads as
+   a rare signal-loss blip rather than a constant effect. steps(1, jump-none)
+   per segment makes each state a hard cut, not an eased blend, matching a
+   real CRT glitch (abrupt) rather than a smooth "glow" wobble. */
+@keyframes tagline-crt-glitch {
+  0%,
+  95% {
+    transform: translate(0, 0);
+    text-shadow: none;
+    filter: none;
+  }
+  95.5% {
+    transform: translate(-2px, 1px);
+    text-shadow: 2px 0 #ff2d6a, -2px 0 #23eff1;
+    filter: brightness(1.4);
+  }
+  96.5% {
+    transform: translate(2px, -1px);
+    text-shadow: -2px 0 #ff2d6a, 2px 0 #23eff1;
+    filter: brightness(0.6);
+  }
+  97.5% {
+    transform: translate(-1px, 0);
+    text-shadow: 1px 0 #ff2d6a;
+    filter: brightness(1.2);
+  }
+  98%,
+  100% {
+    transform: translate(0, 0);
+    text-shadow: none;
+    filter: none;
+  }
+}
+
+.tagline-crt-glitch {
+  animation: tagline-crt-glitch 7s linear infinite;
+}
+
+/* Terminal-style cursor after the tagline: a hard on/off block, no fade. */
+@keyframes cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cursor-blink {
+  animation: cursor-blink 1s linear infinite;
+}
+
+/* Wordmark attract-mode reveal: a one-time stepped wipe (8 steps, one per
+   letter of LASERTAG) on mount rather than a fade-in. animation-fill-mode:
+   forwards holds the fully-revealed end state; it does not loop. */
+@keyframes wordmark-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+.wordmark-reveal {
+  animation: wordmark-reveal 0.9s steps(8, jump-none) forwards;
+}
+
+/* CTA marquee chase lights: each bulb is mostly dim and briefly flashes full
+   brightness once per cycle; staggering every bulb's animation-delay by an
+   even fraction of the cycle (see ctaLightPositions in HeroDesktop) makes a
+   single point of light appear to travel around the button's border. */
+@keyframes cta-chase-light {
+  0%,
+  91% {
+    opacity: 0.18;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.18;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tagline-crt-glitch,
+  .cursor-blink,
+  .wordmark-reveal,
+  [style*="cta-chase-light"] {
+    animation: none !important;
+  }
+  .wordmark-reveal {
+    clip-path: none !important;
+  }
+  .cursor-blink {
+    opacity: 1 !important;
+  }
+}

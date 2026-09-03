@@ -22,6 +22,48 @@ function twinkleStyle(seed: number): CSSProperties {
   };
 }
 
+// Positions for the CTA's chase-light bulbs, evenly spaced by arc length
+// around the button's pill perimeter (399x95, matching register-button.png's
+// own aspect) — marquee/arcade-cabinet lights running around the border,
+// not a moving gradient. Computed once at module load, not per render.
+const CTA_LIGHT_COUNT = 20;
+const CTA_LIGHT_CYCLE_S = 2;
+function ctaLightPositions(n: number) {
+  const W = 399;
+  const H = 95;
+  const r = H / 2;
+  const topLen = W - 2 * r;
+  const arcLen = Math.PI * r;
+  const perim = 2 * topLen + 2 * arcLen;
+  const pts: { l: number; t: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const d = (i * perim) / n;
+    let x: number;
+    let y: number;
+    if (d < topLen) {
+      x = r + d;
+      y = 0;
+    } else if (d < topLen + arcLen) {
+      const t = (d - topLen) / arcLen;
+      const ang = -Math.PI / 2 + t * Math.PI;
+      x = W - r + r * Math.cos(ang);
+      y = r + r * Math.sin(ang);
+    } else if (d < 2 * topLen + arcLen) {
+      const t = (d - topLen - arcLen) / topLen;
+      x = W - r - t * topLen;
+      y = H;
+    } else {
+      const t = (d - 2 * topLen - arcLen) / arcLen;
+      const ang = Math.PI / 2 + t * Math.PI;
+      x = r + r * Math.cos(ang);
+      y = r + r * Math.sin(ang);
+    }
+    pts.push({ l: (x / W) * 100, t: (y / H) * 100 });
+  }
+  return pts;
+}
+const ctaLights = ctaLightPositions(CTA_LIGHT_COUNT);
+
 /**
  * Fluid desktop hero, calibrated against the Figma "Landing - Hero" frame.
  *
@@ -272,7 +314,11 @@ export function HeroDesktop() {
       >
         {/* ArcadeClassic is not a web font, so the lettering is exported from
             Figma; the accessible name lives on the heading. */}
-        <h1 className="m-0 w-full">
+        <h1 className="m-0 w-full overflow-hidden">
+          {/* One-time stepped reveal on mount, 8 steps for the 8 letters of
+              LASERTAG — an arcade attract-mode title wipe rather than a
+              generic fade-in. Pure CSS (animation-fill-mode: forwards), no
+              JS trigger needed. */}
           <Image
             src="/hero/title-wordmark.png"
             alt="LaserTag"
@@ -280,13 +326,13 @@ export function HeroDesktop() {
             height={309}
             priority
             unoptimized
-            className="mx-auto h-auto max-w-full"
+            className="wordmark-reveal mx-auto h-auto max-w-full"
             style={{ width: "var(--cw)" }}
           />
         </h1>
 
         <p
-          className="flex items-center justify-center text-center font-pixel text-[#23eff1]"
+          className="tagline-crt-glitch relative flex items-center justify-center text-center font-pixel text-[#23eff1]"
           style={{
             fontSize: "calc(var(--cw) * 0.034483)",
             marginTop: "max(6px, 1.2695cqh)",
@@ -294,11 +340,13 @@ export function HeroDesktop() {
           }}
         >
           From Pixels to Pew Pew
+          {/* Terminal-style blinking cursor block after the tagline. */}
+          <span aria-hidden className="cursor-blink ml-[0.25em] inline-block bg-[#23eff1]" style={{ width: "0.55em", height: "0.85em" }} />
         </p>
 
         <a
           href="#register"
-          className="block rounded-full outline-offset-4 transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="relative block rounded-full outline-offset-4 transition-[transform,filter] duration-150 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           style={{
             marginTop: "max(28px, 9.4727cqh)",
             width: "calc(var(--cw) * 0.491379)",
@@ -314,6 +362,24 @@ export function HeroDesktop() {
             unoptimized
             className="h-auto w-full"
           />
+          {/* Arcade-cabinet marquee chase lights running around the pill
+              border, one bulb lit at a time. */}
+          {ctaLights.map((p, i) => (
+            <span
+              key={`cta-light-${i}`}
+              aria-hidden
+              className="pointer-events-none absolute rounded-[1px] bg-[#ffc410]"
+              style={{
+                left: `${p.l}%`,
+                top: `${p.t}%`,
+                width: "1.8%",
+                aspectRatio: "1",
+                transform: "translate(-50%, -50%)",
+                animation: `cta-chase-light ${CTA_LIGHT_CYCLE_S}s linear infinite`,
+                animationDelay: `${(i * CTA_LIGHT_CYCLE_S) / CTA_LIGHT_COUNT}s`,
+              }}
+            />
+          ))}
         </a>
       </div>
     </section>
