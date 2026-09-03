@@ -1,0 +1,48 @@
+/* Local Fonts from /fonts (public/fonts) */
+
+@font-face {
+  font-family: 'ArcadeClassic';
+  src: url('/fonts/ARCADECLASSIC.TTF') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('/fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Oxanium';
+  src: url('/fonts/Oxanium-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Anton';
+  src: url('/fonts/Anton-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Fonts */
+  --font-logo: 'ArcadeClassic', 'Press Start 2P', monospace;
+  --font-subheadings: 'Press Start 2P', cursive, monospace;
+  --font-body: 'Oxanium', sans-serif;
+  --font-headings: 'Anton', sans-serif;
+
+  /* Colors */
+  --pink: #F949CC;
+  --red: #FF0101;
+  --yellow: #FEDC02;
+  --purple: #7211C0;
+  --cyan: #23EFF1;
+}
