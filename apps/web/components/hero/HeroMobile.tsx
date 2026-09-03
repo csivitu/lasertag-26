@@ -237,21 +237,21 @@ export function HeroMobile() {
       {/* Gun art is a plain horizontal mirror of the source asset — no
           rotation, since rotating a pixel-art PNG by an arbitrary CSS angle
           forces the browser to interpolate it, blurring the crisp pixel
-          edges. The source art itself ends in flat, un-tapered cuts at both
-          the beam's far tip and the wrist/forearm — visible as an "edge"
-          whenever that raw cut lands inside the visible frame. So this is
-          scaled up and shifted until BOTH of those cut ends fall past the
-          section's true boundary (beam off the top-right, wrist off the
-          bottom-left) — the only edge left visible is the page's own,
-          which reads as the art continuing off-screen rather than being
-          cropped. The wrapper has no overflow-hidden of its own; the
-          section is the sole clip boundary. Sized in vw, capped in px past
-          the ~375px baseline so it doesn't keep growing into the tablet
-          zone. */}
+          edges. The source art ends in a flat, un-tapered cut at both the
+          beam's far tip and past the wrist, at the end of the forearm —
+          visible as an "edge" whenever that raw cut lands inside the frame.
+          This is sized and shifted so only those two cut ends fall past the
+          section's true boundary (beam off the top-right, forearm off the
+          bottom-left) while the hand and gun themselves stay fully inside
+          — the only edge left visible is the page's own, which reads as
+          the art continuing off-screen rather than being cut off mid-hand.
+          The wrapper has no overflow-hidden of its own; the section is the
+          sole clip boundary. Sized in vw, capped in px past the ~375px
+          baseline so it doesn't keep growing into the tablet zone. */}
       <div
         aria-hidden
         className="pointer-events-none relative z-10 mt-2"
-        style={{ height: "min(120vw, 450px)" }}
+        style={{ height: "min(101.333vw, 380px)" }}
       >
         <Image
           src="/hero/gun.png"
@@ -259,11 +259,11 @@ export function HeroMobile() {
           width={4096}
           height={3119}
           priority
-          sizes="670px"
+          sizes="500px"
           className="absolute h-auto max-w-none"
           style={{
-            width: "min(178.667vw, 670px)",
-            left: "max(-16vw, -60px)",
+            width: "min(133.333vw, 500px)",
+            left: "max(-6.667vw, -25px)",
             top: 0,
             transform: "scaleX(-1)",
           }}
