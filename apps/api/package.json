@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun"
   }
 }

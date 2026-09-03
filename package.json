@@ -12,7 +12,11 @@
     "typecheck": "turbo run typecheck",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": "eslint --fix"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,2 +1,2 @@
 bunx lint-staged
-bun --cwd api run typecheck
+bun run typecheck
