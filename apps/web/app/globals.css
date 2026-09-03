@@ -25,3 +25,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Arcade-style nudge for the nav's ▶ selector marker: a blocky, stepped
+   left-right jab (not an eased glide) while its link is hovered/focused,
+   evoking a classic arcade menu cursor pointing at the selection. Idle
+   (unhovered) state matches the marker's static -translate-y-1/2 position
+   exactly, so the animation starting/stopping never causes a visual jump. */
+@keyframes nav-arrow-nudge {
+  0%,
+  20% {
+    transform: translateY(-50%) translateX(0);
+  }
+  60% {
+    transform: translateY(-50%) translateX(4px);
+  }
+  100% {
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.group:hover .nav-arrow-marker,
+.group:focus-visible .nav-arrow-marker {
+  animation: nav-arrow-nudge 0.7s steps(3, jump-none) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-arrow-marker {
+    animation: none !important;
+  }
+}

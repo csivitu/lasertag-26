@@ -62,10 +62,10 @@ const COLUMN_L = "var(--column-l)";
 const WORDMARK_W = "min(79.297cqh, calc(100cqw - var(--column-l) - var(--gutter-r)))";
 
 const navLinks = [
-  { label: "HOME", href: "#", active: false },
-  { label: "ABOUT", href: "#about", active: true },
-  { label: "FAQs", href: "#faqs", active: false },
-  { label: "SIGN IN", href: "#sign-in", active: false },
+  { label: "HOME", href: "#" },
+  { label: "ABOUT", href: "#about" },
+  { label: "FAQs", href: "#faqs" },
+  { label: "SIGN IN", href: "#sign-in" },
 ];
 
 export function HeroDesktop() {
@@ -208,29 +208,24 @@ export function HeroDesktop() {
             <a
               key={link.label}
               href={link.href}
-              aria-current={link.active ? "page" : undefined}
-              className={`relative whitespace-nowrap font-pixel leading-[1.338] outline-offset-4 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-[#01daec] motion-reduce:transition-none ${
-                link.active ? "text-[#01daec]" : "text-white hover:text-[#01daec]"
-              }`}
+              className="group relative whitespace-nowrap font-pixel leading-[1.338] text-white outline-offset-4 transition-colors duration-150 hover:text-[#01daec] focus-visible:text-[#01daec] focus-visible:outline-2 focus-visible:outline-[#01daec] motion-reduce:transition-none"
               style={{ letterSpacing: "0.1em" }}
             >
-              {link.active && (
-                <Image
-                  src="/hero/nav-arrow.png"
-                  alt=""
-                  aria-hidden
-                  width={72}
-                  height={90}
-                  unoptimized
-                  className="absolute top-1/2 -translate-y-1/2 object-contain"
-                  style={{
-                    right: "100%",
-                    marginRight: "0.5435em",
-                    width: "1.2em",
-                    height: "1.5em",
-                  }}
-                />
-              )}
+              <Image
+                src="/hero/nav-arrow.png"
+                alt=""
+                aria-hidden
+                width={72}
+                height={90}
+                unoptimized
+                className="nav-arrow-marker pointer-events-none absolute top-1/2 -translate-y-1/2 object-contain opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                style={{
+                  right: "100%",
+                  marginRight: "0.5435em",
+                  width: "1.2em",
+                  height: "1.5em",
+                }}
+              />
               {link.label}
             </a>
           ))}
