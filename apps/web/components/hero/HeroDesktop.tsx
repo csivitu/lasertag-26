@@ -76,7 +76,7 @@ export function HeroDesktop() {
         {
           containerType: "size",
           "--gutter-r": "clamp(24px, 3.4028vw, 72px)",
-          "--column-l": "49.902cqh",
+          "--column-l": "58cqh",
         } as CSSProperties
       }
     >
@@ -115,11 +115,13 @@ export function HeroDesktop() {
       ))}
 
       {/* Artwork layer. This box is the frame's own coordinate space scaled to
-          the hero height, so the gun keeps its designed size and position and
-          the arm is cut by the bottom edge exactly as in Figma. */}
+          the hero height. Enlarged (1.18x) and nudged right of its Figma
+          position — scaled from the bottom-left corner so the anchored hand
+          stays put while the beam/muzzle grow up and to the right. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-0 top-0 aspect-[1440/1024] h-full"
+        className="pointer-events-none absolute top-0 aspect-[1440/1024] h-full"
+        style={{ left: "6.5cqh", transform: "scale(1.18)", transformOrigin: "0% 100%" }}
       >
         <div
           className="absolute flex items-center justify-center"
