@@ -222,7 +222,7 @@ export function HeroDesktop() {
                 className="nav-arrow-marker pointer-events-none absolute object-contain opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
                 style={{
                   right: "100%",
-                  marginRight: "0.5435em",
+                  marginRight: "0.85em",
                   top: "50%",
                   marginTop: "-0.75em",
                   width: "1.2em",
