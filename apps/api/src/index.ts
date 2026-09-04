@@ -1,10 +1,33 @@
 import express from "express";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth";
+import adminPaymentsRouter from "./routes/admin-payments";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 
 const app = express();
 app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use(express.json());
+const swaggerSpec = swaggerJsdoc({
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "LaserTag API",
+            version: "1.0.0",
+            description: "LaserTag event management API",
+        },
+        servers: [
+            {
+                url: "http://localhost:3001",
+                description: "Development server",
+            },
+        ],
+    },
+    apis: ["./src/routes/*.ts"],
+});
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/admin/payments", adminPaymentsRouter);
 
 app.get("/", (req, res) => {
     res.send("API is running!");
