@@ -14,14 +14,18 @@ export const adminSlotsRouter = Router();
  *         id:
  *           type: string
  *           format: uuid
+ *           example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
  *         startTime:
  *           type: string
  *           format: date-time
+ *           example: 2026-03-14T09:00:00.000Z
  *         endTime:
  *           type: string
  *           format: date-time
+ *           example: 2026-03-14T10:00:00.000Z
  *         capacity:
  *           type: integer
+ *           example: 10
  *     SlotInput:
  *       type: object
  *       required: [startTime, endTime, capacity]
@@ -29,12 +33,21 @@ export const adminSlotsRouter = Router();
  *         startTime:
  *           type: string
  *           format: date-time
+ *           example: 2026-03-14T09:00:00.000Z
  *         endTime:
  *           type: string
  *           format: date-time
+ *           example: 2026-03-14T10:00:00.000Z
  *         capacity:
  *           type: integer
  *           minimum: 0
+ *           example: 10
+ *     Error:
+ *       type: object
+ *       properties:
+ *         error:
+ *           type: string
+ *           example: Slot not found
  */
 
 const UUID_RE =
@@ -106,6 +119,15 @@ async function getBookingCount(slotId: string): Promise<number> {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Slot'
+ *             example:
+ *               - id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+ *                 startTime: 2026-03-14T09:00:00.000Z
+ *                 endTime: 2026-03-14T10:00:00.000Z
+ *                 capacity: 10
+ *               - id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *                 startTime: 2026-03-14T10:00:00.000Z
+ *                 endTime: 2026-03-14T11:00:00.000Z
+ *                 capacity: 8
  */
 adminSlotsRouter.get("/", async (_req: Request, res: Response) => {
   const allSlots = await db.select().from(slots);
@@ -124,6 +146,10 @@ adminSlotsRouter.get("/", async (_req: Request, res: Response) => {
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/SlotInput'
+ *           example:
+ *             startTime: 2026-03-14T09:00:00.000Z
+ *             endTime: 2026-03-14T10:00:00.000Z
+ *             capacity: 10
  *     responses:
  *       201:
  *         description: The created slot
@@ -131,8 +157,19 @@ adminSlotsRouter.get("/", async (_req: Request, res: Response) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Slot'
+ *             example:
+ *               id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+ *               startTime: 2026-03-14T09:00:00.000Z
+ *               endTime: 2026-03-14T10:00:00.000Z
+ *               capacity: 10
  *       400:
- *         description: Invalid input
+ *         description: Invalid input (bad dates, startTime not before endTime, or negative capacity)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: capacity must be a non-negative integer
  */
 adminSlotsRouter.post("/", async (req: Request, res: Response) => {
   const parsed = parseSlotInput(req.body);
@@ -159,6 +196,13 @@ adminSlotsRouter.post("/", async (req: Request, res: Response) => {
  *             type: array
  *             items:
  *               $ref: '#/components/schemas/SlotInput'
+ *           example:
+ *             - startTime: 2026-03-14T09:00:00.000Z
+ *               endTime: 2026-03-14T10:00:00.000Z
+ *               capacity: 10
+ *             - startTime: 2026-03-14T10:00:00.000Z
+ *               endTime: 2026-03-14T11:00:00.000Z
+ *               capacity: 8
  *     responses:
  *       201:
  *         description: The created slots
@@ -168,8 +212,23 @@ adminSlotsRouter.post("/", async (req: Request, res: Response) => {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Slot'
+ *             example:
+ *               - id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+ *                 startTime: 2026-03-14T09:00:00.000Z
+ *                 endTime: 2026-03-14T10:00:00.000Z
+ *                 capacity: 10
+ *               - id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *                 startTime: 2026-03-14T10:00:00.000Z
+ *                 endTime: 2026-03-14T11:00:00.000Z
+ *                 capacity: 8
  *       400:
- *         description: Invalid input
+ *         description: Invalid input — request body must be a non-empty array, and every slot must pass the same validation as the single-create endpoint
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: 'Slot at index 1: startTime must be before endTime'
  */
 adminSlotsRouter.post("/bulk", async (req: Request, res: Response) => {
   const body = req.body;
@@ -205,8 +264,10 @@ adminSlotsRouter.post("/bulk", async (req: Request, res: Response) => {
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
  *     requestBody:
  *       required: true
+ *       description: Any subset of these fields; only the given ones are changed.
  *       content:
  *         application/json:
  *           schema:
@@ -221,6 +282,8 @@ adminSlotsRouter.post("/bulk", async (req: Request, res: Response) => {
  *               capacity:
  *                 type: integer
  *                 minimum: 0
+ *           example:
+ *             capacity: 6
  *     responses:
  *       200:
  *         description: The updated slot
@@ -228,12 +291,44 @@ adminSlotsRouter.post("/bulk", async (req: Request, res: Response) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Slot'
+ *             example:
+ *               id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+ *               startTime: 2026-03-14T09:00:00.000Z
+ *               endTime: 2026-03-14T10:00:00.000Z
+ *               capacity: 6
  *       400:
- *         description: Invalid input
+ *         description: Invalid slot_id, invalid field values, or startTime not before endTime
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: capacity must be a non-negative integer
  *       404:
  *         description: Slot not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Slot not found
  *       409:
- *         description: Capacity would drop below the slot's current booking count
+ *         description: capacity would drop below the slot's current booking count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                 bookingCount:
+ *                   type: integer
+ *                 requestedCapacity:
+ *                   type: integer
+ *             example:
+ *               error: Cannot reduce capacity below the current booking count
+ *               bookingCount: 8
+ *               requestedCapacity: 6
  */
 adminSlotsRouter.patch("/:slot_id", async (req: Request, res: Response) => {
   const { slot_id } = req.params;
@@ -327,15 +422,40 @@ adminSlotsRouter.patch("/:slot_id", async (req: Request, res: Response) => {
  *         schema:
  *           type: string
  *           format: uuid
+ *         example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
  *     responses:
  *       204:
  *         description: Slot deleted
  *       400:
- *         description: Invalid slot_id
+ *         description: slot_id is not a valid UUID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: slot_id must be a valid UUID
  *       404:
  *         description: Slot not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Slot not found
  *       409:
  *         description: Slot has existing bookings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                 bookingCount:
+ *                   type: integer
+ *             example:
+ *               error: Cannot delete a slot with existing bookings
+ *               bookingCount: 8
  */
 adminSlotsRouter.delete("/:slot_id", async (req: Request, res: Response) => {
   const { slot_id } = req.params;
