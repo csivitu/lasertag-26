@@ -1,15 +1,17 @@
 import { Router } from "express";
+import { eq } from "drizzle-orm";
 import { auth } from "../auth";
+import { db, user } from "@lasertag-26/database";
 
 const router = Router();
 
 /**
  * @swagger
- * /auth/login:
+ * /admin/auth/login:
  *   post:
- *     summary: Login a user
+ *     summary: Login an admin
  *     tags:
- *       - Authentication
+ *       - Admin Authentication
  *     requestBody:
  *       required: true
  *       content:
@@ -22,17 +24,17 @@ const router = Router();
  *             properties:
  *               email:
  *                 type: string
- *                 example: user@example.com
  *               password:
  *                 type: string
- *                 example: password123
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Admin login successful
  *       400:
  *         description: Email and password are required
  *       401:
  *         description: Invalid email or password
+ *       403:
+ *         description: Admin access required
  */
 router.post("/login", async (req, res) => {
     try {
@@ -44,6 +46,30 @@ router.post("/login", async (req, res) => {
             });
         }
 
+        // Check whether this email belongs to an admin
+        const adminUser = await db
+            .select({
+                id: user.id,
+                role: user.role,
+            })
+            .from(user)
+            .where(eq(user.email, email))
+            .limit(1);
+
+        // Don't reveal whether the email exists
+        if (adminUser.length === 0) {
+            return res.status(401).json({
+                message: "Invalid email or password",
+            });
+        }
+
+        if (adminUser[0].role !== "admin") {
+            return res.status(403).json({
+                message: "Admin access required",
+            });
+        }
+
+        // Let Better Auth verify the password and create the session
         const result = await auth.api.signInEmail({
             body: {
                 email,
@@ -58,14 +84,14 @@ router.post("/login", async (req, res) => {
             res.append("Set-Cookie", cookie);
         });
 
-        res.status(200).json({
-            message: "Login successful",
+        return res.status(200).json({
+            message: "Admin login successful",
             user: result.response.user,
         });
     } catch (error) {
-        console.error("Login error:", error);
+        console.error("Admin login error:", error);
 
-        res.status(401).json({
+        return res.status(401).json({
             message: "Invalid email or password",
         });
     }
@@ -73,14 +99,14 @@ router.post("/login", async (req, res) => {
 
 /**
  * @swagger
- * /auth/logout:
+ * /admin/auth/logout:
  *   post:
- *     summary: Logout the current user
+ *     summary: Logout the current admin
  *     tags:
- *       - Authentication
+ *       - Admin Authentication
  *     responses:
  *       200:
- *         description: Logout successful
+ *         description: Admin logout successful
  *       401:
  *         description: Not authenticated
  */
@@ -88,10 +114,8 @@ router.post("/logout", async (req, res) => {
     try {
         const headers = new Headers();
 
-        const cookie = req.headers.cookie;
-
-        if (cookie) {
-            headers.set("cookie", cookie);
+        if (req.headers.cookie) {
+            headers.set("cookie", req.headers.cookie);
         }
 
         const result = await auth.api.signOut({
@@ -105,13 +129,13 @@ router.post("/logout", async (req, res) => {
             res.append("Set-Cookie", cookie);
         });
 
-        res.status(200).json({
-            message: "Logout successful",
+        return res.status(200).json({
+            message: "Admin logout successful",
         });
     } catch (error) {
-        console.error("Logout error:", error);
+        console.error("Admin logout error:", error);
 
-        res.status(401).json({
+        return res.status(401).json({
             message: "Not authenticated",
         });
     }
