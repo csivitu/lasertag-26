@@ -1,3 +1,4 @@
+
 import {
   pgTable,
   pgEnum,
@@ -74,3 +75,5 @@ export const bookings = pgTable('bookings', {
     .notNull()
     .default(false),
 });
+
+
