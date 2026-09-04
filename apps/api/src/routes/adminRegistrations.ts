@@ -10,7 +10,83 @@ function queryParam(value: unknown): string | undefined {
   return undefined;
 }
 
-// GET /admin/registrations — search by optional reg_no, name, phone, email.
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Registration:
+ *       type: object
+ *       properties:
+ *         regNo:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: [individual, team]
+ *         teamCode:
+ *           type: string
+ *           nullable: true
+ *         slotId:
+ *           type: string
+ *           format: uuid
+ *         confirmationEmailSent:
+ *           type: boolean
+ *         user:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               format: uuid
+ *             name:
+ *               type: string
+ *             email:
+ *               type: string
+ *             phone:
+ *               type: string
+ *             paid:
+ *               type: boolean
+ *             isCheckedIn:
+ *               type: boolean
+ *             checkedInAt:
+ *               type: string
+ *               format: date-time
+ *               nullable: true
+ *
+ * /admin/registrations:
+ *   get:
+ *     summary: Search registrations
+ *     description: >
+ *       A "registration" is a booking. All query params are optional and
+ *       combined with AND; reg_no matches exactly, the rest match
+ *       case-insensitive substrings.
+ *     tags: [Registrations]
+ *     parameters:
+ *       - in: query
+ *         name: reg_no
+ *         schema:
+ *           type: string
+ *         description: Exact booking id
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: phone
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Matching registrations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Registration'
+ */
 // "Registration" is a booking (packages/database/schema.ts); reg_no is the
 // booking's own id. name/phone/email live on the booking's user, so this
 // joins bookings -> users and filters on whichever params were given.
