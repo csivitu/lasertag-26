@@ -2,6 +2,7 @@ import express from "express";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth";
 import adminPaymentsRouter from "./routes/admin-payments";
+import adminAuthRouter from "./routes/admin-auth";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 
@@ -28,6 +29,7 @@ const swaggerSpec = swaggerJsdoc({
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/admin/payments", adminPaymentsRouter);
+app.use("/auth", adminAuthRouter);
 
 app.get("/", (req, res) => {
     res.send("API is running!");
