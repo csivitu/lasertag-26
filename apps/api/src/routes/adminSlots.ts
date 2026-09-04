@@ -4,6 +4,39 @@ import { db, slots, bookings } from "@lasertag-26/database";
 
 export const adminSlotsRouter = Router();
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Slot:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         startTime:
+ *           type: string
+ *           format: date-time
+ *         endTime:
+ *           type: string
+ *           format: date-time
+ *         capacity:
+ *           type: integer
+ *     SlotInput:
+ *       type: object
+ *       required: [startTime, endTime, capacity]
+ *       properties:
+ *         startTime:
+ *           type: string
+ *           format: date-time
+ *         endTime:
+ *           type: string
+ *           format: date-time
+ *         capacity:
+ *           type: integer
+ *           minimum: 0
+ */
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -58,13 +91,49 @@ async function getBookingCount(slotId: string): Promise<number> {
   return row?.value ?? 0;
 }
 
-// GET /admin/slots — list all slots
+/**
+ * @swagger
+ * /admin/slots:
+ *   get:
+ *     summary: List all slots
+ *     tags: [Slots]
+ *     responses:
+ *       200:
+ *         description: Array of slots
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Slot'
+ */
 adminSlotsRouter.get("/", async (_req: Request, res: Response) => {
   const allSlots = await db.select().from(slots);
   res.json(allSlots);
 });
 
-// POST /admin/slots — create one slot
+/**
+ * @swagger
+ * /admin/slots:
+ *   post:
+ *     summary: Create one slot
+ *     tags: [Slots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SlotInput'
+ *     responses:
+ *       201:
+ *         description: The created slot
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Slot'
+ *       400:
+ *         description: Invalid input
+ */
 adminSlotsRouter.post("/", async (req: Request, res: Response) => {
   const parsed = parseSlotInput(req.body);
   if ("error" in parsed) {
@@ -76,7 +145,32 @@ adminSlotsRouter.post("/", async (req: Request, res: Response) => {
   res.status(201).json(created);
 });
 
-// POST /admin/slots/bulk — create multiple slots from an array in the body
+/**
+ * @swagger
+ * /admin/slots/bulk:
+ *   post:
+ *     summary: Create multiple slots
+ *     tags: [Slots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               $ref: '#/components/schemas/SlotInput'
+ *     responses:
+ *       201:
+ *         description: The created slots
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Slot'
+ *       400:
+ *         description: Invalid input
+ */
 adminSlotsRouter.post("/bulk", async (req: Request, res: Response) => {
   const body = req.body;
   if (!Array.isArray(body) || body.length === 0) {
@@ -98,7 +192,49 @@ adminSlotsRouter.post("/bulk", async (req: Request, res: Response) => {
   res.status(201).json(created);
 });
 
-// PATCH /admin/slots/:slot_id — edit a slot
+/**
+ * @swagger
+ * /admin/slots/{slot_id}:
+ *   patch:
+ *     summary: Edit a slot
+ *     tags: [Slots]
+ *     parameters:
+ *       - in: path
+ *         name: slot_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               startTime:
+ *                 type: string
+ *                 format: date-time
+ *               endTime:
+ *                 type: string
+ *                 format: date-time
+ *               capacity:
+ *                 type: integer
+ *                 minimum: 0
+ *     responses:
+ *       200:
+ *         description: The updated slot
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Slot'
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: Slot not found
+ *       409:
+ *         description: Capacity would drop below the slot's current booking count
+ */
 adminSlotsRouter.patch("/:slot_id", async (req: Request, res: Response) => {
   const { slot_id } = req.params;
   if (typeof slot_id !== "string" || !UUID_RE.test(slot_id)) {
@@ -178,7 +314,29 @@ adminSlotsRouter.patch("/:slot_id", async (req: Request, res: Response) => {
   res.json(updated);
 });
 
-// DELETE /admin/slots/:slot_id — delete a slot
+/**
+ * @swagger
+ * /admin/slots/{slot_id}:
+ *   delete:
+ *     summary: Delete a slot
+ *     tags: [Slots]
+ *     parameters:
+ *       - in: path
+ *         name: slot_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       204:
+ *         description: Slot deleted
+ *       400:
+ *         description: Invalid slot_id
+ *       404:
+ *         description: Slot not found
+ *       409:
+ *         description: Slot has existing bookings
+ */
 adminSlotsRouter.delete("/:slot_id", async (req: Request, res: Response) => {
   const { slot_id } = req.params;
   if (typeof slot_id !== "string" || !UUID_RE.test(slot_id)) {
