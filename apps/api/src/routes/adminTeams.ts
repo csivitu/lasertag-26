@@ -10,38 +10,63 @@ export const adminTeamsRouter = Router();
  *   schemas:
  *     TeamMember:
  *       type: object
+ *       description: A teams.team_code member, joined from team_members -> users.
  *       properties:
  *         id:
  *           type: string
  *           format: uuid
+ *           description: users.id
+ *           example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
  *         name:
  *           type: string
+ *           description: users.name
+ *           example: Priya Nair
  *         email:
  *           type: string
+ *           description: users.email
+ *           example: priya@example.com
  *         phone:
  *           type: string
+ *           description: users.ph_number
+ *           example: '9876543210'
  *         isLeader:
  *           type: boolean
+ *           description: Derived — whether this member is teams.leader_id
+ *           example: true
  *         paid:
  *           type: boolean
+ *           description: users.paid — payment status
+ *           example: true
  *         isCheckedIn:
  *           type: boolean
+ *           description: users.is_checked_in
+ *           example: false
  *         checkedInAt:
  *           type: string
  *           format: date-time
  *           nullable: true
+ *           description: users.checked_in_at
+ *           example: null
  *         hasQrToken:
  *           type: boolean
+ *           description: Derived — whether users.qr_token has been issued
+ *           example: true
  *     TeamDetail:
  *       type: object
  *       properties:
  *         teamCode:
  *           type: string
+ *           description: teams.team_code (primary key)
+ *           example: TEAM-042
  *         leaderId:
  *           type: string
  *           format: uuid
+ *           description: teams.leader_id
+ *           example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
  *         memberCount:
  *           type: integer
+ *           description: teams.members
+ *           example: 4
  *         members:
  *           type: array
  *           items:
@@ -50,6 +75,7 @@ export const adminTeamsRouter = Router();
  *           allOf:
  *             - $ref: '#/components/schemas/Slot'
  *           nullable: true
+ *           description: The slot from this team's own booking (bookings.team_code -> bookings.slot_id), or null if the team has no booking.
  *
  * /admin/teams/{team_id}:
  *   get:
@@ -64,6 +90,8 @@ export const adminTeamsRouter = Router();
  *         required: true
  *         schema:
  *           type: string
+ *         description: teams.team_code
+ *         example: TEAM-042
  *     responses:
  *       200:
  *         description: Team detail
@@ -71,10 +99,50 @@ export const adminTeamsRouter = Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/TeamDetail'
+ *             example:
+ *               teamCode: TEAM-042
+ *               leaderId: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *               memberCount: 2
+ *               members:
+ *                 - id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *                   name: Priya Nair
+ *                   email: priya@example.com
+ *                   phone: '9876543210'
+ *                   isLeader: true
+ *                   paid: true
+ *                   isCheckedIn: false
+ *                   checkedInAt: null
+ *                   hasQrToken: true
+ *                 - id: 5b1f3a2e-8c4d-4e2a-9f7b-1234567890ab
+ *                   name: Arjun Mehta
+ *                   email: arjun@example.com
+ *                   phone: '9123456780'
+ *                   isLeader: false
+ *                   paid: false
+ *                   isCheckedIn: false
+ *                   checkedInAt: null
+ *                   hasQrToken: false
+ *               slot:
+ *                 id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+ *                 startTime: 2026-03-14T09:00:00.000Z
+ *                 endTime: 2026-03-14T10:00:00.000Z
+ *                 capacity: 10
  *       400:
  *         description: team_id is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: team_id is required
  *       404:
  *         description: Team not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               error: Team not found
  */
 // Uses the existing teams/teamMembers/users/bookings/slots schema
 // (packages/database/schema.ts) — no new tables invented.
