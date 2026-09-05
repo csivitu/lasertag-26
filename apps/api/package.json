@@ -1,4 +1,18 @@
 {
   "name": "@lasertag/api",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@lasertag-26/database": "workspace:*",
+    "better-auth": "^1.7.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6"
+  },
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun"
+  }
 }
