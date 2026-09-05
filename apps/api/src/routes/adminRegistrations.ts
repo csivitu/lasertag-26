@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { and, eq, ilike } from "drizzle-orm";
-import { db, bookings, users } from "@lasertag-26/database";
+import { db, bookings, user } from "@lasertag-26/database";
 
 export const adminRegistrationsRouter = Router();
 
@@ -16,7 +16,7 @@ function queryParam(value: unknown): string | undefined {
  *   schemas:
  *     Registration:
  *       type: object
- *       description: A booking (packages/database/schema.ts `bookings`, joined to its `users` row).
+ *       description: A booking (packages/database/schema.ts `bookings`, joined to its `user` row in auth-schema.ts).
  *       properties:
  *         regNo:
  *           type: string
@@ -41,28 +41,27 @@ function queryParam(value: unknown): string | undefined {
  *           properties:
  *             id:
  *               type: string
- *               format: uuid
- *               description: users.id
+ *               description: user.id
  *             name:
  *               type: string
- *               description: users.name
+ *               description: user.name
  *             email:
  *               type: string
- *               description: users.email
+ *               description: user.email
  *             phone:
  *               type: string
- *               description: users.ph_number
+ *               description: user.ph_number
  *             paid:
  *               type: boolean
- *               description: users.paid
+ *               description: user.paid
  *             isCheckedIn:
  *               type: boolean
- *               description: users.is_checked_in
+ *               description: user.is_checked_in
  *             checkedInAt:
  *               type: string
  *               format: date-time
  *               nullable: true
- *               description: users.checked_in_at
+ *               description: user.checked_in_at
  *
  * /admin/registrations:
  *   get:
@@ -84,19 +83,19 @@ function queryParam(value: unknown): string | undefined {
  *         name: name
  *         schema:
  *           type: string
- *         description: Case-insensitive substring match on users.name
+ *         description: Case-insensitive substring match on user.name
  *         example: Alicia
  *       - in: query
  *         name: phone
  *         schema:
  *           type: string
- *         description: Case-insensitive substring match on users.ph_number
+ *         description: Case-insensitive substring match on user.ph_number
  *         example: '98765'
  *       - in: query
  *         name: email
  *         schema:
  *           type: string
- *         description: Case-insensitive substring match on users.email
+ *         description: Case-insensitive substring match on user.email
  *         example: alicia@example.com
  *     responses:
  *       200:
@@ -114,7 +113,7 @@ function queryParam(value: unknown): string | undefined {
  *                 slotId: 3fa85f64-5717-4562-b3fc-2c963f66afa6
  *                 confirmationEmailSent: true
  *                 user:
- *                   id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *                   id: 3paBx9yqT2fJd8x2s0h1mZ
  *                   name: Alicia Rao
  *                   email: alicia@example.com
  *                   phone: '9876543210'
@@ -123,8 +122,10 @@ function queryParam(value: unknown): string | undefined {
  *                   checkedInAt: null
  */
 // "Registration" is a booking (packages/database/schema.ts); reg_no is the
-// booking's own id. name/phone/email live on the booking's user, so this
-// joins bookings -> users and filters on whichever params were given.
+// booking's own id. name/phone/email live on the booking's user (the
+// better-auth `user` table in auth-schema.ts, which now also carries the
+// application fields), so this joins bookings -> user and filters on
+// whichever params were given.
 adminRegistrationsRouter.get("/", async (req: Request, res: Response) => {
   const regNo = queryParam(req.query.reg_no);
   const name = queryParam(req.query.name);
@@ -133,9 +134,9 @@ adminRegistrationsRouter.get("/", async (req: Request, res: Response) => {
 
   const conditions = [];
   if (regNo !== undefined) conditions.push(eq(bookings.id, regNo));
-  if (name !== undefined) conditions.push(ilike(users.name, `%${name}%`));
-  if (phone !== undefined) conditions.push(ilike(users.phNumber, `%${phone}%`));
-  if (email !== undefined) conditions.push(ilike(users.email, `%${email}%`));
+  if (name !== undefined) conditions.push(ilike(user.name, `%${name}%`));
+  if (phone !== undefined) conditions.push(ilike(user.phNumber, `%${phone}%`));
+  if (email !== undefined) conditions.push(ilike(user.email, `%${email}%`));
 
   const rows = await db
     .select({
@@ -144,16 +145,16 @@ adminRegistrationsRouter.get("/", async (req: Request, res: Response) => {
       teamCode: bookings.teamCode,
       slotId: bookings.slotId,
       confirmationEmailSent: bookings.confirmationEmailSent,
-      userId: users.id,
-      name: users.name,
-      email: users.email,
-      phone: users.phNumber,
-      paid: users.paid,
-      isCheckedIn: users.isCheckedIn,
-      checkedInAt: users.checkedInAt,
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phNumber,
+      paid: user.paid,
+      isCheckedIn: user.isCheckedIn,
+      checkedInAt: user.checkedInAt,
     })
     .from(bookings)
-    .innerJoin(users, eq(bookings.userId, users.id))
+    .innerJoin(user, eq(bookings.userId, user.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined);
 
   const registrations = rows.map((row) => ({

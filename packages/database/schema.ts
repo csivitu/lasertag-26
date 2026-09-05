@@ -1,9 +1,10 @@
+import { user } from "./auth-schema";
 
 import {
   pgTable,
   pgEnum,
-  uuid,
   text,
+  uuid,
   boolean,
   timestamp,
   integer,
@@ -13,24 +14,12 @@ import {
 // 1. Enum Definition
 export const bookingTypeEnum = pgEnum('booking_type', ['individual', 'team']);
 
-// 2. Users Table
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull(),
-  phNumber: text('ph_number').notNull(),
-  qrToken: text('qr_token'),
-  isCheckedIn: boolean('is_checked_in').default(false),
-  checkedInAt: timestamp('checked_in_at'),
-  paid: boolean('paid').notNull().default(false),
-});
-
 // 3. Teams Table
 export const teams = pgTable('teams', {
   teamCode: text('team_code').primaryKey(),
-  leaderId: uuid('leader_id')
+  leaderId: text('leader_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => user.id, { onDelete: 'cascade' }),
   members: integer('members').notNull(),
 });
 
@@ -49,12 +38,16 @@ export const teamMembers = pgTable(
     teamCode: text('team_code')
       .notNull()
       .references(() => teams.teamCode, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
+    userId: text('user_id')
       .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+      .references(() => user.id, { onDelete: 'cascade' }),
   },
   (table) => [
-    primaryKey({ columns: [table.teamCode, table.userId] }),
+    primaryKey({
+      columns: [table.teamCode, table.userId],
+      name: "team_members_team_code_user_id_pk",
+    }),
+
   ]
 );
 
@@ -62,9 +55,9 @@ export const teamMembers = pgTable(
 export const bookings = pgTable('bookings', {
   id: text('id').primaryKey(), // Or uuid('id').defaultRandom().primaryKey()
   type: bookingTypeEnum('type').notNull(),
-  userId: uuid('user_id')
+  userId: text('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => user.id, { onDelete: 'cascade' }),
   teamCode: text('team_code').references(() => teams.teamCode, {
     onDelete: 'set null',
   }),
@@ -75,5 +68,3 @@ export const bookings = pgTable('bookings', {
     .notNull()
     .default(false),
 });
-
-

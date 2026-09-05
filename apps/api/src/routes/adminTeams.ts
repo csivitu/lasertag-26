@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { eq } from "drizzle-orm";
-import { db, teams, teamMembers, users, bookings, slots } from "@lasertag-26/database";
+import { db, teams, teamMembers, user, bookings, slots } from "@lasertag-26/database";
 
 export const adminTeamsRouter = Router();
 
@@ -10,24 +10,23 @@ export const adminTeamsRouter = Router();
  *   schemas:
  *     TeamMember:
  *       type: object
- *       description: A teams.team_code member, joined from team_members -> users.
+ *       description: A teams.team_code member, joined from team_members -> user (auth-schema.ts).
  *       properties:
  *         id:
  *           type: string
- *           format: uuid
- *           description: users.id
- *           example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *           description: user.id
+ *           example: 3paBx9yqT2fJd8x2s0h1mZ
  *         name:
  *           type: string
- *           description: users.name
+ *           description: user.name
  *           example: Priya Nair
  *         email:
  *           type: string
- *           description: users.email
+ *           description: user.email
  *           example: priya@example.com
  *         phone:
  *           type: string
- *           description: users.ph_number
+ *           description: user.ph_number
  *           example: '9876543210'
  *         isLeader:
  *           type: boolean
@@ -35,21 +34,21 @@ export const adminTeamsRouter = Router();
  *           example: true
  *         paid:
  *           type: boolean
- *           description: users.paid — payment status
+ *           description: user.paid — payment status
  *           example: true
  *         isCheckedIn:
  *           type: boolean
- *           description: users.is_checked_in
+ *           description: user.is_checked_in
  *           example: false
  *         checkedInAt:
  *           type: string
  *           format: date-time
  *           nullable: true
- *           description: users.checked_in_at
+ *           description: user.checked_in_at
  *           example: null
  *         hasQrToken:
  *           type: boolean
- *           description: Derived — whether users.qr_token has been issued
+ *           description: Derived — whether user.qr_token has been issued
  *           example: true
  *     TeamDetail:
  *       type: object
@@ -60,9 +59,8 @@ export const adminTeamsRouter = Router();
  *           example: TEAM-042
  *         leaderId:
  *           type: string
- *           format: uuid
  *           description: teams.leader_id
- *           example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *           example: 3paBx9yqT2fJd8x2s0h1mZ
  *         memberCount:
  *           type: integer
  *           description: teams.members
@@ -101,10 +99,10 @@ export const adminTeamsRouter = Router();
  *               $ref: '#/components/schemas/TeamDetail'
  *             example:
  *               teamCode: TEAM-042
- *               leaderId: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *               leaderId: 3paBx9yqT2fJd8x2s0h1mZ
  *               memberCount: 2
  *               members:
- *                 - id: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+ *                 - id: 3paBx9yqT2fJd8x2s0h1mZ
  *                   name: Priya Nair
  *                   email: priya@example.com
  *                   phone: '9876543210'
@@ -113,7 +111,7 @@ export const adminTeamsRouter = Router();
  *                   isCheckedIn: false
  *                   checkedInAt: null
  *                   hasQrToken: true
- *                 - id: 5b1f3a2e-8c4d-4e2a-9f7b-1234567890ab
+ *                 - id: 9kLmN2pQ7rStUvWx3yZ0aB
  *                   name: Arjun Mehta
  *                   email: arjun@example.com
  *                   phone: '9123456780'
@@ -144,8 +142,8 @@ export const adminTeamsRouter = Router();
  *             example:
  *               error: Team not found
  */
-// Uses the existing teams/teamMembers/users/bookings/slots schema
-// (packages/database/schema.ts) — no new tables invented.
+// Uses the existing teams/teamMembers/user/bookings/slots schema
+// (packages/database/schema.ts + auth-schema.ts) — no new tables invented.
 adminTeamsRouter.get("/:team_id", async (req: Request, res: Response) => {
   const { team_id } = req.params;
   if (typeof team_id !== "string" || team_id.trim() === "") {
@@ -161,17 +159,17 @@ adminTeamsRouter.get("/:team_id", async (req: Request, res: Response) => {
 
   const memberRows = await db
     .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      phone: users.phNumber,
-      paid: users.paid,
-      isCheckedIn: users.isCheckedIn,
-      checkedInAt: users.checkedInAt,
-      qrToken: users.qrToken,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phNumber,
+      paid: user.paid,
+      isCheckedIn: user.isCheckedIn,
+      checkedInAt: user.checkedInAt,
+      qrToken: user.qrToken,
     })
     .from(teamMembers)
-    .innerJoin(users, eq(teamMembers.userId, users.id))
+    .innerJoin(user, eq(teamMembers.userId, user.id))
     .where(eq(teamMembers.teamCode, team_id));
 
   const members = memberRows.map((member) => ({
