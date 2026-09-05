@@ -5,6 +5,7 @@
   "types": "index.ts",
   "exports": {
     ".": "./index.ts",
-    "./schema": "./schema.ts"
+    "./schema": "./schema.ts",
+    "./auth-schema": "./auth-schema.ts"
   }
 }

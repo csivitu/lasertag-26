@@ -3,8 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import * as schema from './schema';
+import * as domainSchema from './schema';
+import * as authSchema from './auth-schema';
 export * from './schema';
+export * from './auth-schema';
+
+const schema = { ...domainSchema, ...authSchema };
 
 // `dotenv/config` loads .env from process.cwd(), which is the *consuming*
 // package's directory (e.g. apps/api) when run via `bun run --filter`, not
