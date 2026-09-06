@@ -141,9 +141,9 @@ export function HeroMobile() {
         </nav>
       )}
 
-      {/* Content block: Wordmark, tagline typewriter, Register CTA */}
-      <div className="relative z-10 flex flex-col items-center px-4 pt-6 pb-2 sm:px-6 sm:pt-8 sm:pb-4">
-        <div className="relative mx-auto w-[min(90%,380px)] sm:w-[min(80%,440px)]">
+      {/* Content block: Wordmark, tagline typewriter, Register CTA (enlarged for mobile) */}
+      <div className="relative z-10 flex flex-col items-center px-3 pt-3 pb-2 sm:px-6 sm:pt-6 sm:pb-3">
+        <div className="relative mx-auto w-[min(96%,460px)] sm:w-[min(88%,540px)]">
           <Image
             src="/hero/title-wordmark.png"
             alt="LaserTag"
@@ -155,9 +155,9 @@ export function HeroMobile() {
           />
         </div>
 
-        {/* Scalable terminal-typewriter tagline — clamps from 11px on 320px up to 24px on tablet */}
+        {/* Scalable terminal-typewriter tagline — clamps from 12px on 320px up to 26px on tablet */}
         <p
-          className="tagline-crt-glitch relative mt-4 whitespace-nowrap text-center font-pixel text-[clamp(11px,3.3vw,22px)] sm:mt-5 sm:text-[clamp(14px,2.4vw,24px)] text-[#23eff1]"
+          className="tagline-crt-glitch relative mt-3 whitespace-nowrap text-center font-pixel text-[clamp(12px,3.9vw,26px)] sm:mt-4 text-[#23eff1]"
           style={{ lineHeight: "1.6em" }}
         >
           {"From Pixels to "}
@@ -171,11 +171,11 @@ export function HeroMobile() {
           />
         </p>
 
-        {/* CTA Register button */}
-        <div className="mt-5 flex w-full justify-center sm:mt-6">
+        {/* CTA Register button (enlarged for mobile) */}
+        <div className="mt-4 flex w-full justify-center sm:mt-5">
           <a
             href="#register"
-            className="group relative block w-[min(72%,280px)] sm:w-[min(50%,320px)] overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:scale-y-[0.94] motion-reduce:transition-none"
+            className="group relative block w-[min(85%,350px)] sm:w-[min(60%,400px)] overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:scale-y-[0.94] motion-reduce:transition-none"
             style={{ transformOrigin: "bottom" }}
           >
             <Image
@@ -235,19 +235,20 @@ export function HeroMobile() {
         </div>
       </div>
 
-      {/* Gun art: gun pointing up-left, hand entering from bottom-right.
-          Anchored to the bottom-right corner so the flat cut on the forearm
-          falls cleanly past the screen boundary, while the gun body
-          remains heroic and centered in the lower scene.
-          When fired, the beam shoots freely up-left across the hero background. */}
-      <div className="pointer-events-none relative z-10 flex-1 min-h-[260px] max-h-[520px] w-full">
+      {/* Gun art: flipped horizontally (scaleX(-1)) so the gun points up-right
+          and the hand enters from the bottom-left corner.
+          Enlarged for dramatic mobile arcade impact.
+          When fired, the beam shoots freely up-right across the starry background. */}
+      <div className="pointer-events-none relative z-10 flex-1 min-h-[340px] max-h-[640px] w-full">
         <div
           className="absolute"
           style={{
-            width: "min(126vw, 620px)",
+            width: "min(165vw, 820px)",
             aspectRatio: GUN_ASPECT_RATIO,
-            right: "clamp(-16px, -2.5vw, -8px)",
-            bottom: "clamp(-16px, -2.5vw, -8px)",
+            left: "clamp(-28px, -4vw, -16px)",
+            bottom: "clamp(-28px, -4vw, -16px)",
+            transform: "scaleX(-1)",
+            transformOrigin: "center center",
           }}
         >
           <Image
