@@ -17,6 +17,11 @@ import { pixelDots, sparkles, twinkleStyle } from "./heroDecor";
  * so unlike HeroDesktop it is a client component.
  */
 
+const GUN_ASPECT_RATIO = "4096 / 3650";
+// Exact silhouette polygon covering the gun casing, trigger, and grip
+const GUN_HITBOX_CLIP_PATH =
+  "polygon(98.8% 84.8%, 98.3% 98.6%, 76.8% 80.1%, 54.8% 48.1%, 62.2% 39.1%, 91.0% 31.7%)";
+
 const navLinks = [
   { label: "HOME", href: "#" },
   { label: "ABOUT", href: "#about" },
@@ -30,9 +35,7 @@ export function HeroMobile() {
   const fireTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Same fire-on-click as HeroDesktop — Register Now still navigates
-  // normally, this just layers the beam reveal on top. See HeroDesktop for
-  // the full reasoning (gun-only.png/gun-beam.png are the same assets,
-  // same 4096x3119 coordinate frame, just mirrored+positioned differently).
+  // normally, this just layers the beam reveal on top.
   function handleFire() {
     if (firing) return;
     setFiring(true);
@@ -46,46 +49,43 @@ export function HeroMobile() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[#08080d] lg:hidden">
-      {/* Background pixel dots + sparkles, same data/twinkle as desktop. */}
-      {pixelDots.map((d, i) => (
-        <span
-          key={`dot-${i}`}
-          aria-hidden
-          className="absolute"
-          style={{
-            left: `${d.l}%`,
-            top: `${d.t}%`,
-            width: `${d.w}vw`,
-            height: `${d.h}vw`,
-            backgroundColor: d.c,
-            ...twinkleStyle(i),
-          }}
-        />
-      ))}
-      {sparkles.map((s, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={`sparkle-${i}`}
-          src={`/hero/${s.src}.svg`}
-          alt=""
-          aria-hidden
-          className="absolute block max-w-none"
-          style={{
-            left: `${s.l}%`,
-            top: `${s.t}%`,
-            width: `${s.w}vw`,
-            height: `${s.h}vw`,
-            ...twinkleStyle(pixelDots.length + i),
-          }}
-        />
-      ))}
+    <section className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden bg-[#08080d] lg:hidden">
+      {/* Background pixel dots + sparkles wrapped in an absolute overflow-clipped container */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        {pixelDots.map((d, i) => (
+          <span
+            key={`dot-${i}`}
+            className="absolute"
+            style={{
+              left: `${d.l}%`,
+              top: `${d.t}%`,
+              width: `${d.w}vw`,
+              height: `${d.h}vw`,
+              backgroundColor: d.c,
+              ...twinkleStyle(i),
+            }}
+          />
+        ))}
+        {sparkles.map((s, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={`sparkle-${i}`}
+            src={`/hero/${s.src}.svg`}
+            alt=""
+            className="absolute block max-w-none"
+            style={{
+              left: `${s.l}%`,
+              top: `${s.t}%`,
+              width: `${s.w}vw`,
+              height: `${s.h}vw`,
+              ...twinkleStyle(pixelDots.length + i),
+            }}
+          />
+        ))}
+      </div>
 
-      {/* Header: logo left, hamburger right. No hover states to adapt here —
-          touch has no hover, so the desktop nav's ▶-marker-on-hover approach
-          doesn't carry over; a toggleable menu is the standard mobile
-          replacement instead of trying to fake hover semantics on tap. */}
-      <div className="relative z-20 flex items-center justify-between px-5 pt-5">
+      {/* Header: logo left, hamburger right */}
+      <div className="relative z-20 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
         <a
           href="#"
           aria-label="LaserTag home"
@@ -125,10 +125,9 @@ export function HeroMobile() {
         </button>
       </div>
 
-      {/* Dropdown nav panel. Overlays the content below rather than pushing
-          it down, and closes itself on link tap. */}
+      {/* Dropdown nav panel */}
       {menuOpen && (
-        <nav className="absolute left-5 right-5 top-[76px] z-30 flex flex-col overflow-hidden rounded-md border border-white/15 bg-[#0d0d14]/95 backdrop-blur-sm">
+        <nav className="absolute left-5 right-5 top-[76px] z-30 flex flex-col overflow-hidden rounded-md border border-white/15 bg-[#0d0d14]/95 backdrop-blur-sm sm:left-8 sm:right-8 sm:top-[88px]">
           {navLinks.map((link) => (
             <a
               key={link.label}
@@ -142,8 +141,9 @@ export function HeroMobile() {
         </nav>
       )}
 
-      <div className="relative z-10 px-6 pb-10 pt-8">
-        <div className="relative mx-auto w-[min(92%,420px)]">
+      {/* Content block: Wordmark, tagline typewriter, Register CTA */}
+      <div className="relative z-10 flex flex-col items-center px-4 pt-6 pb-2 sm:px-6 sm:pt-8 sm:pb-4">
+        <div className="relative mx-auto w-[min(90%,380px)] sm:w-[min(80%,440px)]">
           <Image
             src="/hero/title-wordmark.png"
             alt="LaserTag"
@@ -155,11 +155,9 @@ export function HeroMobile() {
           />
         </div>
 
-        {/* Same terminal-typewriter tagline as desktop — only "Pew Pew"
-            types out, the CRT glitch and cursor blink are shared global
-            animations already sized in em/ch off this element's font-size. */}
+        {/* Scalable terminal-typewriter tagline — clamps from 11px on 320px up to 24px on tablet */}
         <p
-          className="tagline-crt-glitch relative mt-5 whitespace-nowrap text-center font-pixel text-[clamp(14px,3.6vw,26px)] text-[#23eff1]"
+          className="tagline-crt-glitch relative mt-4 whitespace-nowrap text-center font-pixel text-[clamp(11px,3.3vw,22px)] sm:mt-5 sm:text-[clamp(14px,2.4vw,24px)] text-[#23eff1]"
           style={{ lineHeight: "1.6em" }}
         >
           {"From Pixels to "}
@@ -173,20 +171,13 @@ export function HeroMobile() {
           />
         </p>
 
-        {/* CTA sits right after the tagline, above the gun art — matches the
-            reference layout rather than the gun-then-button order this had
-            before. */}
-        <div className="mt-6 flex justify-center">
+        {/* CTA Register button */}
+        <div className="mt-5 flex w-full justify-center sm:mt-6">
           <a
             href="#register"
-            className="group relative block w-[72%] max-w-xs overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:scale-y-[0.94] motion-reduce:transition-none"
+            className="group relative block w-[min(72%,280px)] sm:w-[min(50%,320px)] overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:scale-y-[0.94] motion-reduce:transition-none"
             style={{ transformOrigin: "bottom" }}
           >
-            {/* Same real pressed-state export as desktop (399x87 vs resting
-                399x95), bottom-anchored and cross-faded on :active so the
-                button's own footprint never shifts when pressed. A slower,
-                eased crossfade plus the container's own active:scale-y
-                squash reads as one continuous press, not a flicker. */}
             <Image
               src="/hero/register-button.png"
               alt="Register now"
@@ -205,14 +196,6 @@ export function HeroMobile() {
               unoptimized
               className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
             />
-            {/* Same arcade shine as desktop — inert on pure touch (no hover),
-                free for hybrid mouse+touch devices. Two masked layers, one
-                per button state, crossfading in sync with the button images.
-                The gradient band is the masked element's own background,
-                animated via background-position rather than transforming a
-                separate child (see HeroDesktop for why — a transformed
-                child inside a masked parent left a white notch artifact at
-                one corner). */}
             <span
               aria-hidden
               className="button-shine pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
@@ -252,75 +235,57 @@ export function HeroMobile() {
         </div>
       </div>
 
-      {/* Gun art is the source asset as-is (same orientation as desktop:
-          gun pointing up-left, hand entering from bottom-right) — no
-          rotation, since rotating a pixel-art PNG by an arbitrary CSS angle
-          forces the browser to interpolate it, blurring the crisp pixel
-          edges. The source art ends in a flat, un-tapered cut at both the
-          beam's far tip and past the wrist, at the end of the forearm —
-          visible as an "edge" whenever that raw cut lands inside the frame.
-          This is sized and shifted so only those two cut ends fall past the
-          section's true boundary (beam off the top-left, forearm off the
-          bottom-right) while the hand and gun themselves stay fully inside
-          — the only edge left visible is the page's own, which reads as
-          the art continuing off-screen rather than being cut off mid-hand.
-          The wrapper has no overflow-hidden of its own; the section is the
-          sole clip boundary. Sized in vw, capped in px past the ~375px
-          baseline so it doesn't keep growing into the tablet zone. */}
-      <div
-        className="pointer-events-none relative z-10 mt-2"
-        style={{ height: "min(112vw, 420px)" }}
-      >
-        <Image
-          src="/hero/gun-only.png"
-          alt=""
-          width={4096}
-          height={3650}
-          priority
-          sizes="550px"
-          className="absolute h-auto max-w-none"
-          style={{
-            width: "min(146.667vw, 550px)",
-            left: "calc(min(1.333vw, 5px) - min(66vw, 247.5px))",
-            top: 0,
-          }}
-        />
-        {/* Beam + muzzle sparks, hidden until fired — see HeroDesktop for
-            the full reasoning. Same position as gun-only.png above, since
-            both share the exact same 4096x3650 frame. */}
+      {/* Gun art: gun pointing up-left, hand entering from bottom-right.
+          Anchored to the bottom-right corner so the flat cut on the forearm
+          falls cleanly past the screen boundary, while the gun body
+          remains heroic and centered in the lower scene.
+          When fired, the beam shoots freely up-left across the hero background. */}
+      <div className="pointer-events-none relative z-10 flex-1 min-h-[260px] max-h-[520px] w-full">
         <div
-          aria-hidden
           className="absolute"
           style={{
-            width: "min(146.667vw, 550px)",
-            left: "calc(min(1.333vw, 5px) - min(66vw, 247.5px))",
-            top: 0,
+            width: "min(126vw, 620px)",
+            aspectRatio: GUN_ASPECT_RATIO,
+            right: "clamp(-16px, -2.5vw, -8px)",
+            bottom: "clamp(-16px, -2.5vw, -8px)",
           }}
         >
           <Image
-            src="/hero/gun-beam.png"
+            src="/hero/gun-only.png"
             alt=""
             width={4096}
             height={3650}
-            sizes="550px"
             priority
-            className={`gun-fire-beam h-auto w-full max-w-none ${firing ? "is-firing" : ""}`}
+            unoptimized
+            className="pointer-events-none absolute inset-0 size-full object-contain"
+          />
+
+          {/* Beam + muzzle sparks overlay, revealed on fire */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 size-full">
+            <Image
+              src="/hero/gun-beam.png"
+              alt=""
+              width={4096}
+              height={3650}
+              priority
+              unoptimized
+              className={`gun-fire-beam pointer-events-none size-full object-contain ${
+                firing ? "is-firing" : ""
+              }`}
+            />
+          </div>
+
+          {/* Clickable button matching the exact gun polygon */}
+          <button
+            type="button"
+            onClick={handleFire}
+            aria-label="Fire laser gun"
+            className="pointer-events-auto absolute inset-0 cursor-pointer border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:outline-[#01daec]"
+            style={{
+              clipPath: GUN_HITBOX_CLIP_PATH,
+            }}
           />
         </div>
-        <button
-          type="button"
-          onClick={handleFire}
-          aria-label="Fire laser gun"
-          className="pointer-events-auto absolute cursor-pointer border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:outline-[#01daec]"
-          style={{
-            width: "min(146.667vw, 550px)",
-            aspectRatio: "4096 / 3650",
-            left: "calc(min(1.333vw, 5px) - min(66vw, 247.5px))",
-            top: 0,
-            clipPath:
-              "polygon(98.8% 84.8%, 98.3% 98.6%, 76.8% 80.1%, 54.8% 48.1%, 62.2% 39.1%, 91.0% 31.7%)",
-          }}
-        />
       </div>
     </section>
   );
