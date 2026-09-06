@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import { pixelDots, sparkles, twinkleStyle } from "./heroDecor";
@@ -26,6 +26,24 @@ const navLinks = [
 
 export function HeroMobile() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [firing, setFiring] = useState(false);
+  const fireTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Same fire-on-click as HeroDesktop — Register Now still navigates
+  // normally, this just layers the beam reveal on top. See HeroDesktop for
+  // the full reasoning (gun-only.png/gun-beam.png are the same assets,
+  // same 4096x3119 coordinate frame, just mirrored+positioned differently).
+  function handleFire() {
+    if (firing) return;
+    setFiring(true);
+    fireTimeout.current = setTimeout(() => setFiring(false), 1600);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (fireTimeout.current) clearTimeout(fireTimeout.current);
+    };
+  }, []);
 
   return (
     <section className="relative overflow-hidden bg-[#08080d] lg:hidden">
@@ -161,6 +179,7 @@ export function HeroMobile() {
         <div className="mt-6 flex justify-center">
           <a
             href="#register"
+            onClick={handleFire}
             className="group relative block w-[72%] max-w-xs overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:scale-y-[0.94] motion-reduce:transition-none"
             style={{ transformOrigin: "bottom" }}
           >
@@ -254,7 +273,7 @@ export function HeroMobile() {
         style={{ height: "min(112vw, 420px)" }}
       >
         <Image
-          src="/hero/gun.png"
+          src="/hero/gun-only.png"
           alt=""
           width={4096}
           height={3119}
@@ -268,6 +287,33 @@ export function HeroMobile() {
             transform: "scaleX(-1)",
           }}
         />
+        {/* Beam + muzzle sparks, hidden until fired — see HeroDesktop for
+            the full reasoning. Same position as gun-only.png above, since
+            both share the exact same 4096x3119 frame. The mirror lives on
+            this wrapper (a static transform) rather than on the image
+            itself, because the image's own `transform` is where the fire
+            animation's scale reveal happens — the two would otherwise
+            fight over the same property. */}
+        <div
+          aria-hidden
+          className="absolute"
+          style={{
+            width: "min(146.667vw, 550px)",
+            left: "min(1.333vw, 5px)",
+            top: 0,
+            transform: "scaleX(-1)",
+          }}
+        >
+          <Image
+            src="/hero/gun-beam.png"
+            alt=""
+            width={4096}
+            height={3119}
+            sizes="550px"
+            className={`gun-fire-beam h-auto w-full max-w-none ${firing ? "is-firing" : ""}`}
+            style={{ transformOrigin: "59.8% 50.3%" }}
+          />
+        </div>
       </div>
     </section>
   );

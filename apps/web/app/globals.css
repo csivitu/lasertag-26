@@ -203,3 +203,41 @@ body {
     opacity: 0 !important;
   }
 }
+
+/* Gun "fire" reveal: gun-beam.png (the beam + muzzle sparks, a real
+   separate Figma layer — not carved out of the flattened gun art by hand)
+   sits over gun-only.png, hidden by default and revealed on click. Because
+   this overlay contains nothing but the beam/sparks, there's no gun body
+   it could accidentally expose, so a plain scale+opacity reveal anchored
+   at the muzzle (transform-origin) reads as the beam shooting outward —
+   no clip-path polygon needed. Matches the arcade-style animations already
+   used elsewhere in the hero (nav nudge, button shine, CRT glitch). */
+.gun-fire-beam {
+  opacity: 0;
+  transform: scale(0.1);
+}
+
+.gun-fire-beam.is-firing {
+  animation: gun-fire-reveal 1.6s ease-out;
+}
+
+@keyframes gun-fire-reveal {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+  15%,
+  85% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gun-fire-beam.is-firing {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: scale(1) !important;
+  }
+}

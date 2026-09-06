@@ -1,4 +1,6 @@
-import type { CSSProperties } from "react";
+"use client";
+
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 
 import { pixelDots, sparkles, twinkleStyle } from "./heroDecor";
@@ -69,6 +71,25 @@ const navLinks = [
 ];
 
 export function HeroDesktop() {
+  const [firing, setFiring] = useState(false);
+  const fireTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Register Now still navigates normally — this just layers a visual
+  // "fire" on top of the click. Ignored while already firing so a burst of
+  // clicks can't restart the animation mid-flight and desync the timeout
+  // from the CSS animation's own duration.
+  function handleFire() {
+    if (firing) return;
+    setFiring(true);
+    fireTimeout.current = setTimeout(() => setFiring(false), 1600);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (fireTimeout.current) clearTimeout(fireTimeout.current);
+    };
+  }, []);
+
   return (
     <section
       className="relative hidden h-[100svh] min-h-[640px] overflow-hidden bg-[#08080d] lg:block"
@@ -144,12 +165,28 @@ export function HeroDesktop() {
           >
             <div className="absolute left-0 top-0 h-[100.38%] w-[102.13%]">
               <Image
-                src="/hero/gun.png"
+                src="/hero/gun-only.png"
                 alt=""
                 fill
                 sizes="70vw"
                 priority
                 className="object-fill"
+              />
+              {/* Beam + muzzle sparks: a real separate Figma layer (not
+                  carved out of the flattened gun art by hand), pre-composited
+                  onto a transparent canvas at the exact same 4096x3119 frame
+                  as gun-only.png (affine-aligned to the source art's own
+                  socket, not guessed CSS percentages), so it needs no
+                  position/size of its own here — just `fill`, identical to
+                  the base image. Hidden by default; handleFire reveals it. */}
+              <Image
+                src="/hero/gun-beam.png"
+                alt=""
+                aria-hidden
+                fill
+                sizes="70vw"
+                className={`gun-fire-beam pointer-events-none object-fill ${firing ? "is-firing" : ""}`}
+                style={{ transformOrigin: "59.8% 50.3%" }}
               />
             </div>
           </div>
@@ -301,6 +338,7 @@ export function HeroDesktop() {
 
         <a
           href="#register"
+          onClick={handleFire}
           className="group relative block overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 active:scale-y-[0.94] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           style={{
             marginTop: "max(28px, 9.4727cqh)",
