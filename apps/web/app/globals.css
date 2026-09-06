@@ -214,13 +214,13 @@ body {
    the same path, so the bolt leaves through the tip like a projectile
    rather than retracting back into the gun. The overlay holds only beam +
    sparks, so nothing else can leak. Vertices are in the artwork's own
-   percentage box (beam runs from tip (24.2%,12.5%) to muzzle (59.8%,50.3%)
-   of the 4096x3119 frame), so the same keyframes work on desktop (rotated
+   percentage box (beam runs from tip (23.5%,16.0%) to muzzle (59.3%,46.8%)
+   of the 4096x3119 frame, measured from gun-beam.png's alpha), so the same keyframes work on desktop (rotated
    wrapper) and mobile at any width without per-layout numbers. Linear
    timing so both sweeps travel at a constant speed. */
 .gun-fire-beam {
   opacity: 0;
-  clip-path: polygon(114.8% -15%, 22.7% 134.6%, 22.7% 134.6%, 114.8% -15%);
+  clip-path: polygon(28.2% 135%, 108.4% -26%, 108.4% -26%, 28.2% 135%);
 }
 
 .gun-fire-beam.is-firing {
@@ -230,17 +230,17 @@ body {
 @keyframes gun-fire-reveal {
   0% {
     opacity: 1;
-    clip-path: polygon(114.8% -15%, 22.7% 134.6%, 22.7% 134.6%, 114.8% -15%);
+    clip-path: polygon(28.2% 135%, 108.4% -26%, 108.4% -26%, 28.2% 135%);
   }
   18%,
   55% {
     opacity: 1;
-    clip-path: polygon(64.9% -68%, -27.2% 81.7%, 22.7% 134.6%, 114.8% -15%);
+    clip-path: polygon(-22% 91.9%, 58.2% -69.1%, 108.4% -26%, 28.2% 135%);
   }
   80%,
   100% {
     opacity: 1;
-    clip-path: polygon(64.9% -68%, -27.2% 81.7%, -27.2% 81.7%, 64.9% -68%);
+    clip-path: polygon(-22% 91.9%, 58.2% -69.1%, 58.2% -69.1%, -22% 91.9%);
   }
 }
 
