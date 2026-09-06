@@ -253,15 +253,16 @@ export function HeroMobile() {
         </div>
       </div>
 
-      {/* Gun art is a plain horizontal mirror of the source asset — no
+      {/* Gun art is the source asset as-is (same orientation as desktop:
+          gun pointing up-left, hand entering from bottom-right) — no
           rotation, since rotating a pixel-art PNG by an arbitrary CSS angle
           forces the browser to interpolate it, blurring the crisp pixel
           edges. The source art ends in a flat, un-tapered cut at both the
           beam's far tip and past the wrist, at the end of the forearm —
           visible as an "edge" whenever that raw cut lands inside the frame.
           This is sized and shifted so only those two cut ends fall past the
-          section's true boundary (beam off the top-right, forearm off the
-          bottom-left) while the hand and gun themselves stay fully inside
+          section's true boundary (beam off the top-left, forearm off the
+          bottom-right) while the hand and gun themselves stay fully inside
           — the only edge left visible is the page's own, which reads as
           the art continuing off-screen rather than being cut off mid-hand.
           The wrapper has no overflow-hidden of its own; the section is the
@@ -282,26 +283,20 @@ export function HeroMobile() {
           className="absolute h-auto max-w-none"
           style={{
             width: "min(146.667vw, 550px)",
-            left: "min(1.333vw, 5px)",
+            left: "calc(min(1.333vw, 5px) - min(66vw, 247.5px))",
             top: 0,
-            transform: "scaleX(-1)",
           }}
         />
         {/* Beam + muzzle sparks, hidden until fired — see HeroDesktop for
             the full reasoning. Same position as gun-only.png above, since
-            both share the exact same 4096x3119 frame. The mirror lives on
-            this wrapper (a static transform) rather than on the image
-            itself, because the image's own `transform` is where the fire
-            animation's scale reveal happens — the two would otherwise
-            fight over the same property. */}
+            both share the exact same 4096x3119 frame. */}
         <div
           aria-hidden
           className="absolute"
           style={{
             width: "min(146.667vw, 550px)",
-            left: "min(1.333vw, 5px)",
+            left: "calc(min(1.333vw, 5px) - min(66vw, 247.5px))",
             top: 0,
-            transform: "scaleX(-1)",
           }}
         >
           <Image
