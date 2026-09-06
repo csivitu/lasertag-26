@@ -1,0 +1,426 @@
+"use client";
+
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import Image from "next/image";
+
+import { pixelDots, sparkles, twinkleStyle } from "./heroDecor";
+
+/**
+ * Fluid desktop hero, calibrated against the Figma "Landing - Hero" frame.
+ *
+ * At a 1440x1024 viewport this renders identically to the frame; wider or
+ * shorter viewports redistribute the extra space rather than letterboxing.
+ *
+ * Two independent scales drive the layout:
+ *   - artwork and background scale with hero *height* (via `cqh`), so the gun
+ *     never bloats on ultrawide and the scene always fills exactly one screen;
+ *   - type and the content block scale with *width*, clamped at both ends.
+ *
+ * Design values are quoted in frame pixels: 1 design px = (100/1024)cqh
+ * vertically, and horizontal percentages are of the 1440px-wide frame.
+ */
+
+// The header keeps a real inset from the screen edges — this is no longer
+// tied to the Figma frame's own 38px/49px values, just a sensible gutter
+// for a full-width site header. The content column reuses the same value
+// so the whole hero reads as one consistent rhythm.
+const GUTTER_R = "var(--gutter-r)";
+
+// Everything is measured off the hero's *height*, in `cqh` (1cqh = 1% of hero
+// height), because that is the dimension the frame is composed against. The
+// artwork is height-driven too, so the whole scene scales as a single unit and
+// keeps the frame's internal proportions at any viewport. Extra width simply
+// becomes breathing room between the gun and the text.
+//
+// 1 design px = (100/1024)cqh = 0.09766cqh.
+
+// 20px at the reference size. The rest of the header is sized in `em` off
+// this, so the bar scales as one unit: logo 4em, link gap 3.865em.
+//
+// On a tall-but-narrow viewport the height-driven size alone can demand
+// more width than is available inside the two gutters — the nav is nowrap
+// and can't shrink, so it would overflow past the edge. The second min()
+// term is a solved width ceiling: nav content plus the 4em logo is
+// 37.5868em wide, so font-size <= (100cqw - 2*gutter) / 38 (38 instead of
+// the exact 37.5868 leaves a small safety margin) always leaves the row
+// fitting between the gutters. It only engages when height and width
+// diverge this far — inert at the 1440x1024 reference ratio and 1920x1080.
+const NAV_FONT =
+  "max(13px, min(1.9531cqh, calc((100cqw - 2 * var(--gutter-r)) / 38)))";
+
+// Left edge of the content column (design x=511), tied to height so the column
+// tracks the gun. Centring the block here puts it at x=951, as in the frame.
+const COLUMN_L = "var(--column-l)";
+
+// The wordmark's width drives the whole content block: 812px in the frame, from
+// which the tagline (28px) and CTA (399px) are derived proportionally.
+//
+// The second term keeps it inside the content column on narrow-but-tall
+// windows. Both terms are absolute units — a percentage here would resolve
+// against font-size rather than width, and `--cw` feeds the tagline's.
+//
+// These compose through CSS custom properties rather than by interpolating one
+// JS constant into another, so the declarations carry no ordering hazard.
+const WORDMARK_W = "min(79.297cqh, calc(100cqw - var(--column-l) - var(--gutter-r)))";
+
+const navLinks = [
+  { label: "HOME", href: "#" },
+  { label: "ABOUT", href: "#about" },
+  { label: "FAQs", href: "#faqs" },
+  { label: "SIGN IN", href: "#sign-in" },
+];
+
+export function HeroDesktop() {
+  const [firing, setFiring] = useState(false);
+  const fireTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Register Now still navigates normally — this just layers a visual
+  // "fire" on top of the click. Ignored while already firing so a burst of
+  // clicks can't restart the animation mid-flight and desync the timeout
+  // from the CSS animation's own duration.
+  function handleFire() {
+    if (firing) return;
+    setFiring(true);
+    fireTimeout.current = setTimeout(() => setFiring(false), 1600);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (fireTimeout.current) clearTimeout(fireTimeout.current);
+    };
+  }, []);
+
+  return (
+    <section
+      className="relative hidden h-[100svh] min-h-[640px] overflow-hidden bg-[#08080d] lg:block"
+      style={
+        {
+          containerType: "size",
+          "--gutter-r": "clamp(24px, 3.4028vw, 72px)",
+          "--column-l": "58cqh",
+        } as CSSProperties
+      }
+    >
+      {/* Background pixel dots. Positions stretch across the hero; sizes are
+          height-driven so the marks stay square at any aspect ratio. */}
+      {pixelDots.map((d, i) => (
+        <span
+          key={`dot-${i}`}
+          aria-hidden
+          className="absolute"
+          style={{
+            left: `${d.l}%`,
+            top: `${d.t}%`,
+            width: `${(d.w * 1.40625).toFixed(4)}cqh`,
+            height: `${d.h}cqh`,
+            backgroundColor: d.c,
+            ...twinkleStyle(i),
+          }}
+        />
+      ))}
+
+      {sparkles.map((s, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={`sparkle-${i}`}
+          src={`/hero/${s.src}.svg`}
+          alt=""
+          aria-hidden
+          className="absolute block max-w-none"
+          style={{
+            left: `${s.l}%`,
+            top: `${s.t}%`,
+            width: `${(s.w * 1.40625).toFixed(4)}cqh`,
+            height: `${s.h}cqh`,
+            ...twinkleStyle(pixelDots.length + i),
+          }}
+        />
+      ))}
+
+      {/* Artwork layer. This box is the frame's own coordinate space scaled to
+          the hero height. Enlarged (1.18x) and nudged right of its Figma
+          position — scaled from the bottom-left corner so the anchored hand
+          stays put while the beam/muzzle grow up and to the right. */}
+      <div
+        className="pointer-events-none absolute top-0 aspect-[1440/1024] h-full"
+        style={{
+          left: "6.5cqh",
+          transform: "scale(1.18)",
+          transformOrigin: "0% 100%",
+        }}
+      >
+        <div
+          className="absolute flex items-center justify-center"
+          style={{
+            left: "-20.3639%",
+            top: "-47.4922%",
+            width: "117.7733%",
+            height: "149.091%",
+          }}
+        >
+          <div
+            className="relative flex-none"
+            style={{
+              width: "81.9353%",
+              height: "70.5202%",
+              transform: "rotate(157.48deg) scaleY(-1)",
+            }}
+          >
+            <div className="absolute left-0 top-0 h-[117.46%] w-[102.13%]">
+              <Image
+                src="/hero/gun-only.png"
+                alt=""
+                fill
+                sizes="70vw"
+                priority
+                className="object-fill"
+              />
+              {/* Beam + muzzle sparks: a real separate Figma layer (not
+                  carved out of the flattened gun art by hand), pre-composited
+                  onto a transparent canvas at the exact same 4096x3650 frame
+                  as gun-only.png (affine-aligned to the source art's own
+                  socket, not guessed CSS percentages), so it needs no
+                  position/size of its own here — just `fill`, identical to
+                  the base image. Hidden by default; handleFire reveals it. */}
+              <Image
+                src="/hero/gun-beam.png"
+                alt=""
+                aria-hidden
+                fill
+                sizes="70vw"
+                priority
+                className={`gun-fire-beam pointer-events-none object-fill ${firing ? "is-firing" : ""}`}
+              />
+              <button
+                type="button"
+                onClick={handleFire}
+                aria-label="Fire laser gun"
+                className="pointer-events-auto absolute inset-0 cursor-pointer border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:outline-[#01daec]"
+                style={{
+                  clipPath:
+                    "polygon(98.8% 84.8%, 98.3% 98.6%, 76.8% 80.1%, 54.8% 48.1%, 62.2% 39.1%, 91.0% 31.7%)",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Header: logo hard left, links hard right */}
+      <div
+        className="absolute z-20 flex items-center justify-between"
+        style={{
+          left: GUTTER_R,
+          right: GUTTER_R,
+          top: "1.4648%",
+          fontSize: NAV_FONT,
+        }}
+      >
+        <a
+          href="#"
+          aria-label="LaserTag home"
+          className="block shrink-0 rounded-sm outline-offset-4 focus-visible:outline-2 focus-visible:outline-[#01daec]"
+          style={{ width: "4em", height: "4em" }}
+        >
+          <Image
+            src="/hero/logo-badge.png"
+            alt=""
+            width={240}
+            height={240}
+            priority
+            unoptimized
+            className="size-full object-contain"
+          />
+        </a>
+
+        <nav className="flex items-center" style={{ gap: "3.865em" }}>
+          {navLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="group relative inline-flex items-center whitespace-nowrap font-pixel leading-[1.338] text-white outline-offset-4 transition-colors duration-150 hover:text-[#01daec] focus-visible:text-[#01daec] focus-visible:outline-2 focus-visible:outline-[#01daec] motion-reduce:transition-none"
+              style={{ letterSpacing: "0.1em" }}
+            >
+              <Image
+                src="/hero/nav-arrow.png"
+                alt=""
+                aria-hidden
+                width={72}
+                height={90}
+                priority
+                unoptimized
+                className="nav-arrow-marker pointer-events-none absolute object-contain opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                style={{
+                  right: "100%",
+                  marginRight: "0.85em",
+                  top: "50%",
+                  marginTop: "-0.75em",
+                  width: "1.2em",
+                  height: "1.5em",
+                }}
+              />
+              {link.label}
+            </a>
+          ))}
+        </nav>
+      </div>
+
+      {/* Content block, centred in the column between the gun and the right
+          gutter. `--cw` drives the wordmark, tagline and CTA together. */}
+      <div
+        className="absolute z-20 flex flex-col items-center"
+        style={
+          {
+            left: COLUMN_L,
+            right: GUTTER_R,
+            top: "60.205%",
+            transform: "translateY(-50%)",
+            "--cw": WORDMARK_W,
+          } as CSSProperties
+        }
+      >
+        {/* ArcadeClassic is not a web font, so the lettering is exported from
+            Figma; the accessible name lives on the heading. */}
+        <h1 className="m-0 w-full">
+          <Image
+            src="/hero/title-wordmark.png"
+            alt="LaserTag"
+            width={2436}
+            height={309}
+            priority
+            unoptimized
+            className="mx-auto h-auto max-w-full"
+            style={{ width: "var(--cw)" }}
+          />
+        </h1>
+
+        {/* Plain block, not flex/grid: both wrap mixed text + inline-block
+            children into separate anonymous items per contiguous run (one
+            per spec for BOTH layout modes — grid does not merge them into a
+            single box the way it might look like it should), and a purely-
+            whitespace run between two such items collapses to nothing. That
+            silently ate the space before "Pew Pew". Plain inline flow does
+            not have this behaviour. Single-line vertical centring instead
+            comes from line-height === height (classic single-line trick). */}
+        <p
+          className="tagline-crt-glitch relative whitespace-nowrap text-center font-pixel text-[#23eff1]"
+          style={{
+            fontSize: "calc(var(--cw) * 0.034483)",
+            marginTop: "max(6px, 1.2695cqh)",
+            height: "max(2.357em, 6.4453cqh)",
+            lineHeight: "max(2.357em, 6.4453cqh)",
+          }}
+        >
+          {"From Pixels to "}
+          {/* Only "Pew Pew" types out — width animates 0 -> 7ch (Press
+              Start 2P is monospace, so ch is exact) rather than clip-path,
+              because growing the box's real layout width is what makes the
+              cursor after it get pushed along by ordinary reflow instead of
+              sitting fixed at its final position from mount. One-time; the
+              CRT glitch on the parent <p> and the cursor blink are both
+              independent infinite animations unaffected by this finishing. */}
+          <span className="pew-pew-typewriter inline-block overflow-hidden whitespace-nowrap align-middle">
+            Pew Pew
+          </span>
+          {/* Terminal-style blinking cursor block, pushed along by the
+               typewriter span's growing width so it tracks the reveal. */}
+          <span aria-hidden className="cursor-blink ml-[0.25em] inline-block align-middle bg-[#23eff1]" style={{ width: "0.55em", height: "0.85em" }} />
+        </p>
+
+        <a
+          href="#register"
+          className="group relative block overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 active:scale-y-[0.94] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          style={{
+            marginTop: "max(28px, 9.4727cqh)",
+            width: "calc(var(--cw) * 0.491379)",
+            maxWidth: "100%",
+            transformOrigin: "bottom",
+          }}
+        >
+          {/* Two real Figma exports, not a filter approximation — the pressed
+              state (399x87) is 8px shorter than resting (399x95), so it's
+              anchored to the bottom edge and cross-faded in on :active. The
+              container keeps the resting (taller) image's footprint so the
+              button's own layout/position never shifts when pressed. A
+              slower, eased crossfade (200ms) plus the container's own
+              active:scale-y squash reads as one continuous press motion
+              rather than the images just flicking between each other. */}
+          <Image
+            src="/hero/register-button.png"
+            alt="Register now"
+            width={1197}
+            height={285}
+            priority
+            unoptimized
+            className="h-auto w-full opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
+          />
+          <Image
+            src="/hero/register-button-pressed.png"
+            alt=""
+            aria-hidden
+            width={1197}
+            height={261}
+            unoptimized
+            className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
+          />
+          {/* Arcade-cabinet shine: a diagonal light band that sweeps across
+              on hover, looping for as long as the pointer stays. Two masked
+              layers, one per button state, crossfading in sync with the
+              button images above — each mask traces that state's own real
+              pixel-art silhouette (register-button-mask.png for resting,
+              register-button-pressed-mask.png for the shorter, bottom-
+              anchored pressed shape) rather than one approximated CSS clip,
+              which mismatched both states to some degree. The gradient band
+              is the masked element's own background, animated via
+              background-position — not a separately transformed child —
+              because a transformed child inside a masked parent can leave a
+              thin sliver of unmasked content visible at some sub-pixel
+              positions (confirmed live: a white notch at the resting
+              button's bottom-right corner during the sweep, gone once the
+              transform+mask-on-child combination was removed). */}
+          <span
+            aria-hidden
+            className="button-shine pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
+            style={{
+              maskImage: "url(/hero/register-button-mask.png)",
+              maskSize: "100% 100%",
+              maskRepeat: "no-repeat",
+              WebkitMaskImage: "url(/hero/register-button-mask.png)",
+              WebkitMaskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
+              // A single smooth peak, not two close stops — an earlier version
+              // (0.6 at 45%, 0.15 at 55%) rasterised as a visible seam/Mach-band
+              // over the button's dark purple border, confirmed by swapping in
+              // this simpler gradient at the same frozen sweep position and
+              // watching the line disappear.
+              background:
+                "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
+              backgroundSize: "250% 100%",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "-60% 0",
+            }}
+          />
+          <span
+            aria-hidden
+            className="button-shine pointer-events-none absolute inset-x-0 bottom-0 opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
+            style={{
+              aspectRatio: "1197 / 261",
+              maskImage: "url(/hero/register-button-pressed-mask.png)",
+              maskSize: "100% 100%",
+              maskRepeat: "no-repeat",
+              WebkitMaskImage: "url(/hero/register-button-pressed-mask.png)",
+              WebkitMaskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
+              background:
+                "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
+              backgroundSize: "250% 100%",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "-60% 0",
+            }}
+          />
+        </a>
+      </div>
+    </section>
+  );
+}
