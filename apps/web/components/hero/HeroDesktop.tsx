@@ -142,7 +142,6 @@ export function HeroDesktop() {
           position — scaled from the bottom-left corner so the anchored hand
           stays put while the beam/muzzle grow up and to the right. */}
       <div
-        aria-hidden
         className="pointer-events-none absolute top-0 aspect-[1440/1024] h-full"
         style={{
           left: "6.5cqh",
@@ -192,6 +191,16 @@ export function HeroDesktop() {
                 priority
                 className={`gun-fire-beam pointer-events-none object-fill ${firing ? "is-firing" : ""}`}
               />
+              <button
+                type="button"
+                onClick={handleFire}
+                aria-label="Fire laser gun"
+                className="pointer-events-auto absolute inset-0 cursor-pointer border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:outline-[#01daec]"
+                style={{
+                  clipPath:
+                    "polygon(98.8% 84.8%, 98.3% 98.6%, 76.8% 80.1%, 54.8% 48.1%, 62.2% 39.1%, 91.0% 31.7%)",
+                }}
+              />
             </div>
           </div>
         </div>
@@ -200,7 +209,7 @@ export function HeroDesktop() {
 
       {/* Header: logo hard left, links hard right */}
       <div
-        className="absolute flex items-center justify-between"
+        className="absolute z-20 flex items-center justify-between"
         style={{
           left: GUTTER_R,
           right: GUTTER_R,
@@ -260,7 +269,7 @@ export function HeroDesktop() {
       {/* Content block, centred in the column between the gun and the right
           gutter. `--cw` drives the wordmark, tagline and CTA together. */}
       <div
-        className="absolute flex flex-col items-center"
+        className="absolute z-20 flex flex-col items-center"
         style={
           {
             left: COLUMN_L,
@@ -315,13 +324,12 @@ export function HeroDesktop() {
             Pew Pew
           </span>
           {/* Terminal-style blinking cursor block, pushed along by the
-              typewriter span's growing width so it tracks the reveal. */}
+               typewriter span's growing width so it tracks the reveal. */}
           <span aria-hidden className="cursor-blink ml-[0.25em] inline-block align-middle bg-[#23eff1]" style={{ width: "0.55em", height: "0.85em" }} />
         </p>
 
         <a
           href="#register"
-          onClick={handleFire}
           className="group relative block overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0 active:scale-y-[0.94] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           style={{
             marginTop: "max(28px, 9.4727cqh)",

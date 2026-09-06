@@ -179,7 +179,6 @@ export function HeroMobile() {
         <div className="mt-6 flex justify-center">
           <a
             href="#register"
-            onClick={handleFire}
             className="group relative block w-[72%] max-w-xs overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:scale-y-[0.94] motion-reduce:transition-none"
             style={{ transformOrigin: "bottom" }}
           >
@@ -269,7 +268,6 @@ export function HeroMobile() {
           sole clip boundary. Sized in vw, capped in px past the ~375px
           baseline so it doesn't keep growing into the tablet zone. */}
       <div
-        aria-hidden
         className="pointer-events-none relative z-10 mt-2"
         style={{ height: "min(112vw, 420px)" }}
       >
@@ -309,6 +307,20 @@ export function HeroMobile() {
             className={`gun-fire-beam h-auto w-full max-w-none ${firing ? "is-firing" : ""}`}
           />
         </div>
+        <button
+          type="button"
+          onClick={handleFire}
+          aria-label="Fire laser gun"
+          className="pointer-events-auto absolute cursor-pointer border-0 bg-transparent p-0 outline-none focus-visible:outline-2 focus-visible:outline-[#01daec]"
+          style={{
+            width: "min(146.667vw, 550px)",
+            aspectRatio: "4096 / 3650",
+            left: "calc(min(1.333vw, 5px) - min(66vw, 247.5px))",
+            top: 0,
+            clipPath:
+              "polygon(98.8% 84.8%, 98.3% 98.6%, 76.8% 80.1%, 54.8% 48.1%, 62.2% 39.1%, 91.0% 31.7%)",
+          }}
+        />
       </div>
     </section>
   );
