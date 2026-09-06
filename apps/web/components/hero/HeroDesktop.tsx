@@ -185,6 +185,7 @@ export function HeroDesktop() {
                 aria-hidden
                 fill
                 sizes="70vw"
+                priority
                 className={`gun-fire-beam pointer-events-none object-fill ${firing ? "is-firing" : ""}`}
               />
             </div>

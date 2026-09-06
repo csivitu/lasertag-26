@@ -207,36 +207,40 @@ body {
 /* Gun "fire" reveal: gun-beam.png (the beam + muzzle sparks, a real
    separate Figma layer — not carved out of the flattened gun art by hand)
    sits over gun-only.png, hidden by default and revealed on click.
-   The reveal is a clip-path half-plane whose cut line is perpendicular to
-   the beam and sweeps from just behind the muzzle out past the tip, so the
-   beam visibly extends out of the barrel rather than scaling in from a
-   point. The overlay holds only beam + sparks, so nothing else can leak.
-   Polygon vertices are in the artwork's own percentage box (beam runs from
-   tip (24.2%,12.5%) to muzzle (59.8%,50.3%) of the 4096x3119 frame), so the
-   same keyframes work on desktop (rotated wrapper) and mobile (mirrored
-   wrapper) without per-layout numbers. */
+   The reveal is a clip-path band between two cut lines, both perpendicular
+   to the beam: a leading edge and a trailing edge. Both start just behind
+   the muzzle (empty band). The leading edge sweeps out past the tip, so the
+   beam extends out of the barrel; it holds; then the trailing edge follows
+   the same path, so the bolt leaves through the tip like a projectile
+   rather than retracting back into the gun. The overlay holds only beam +
+   sparks, so nothing else can leak. Vertices are in the artwork's own
+   percentage box (beam runs from tip (24.2%,12.5%) to muzzle (59.8%,50.3%)
+   of the 4096x3119 frame), so the same keyframes work on desktop (rotated
+   wrapper) and mobile at any width without per-layout numbers. Linear
+   timing so both sweeps travel at a constant speed. */
 .gun-fire-beam {
   opacity: 0;
-  clip-path: polygon(114.8% -15%, 22.7% 134.6%, 98.6% 215.3%, 190.8% 65.6%);
+  clip-path: polygon(114.8% -15%, 22.7% 134.6%, 22.7% 134.6%, 114.8% -15%);
 }
 
 .gun-fire-beam.is-firing {
-  animation: gun-fire-reveal 1.6s ease-out;
+  animation: gun-fire-reveal 1.6s linear;
 }
 
 @keyframes gun-fire-reveal {
   0% {
     opacity: 1;
-    clip-path: polygon(114.8% -15%, 22.7% 134.6%, 98.6% 215.3%, 190.8% 65.6%);
+    clip-path: polygon(114.8% -15%, 22.7% 134.6%, 22.7% 134.6%, 114.8% -15%);
   }
-  22%,
-  78% {
+  18%,
+  55% {
     opacity: 1;
-    clip-path: polygon(64.9% -68%, -27.2% 81.7%, 48.7% 162.3%, 140.9% 12.7%);
+    clip-path: polygon(64.9% -68%, -27.2% 81.7%, 22.7% 134.6%, 114.8% -15%);
   }
+  80%,
   100% {
     opacity: 1;
-    clip-path: polygon(114.8% -15%, 22.7% 134.6%, 98.6% 215.3%, 190.8% 65.6%);
+    clip-path: polygon(64.9% -68%, -27.2% 81.7%, -27.2% 81.7%, 64.9% -68%);
   }
 }
 

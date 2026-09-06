@@ -305,6 +305,7 @@ export function HeroMobile() {
             width={4096}
             height={3119}
             sizes="550px"
+            priority
             className={`gun-fire-beam h-auto w-full max-w-none ${firing ? "is-firing" : ""}`}
           />
         </div>
