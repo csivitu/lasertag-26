@@ -277,7 +277,7 @@ export function HeroMobile() {
           src="/hero/gun-only.png"
           alt=""
           width={4096}
-          height={3119}
+          height={3650}
           priority
           sizes="550px"
           className="absolute h-auto max-w-none"
@@ -289,7 +289,7 @@ export function HeroMobile() {
         />
         {/* Beam + muzzle sparks, hidden until fired — see HeroDesktop for
             the full reasoning. Same position as gun-only.png above, since
-            both share the exact same 4096x3119 frame. */}
+            both share the exact same 4096x3650 frame. */}
         <div
           aria-hidden
           className="absolute"
@@ -303,7 +303,7 @@ export function HeroMobile() {
             src="/hero/gun-beam.png"
             alt=""
             width={4096}
-            height={3119}
+            height={3650}
             sizes="550px"
             priority
             className={`gun-fire-beam h-auto w-full max-w-none ${firing ? "is-firing" : ""}`}

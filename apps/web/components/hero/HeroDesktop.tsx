@@ -144,7 +144,11 @@ export function HeroDesktop() {
       <div
         aria-hidden
         className="pointer-events-none absolute top-0 aspect-[1440/1024] h-full"
-        style={{ left: "6.5cqh", transform: "scale(1.18)", transformOrigin: "0% 100%" }}
+        style={{
+          left: "6.5cqh",
+          transform: "scale(1.18)",
+          transformOrigin: "0% 100%",
+        }}
       >
         <div
           className="absolute flex items-center justify-center"
@@ -156,14 +160,14 @@ export function HeroDesktop() {
           }}
         >
           <div
-            className="relative flex-none overflow-hidden"
+            className="relative flex-none"
             style={{
               width: "81.9353%",
               height: "70.5202%",
               transform: "rotate(157.48deg) scaleY(-1)",
             }}
           >
-            <div className="absolute left-0 top-0 h-[100.38%] w-[102.13%]">
+            <div className="absolute left-0 top-0 h-[117.46%] w-[102.13%]">
               <Image
                 src="/hero/gun-only.png"
                 alt=""
@@ -174,7 +178,7 @@ export function HeroDesktop() {
               />
               {/* Beam + muzzle sparks: a real separate Figma layer (not
                   carved out of the flattened gun art by hand), pre-composited
-                  onto a transparent canvas at the exact same 4096x3119 frame
+                  onto a transparent canvas at the exact same 4096x3650 frame
                   as gun-only.png (affine-aligned to the source art's own
                   socket, not guessed CSS percentages), so it needs no
                   position/size of its own here — just `fill`, identical to
