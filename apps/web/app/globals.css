@@ -206,15 +206,18 @@ body {
 
 /* Gun "fire" reveal: gun-beam.png (the beam + muzzle sparks, a real
    separate Figma layer — not carved out of the flattened gun art by hand)
-   sits over gun-only.png, hidden by default and revealed on click. Because
-   this overlay contains nothing but the beam/sparks, there's no gun body
-   it could accidentally expose, so a plain scale+opacity reveal anchored
-   at the muzzle (transform-origin) reads as the beam shooting outward —
-   no clip-path polygon needed. Matches the arcade-style animations already
-   used elsewhere in the hero (nav nudge, button shine, CRT glitch). */
+   sits over gun-only.png, hidden by default and revealed on click.
+   The reveal is a clip-path half-plane whose cut line is perpendicular to
+   the beam and sweeps from just behind the muzzle out past the tip, so the
+   beam visibly extends out of the barrel rather than scaling in from a
+   point. The overlay holds only beam + sparks, so nothing else can leak.
+   Polygon vertices are in the artwork's own percentage box (beam runs from
+   tip (24.2%,12.5%) to muzzle (59.8%,50.3%) of the 4096x3119 frame), so the
+   same keyframes work on desktop (rotated wrapper) and mobile (mirrored
+   wrapper) without per-layout numbers. */
 .gun-fire-beam {
   opacity: 0;
-  transform: scale(0.1);
+  clip-path: polygon(114.8% -15%, 22.7% 134.6%, 98.6% 215.3%, 190.8% 65.6%);
 }
 
 .gun-fire-beam.is-firing {
@@ -222,15 +225,18 @@ body {
 }
 
 @keyframes gun-fire-reveal {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(0.1);
-  }
-  15%,
-  85% {
+  0% {
     opacity: 1;
-    transform: scale(1);
+    clip-path: polygon(114.8% -15%, 22.7% 134.6%, 98.6% 215.3%, 190.8% 65.6%);
+  }
+  22%,
+  78% {
+    opacity: 1;
+    clip-path: polygon(64.9% -68%, -27.2% 81.7%, 48.7% 162.3%, 140.9% 12.7%);
+  }
+  100% {
+    opacity: 1;
+    clip-path: polygon(114.8% -15%, 22.7% 134.6%, 98.6% 215.3%, 190.8% 65.6%);
   }
 }
 
@@ -238,6 +244,6 @@ body {
   .gun-fire-beam.is-firing {
     animation: none !important;
     opacity: 1 !important;
-    transform: scale(1) !important;
+    clip-path: none !important;
   }
 }

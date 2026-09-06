@@ -311,7 +311,6 @@ export function HeroMobile() {
             height={3119}
             sizes="550px"
             className={`gun-fire-beam h-auto w-full max-w-none ${firing ? "is-firing" : ""}`}
-            style={{ transformOrigin: "59.8% 50.3%" }}
           />
         </div>
       </div>

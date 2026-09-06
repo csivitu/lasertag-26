@@ -186,33 +186,11 @@ export function HeroDesktop() {
                 fill
                 sizes="70vw"
                 className={`gun-fire-beam pointer-events-none object-fill ${firing ? "is-firing" : ""}`}
-                style={{ transformOrigin: "59.8% 50.3%" }}
               />
             </div>
           </div>
         </div>
 
-        <div
-          className="absolute flex items-center justify-center"
-          style={{
-            left: "8.0819%",
-            top: "94.3184%",
-            width: "15.867%",
-            height: "20.425%",
-          }}
-        >
-          <div
-            className="flex-none"
-            style={{
-              width: "81.426%",
-              height: "72.7538%",
-              transform: "rotate(-21.2deg) scaleY(-1)",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/hero/gun-spark.svg" alt="" className="block size-full max-w-none" />
-          </div>
-        </div>
       </div>
 
       {/* Header: logo hard left, links hard right */}
