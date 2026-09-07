@@ -7,11 +7,10 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "noEmit": true,
-        "allowJs": true
+        "types": ["bun"]
     },
     "include": [
-        "src/**/*.ts",
-        "src/**/*.js"
+        "src/**/*.ts"
     ],
     "exclude": [
         "node_modules",

@@ -4,19 +4,24 @@
   "dependencies": {
     "@lasertag-26/database": "workspace:*",
     "better-auth": "^1.7.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "drizzle-zod": "^0.8.3",
     "express": "^5.2.1",
-    "swagger-jsdoc": "^6.3.0",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.1",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8"
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "build": "bun build ./src/index.ts --outdir ./dist --target bun"
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
+    "test": "bun test"
   }
 }
