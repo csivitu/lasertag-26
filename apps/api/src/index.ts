@@ -25,7 +25,7 @@ const swaggerSpec = swaggerJsdoc({
             },
         ],
     },
-    apis: ["./src/routes/*.ts"],
+    apis: ["./src/swagger/*.ts"],
 });
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
