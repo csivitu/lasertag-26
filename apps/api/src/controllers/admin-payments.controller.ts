@@ -1,6 +1,10 @@
 import type { Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { db, bookings, user } from "@lasertag-26/database";
+import type {
+    GetPaymentDetailsInput,
+    UpdatePaymentInput,
+} from "../validations/payment.validation";
 
 export const verifyPayments = async (_req: Request, res: Response) => {
     res.status(501).json({
@@ -9,9 +13,12 @@ export const verifyPayments = async (_req: Request, res: Response) => {
     });
 };
 
-export const getPaymentDetails = async (req: Request, res: Response) => {
+export const getPaymentDetails = async (
+    req: Request<GetPaymentDetailsInput["params"]>,
+    res: Response
+) => {
     try {
-        const registration_id = req.params.registration_id as string;
+        const { registration_id } = req.params;
 
         const result = await db
             .select({
@@ -42,17 +49,17 @@ export const getPaymentDetails = async (req: Request, res: Response) => {
     }
 };
 
-export const updatePaymentStatus = async (req: Request, res: Response) => {
+export const updatePaymentStatus = async (
+    req: Request<
+        UpdatePaymentInput["params"],
+        unknown,
+        UpdatePaymentInput["body"]
+    >,
+    res: Response
+) => {
     try {
-        const registration_id = req.params.registration_id as string;
+        const { registration_id } = req.params;
         const { paid } = req.body;
-
-        // Validate the request body
-        if (typeof paid !== "boolean") {
-            return res.status(400).json({
-                message: "paid must be a boolean",
-            });
-        }
 
         // Find the booking first
         const bookingResult = await db

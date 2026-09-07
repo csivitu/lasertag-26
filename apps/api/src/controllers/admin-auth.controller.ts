@@ -2,16 +2,14 @@ import type { Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { auth } from "../auth";
 import { db, user } from "@lasertag-26/database";
+import type { LoginInput } from "../validations/auth.validation";
 
-export const adminLogin = async (req: Request, res: Response) => {
+export const adminLogin = async (
+    req: Request<unknown, unknown, LoginInput["body"]>,
+    res: Response
+) => {
     try {
         const { email, password } = req.body;
-
-        if (!email || !password) {
-            return res.status(400).json({
-                message: "Email and password are required",
-            });
-        }
 
         // Check whether this email belongs to an admin
         const adminUser = await db
