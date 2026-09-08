@@ -1,11 +1,11 @@
-import { db } from '../../../../packages/database';
-import { teams, teamMembers, users } from '../../../../packages/database/schema';
-import { eq, and } from 'drizzle-orm';
+import { db } from "@lasertag-26/database";
+import { teams, teamMembers, user } from "@lasertag-26/database/schema";
+import { eq, and } from "drizzle-orm";
 
 export class AppError extends Error {
   constructor(public statusCode: number, message: string) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
   }
 }
 
@@ -15,17 +15,17 @@ export interface CreateTeamInput {
   members?: number;
 }
 
-export const teamService = {
+export const teamController = {
   async createTeam(input: CreateTeamInput) {
     const { leader_id, team_code, members } = input;
 
     const leaderExists = await db
       .select()
-      .from(users)
-      .where(eq(users.id, leader_id));
+      .from(user)
+      .where(eq(user.id, leader_id));
 
     if (leaderExists.length === 0) {
-      throw new AppError(404, 'Leader user not found.');
+      throw new AppError(404, "Leader user not found.");
     }
 
     const existingTeam = await db
@@ -34,7 +34,7 @@ export const teamService = {
       .where(eq(teams.teamCode, team_code));
 
     if (existingTeam.length > 0) {
-      throw new AppError(400, 'Team code already exists.');
+      throw new AppError(400, "Team code already exists.");
     }
 
     const [newTeam] = await db
@@ -61,19 +61,19 @@ export const teamService = {
       .where(eq(teams.teamCode, code));
 
     if (!team) {
-      throw new AppError(404, 'Team not found.');
+      throw new AppError(404, "Team not found.");
     }
 
     const [leader] = await db
       .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        phNumber: users.phNumber,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phNumber: user.phNumber,
       })
-      .from(users)
-      .where(eq(users.id, team.leaderId));
+      .from(user)
+      .where(eq(user.id, team.leaderId));
 
     return {
       ...team,
@@ -88,16 +88,16 @@ export const teamService = {
       .where(eq(teams.teamCode, teamId));
 
     if (!team) {
-      throw new AppError(404, 'Team not found.');
+      throw new AppError(404, "Team not found.");
     }
 
-    const [user] = await db
+    const [foundUser] = await db
       .select()
-      .from(users)
-      .where(eq(users.id, userId));
+      .from(user)
+      .where(eq(user.id, userId));
 
-    if (!user) {
-      throw new AppError(404, 'User not found.');
+    if (!foundUser) {
+      throw new AppError(404, "User not found.");
     }
 
     const existingMembership = await db
@@ -111,7 +111,7 @@ export const teamService = {
       );
 
     if (existingMembership.length > 0) {
-      throw new AppError(400, 'User is already a member of this team.');
+      throw new AppError(400, "User is already a member of this team.");
     }
 
     await db.insert(teamMembers).values({
@@ -128,10 +128,10 @@ export const teamService = {
     return {
       team: updatedTeam,
       joined_user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role,
       },
     };
   },
@@ -143,21 +143,21 @@ export const teamService = {
       .where(eq(teams.teamCode, teamId));
 
     if (!team) {
-      throw new AppError(404, 'Team not found.');
+      throw new AppError(404, "Team not found.");
     }
 
     const membersList = await db
       .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        phNumber: users.phNumber,
-        isCheckedIn: users.isCheckedIn,
-        paid: users.paid,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phNumber: user.phNumber,
+        isCheckedIn: user.isCheckedIn,
+        paid: user.paid,
       })
       .from(teamMembers)
-      .innerJoin(users, eq(teamMembers.userId, users.id))
+      .innerJoin(user, eq(teamMembers.userId, user.id))
       .where(eq(teamMembers.teamCode, teamId));
 
     return {
@@ -174,10 +174,10 @@ export const teamService = {
       .where(eq(teams.teamCode, teamId));
 
     if (!team) {
-      throw new AppError(404, 'Team not found.');
+      throw new AppError(404, "Team not found.");
     }
 
-    const baseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const baseUrl = process.env.CLIENT_URL || "http://localhost:3000";
     const inviteUrl = `${baseUrl}/join?team_code=${encodeURIComponent(team.teamCode)}`;
 
     return {
@@ -187,3 +187,5 @@ export const teamService = {
     };
   },
 };
+
+export const teamService = teamController;

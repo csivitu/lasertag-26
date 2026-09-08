@@ -1,9 +1,9 @@
-import { db } from '../../../../packages/database';
-import { bookings, user, slots } from '../../../../packages/database/schema';
-import { eq, or } from 'drizzle-orm';
-import { AppError } from './team.service';
+import { db } from "@lasertag-26/database";
+import { bookings, user, slots } from "@lasertag-26/database/schema";
+import { eq, or } from "drizzle-orm";
+import { AppError } from "./team.controller";
 
-export const verificationService = {
+export const verificationController = {
   async verifyRegistration(registrationId: string) {
     const [booking] = await db
       .select()
@@ -23,7 +23,7 @@ export const verificationService = {
 
       return {
         verified: true,
-        type: 'booking',
+        type: "booking",
         data: {
           booking_id: booking.id,
           booking_type: booking.type,
@@ -63,7 +63,7 @@ export const verificationService = {
 
       return {
         verified: true,
-        type: 'user',
+        type: "user",
         data: {
           user: {
             id: foundUser.id,
@@ -81,7 +81,7 @@ export const verificationService = {
       };
     }
 
-    throw new AppError(404, 'Registration / Ticket / User not found for the given ID.');
+    throw new AppError(404, "Registration / Ticket / User not found for the given ID.");
   },
 
   async checkInUser(identifier: string) {
@@ -91,7 +91,7 @@ export const verificationService = {
       .where(or(eq(user.id, identifier), eq(user.qrToken, identifier)));
 
     if (!targetUser) {
-      throw new AppError(404, 'User not found.');
+      throw new AppError(404, "User not found.");
     }
 
     if (targetUser.isCheckedIn) {
@@ -116,3 +116,5 @@ export const verificationService = {
     };
   },
 };
+
+export const verificationService = verificationController;

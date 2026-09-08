@@ -1,12 +1,12 @@
-import { db } from '../../../../packages/database';
-import { slots, bookings, user, teams } from '../../../../packages/database/schema';
-import { eq } from 'drizzle-orm';
-import { AppError } from './team.service';
+import { db } from "@lasertag-26/database";
+import { slots, bookings, user, teams } from "@lasertag-26/database/schema";
+import { eq } from "drizzle-orm";
+import { AppError } from "./team.controller";
 
 export interface ReserveSlotInput {
   slot_id: string;
   user_id: string;
-  type: 'individual' | 'team';
+  type: "individual" | "team";
   team_code?: string;
 }
 
@@ -16,7 +16,7 @@ export interface CreateSlotInput {
   capacity: number;
 }
 
-export const slotService = {
+export const slotController = {
   async getAllSlots() {
     return db.select().from(slots);
   },
@@ -41,7 +41,7 @@ export const slotService = {
       .where(eq(slots.id, slotId));
 
     if (!existingSlot) {
-      throw new AppError(404, 'Slot not found.');
+      throw new AppError(404, "Slot not found.");
     }
 
     await db.delete(slots).where(eq(slots.id, slotId));
@@ -57,7 +57,7 @@ export const slotService = {
       .where(eq(slots.id, slot_id));
 
     if (!targetSlot) {
-      throw new AppError(404, 'Slot not found.');
+      throw new AppError(404, "Slot not found.");
     }
 
     const [targetUser] = await db
@@ -66,12 +66,12 @@ export const slotService = {
       .where(eq(user.id, user_id));
 
     if (!targetUser) {
-      throw new AppError(404, 'User not found.');
+      throw new AppError(404, "User not found.");
     }
 
-    if (type === 'team') {
+    if (type === "team") {
       if (!team_code) {
-        throw new AppError(400, 'team_code is required for team booking.');
+        throw new AppError(400, "team_code is required for team booking.");
       }
 
       const [team] = await db
@@ -80,7 +80,7 @@ export const slotService = {
         .where(eq(teams.teamCode, team_code));
 
       if (!team) {
-        throw new AppError(404, 'Team not found.');
+        throw new AppError(404, "Team not found.");
       }
     }
 
@@ -92,7 +92,7 @@ export const slotService = {
         id: bookingId,
         type,
         userId: user_id,
-        teamCode: type === 'team' ? (team_code as string) : null,
+        teamCode: type === "team" ? (team_code as string) : null,
         slotId: slot_id,
         confirmationEmailSent: false,
       })
@@ -101,3 +101,5 @@ export const slotService = {
     return newBooking;
   },
 };
+
+export const slotService = slotController;

@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { db } from '../../../../packages/database';
-import { user } from '../../../../packages/database/schema';
-import { eq } from 'drizzle-orm';
+import { Request, Response, NextFunction } from "express";
+import { db } from "@lasertag-26/database";
+import { user } from "@lasertag-26/database/schema";
+import { eq } from "drizzle-orm";
 
 export interface AuthenticatedUser {
   id: string;
@@ -39,16 +39,16 @@ export async function requireAuth(
     let userId: string | undefined;
 
     const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith("Bearer ")) {
       userId = authHeader.substring(7).trim();
-    } else if (req.headers['x-user-id']) {
-      userId = String(req.headers['x-user-id']).trim();
+    } else if (req.headers["x-user-id"]) {
+      userId = String(req.headers["x-user-id"]).trim();
     }
 
     if (!userId) {
       res.status(401).json({
         success: false,
-        error: 'Unauthorized: Missing authentication credentials (x-user-id or Authorization header required).',
+        error: "Unauthorized: Missing authentication credentials (x-user-id or Authorization header required).",
       });
       return;
     }
@@ -70,7 +70,7 @@ export async function requireAuth(
     if (!foundUser) {
       res.status(401).json({
         success: false,
-        error: 'Unauthorized: User not found or invalid token.',
+        error: "Unauthorized: User not found or invalid token.",
       });
       return;
     }
@@ -84,7 +84,6 @@ export async function requireAuth(
 
 /**
  * Middleware to restrict endpoints to admin users only.
- * Must be used after requireAuth or will execute requireAuth automatically.
  */
 export async function requireAdmin(
   req: Request,
@@ -104,10 +103,10 @@ export async function requireAdmin(
 }
 
 function checkAdminRole(req: Request, res: Response, next: NextFunction): void {
-  if (req.user?.role !== 'admin') {
+  if (req.user?.role !== "admin") {
     res.status(403).json({
       success: false,
-      error: 'Forbidden: Admin authorization required to access this resource.',
+      error: "Forbidden: Admin authorization required to access this resource.",
     });
     return;
   }

@@ -1,13 +1,13 @@
 import { Router } from "express";
 import {
-    verifyPayments,
-    getPaymentDetails,
-    updatePaymentStatus,
+  verifyPayments,
+  getPaymentDetails,
+  updatePaymentStatus,
 } from "../controllers/admin-payments.controller";
-import { validate } from "../middleware/validate";
+import { validate } from "../middlewares/validate";
 import {
-    getPaymentDetailsSchema,
-    updatePaymentSchema,
+  getPaymentDetailsSchema,
+  updatePaymentSchema,
 } from "../validations/payment.validation";
 
 const router = Router();

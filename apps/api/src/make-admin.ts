@@ -1,19 +1,19 @@
-import 'dotenv/config';
-import { db } from '../../../packages/database';
-import { user } from '../../../packages/database/schema';
-import { eq } from 'drizzle-orm';
+import "dotenv/config";
+import { db } from "@lasertag-26/database";
+import { user } from "@lasertag-26/database/schema";
+import { eq } from "drizzle-orm";
 
 async function main() {
   const email = process.argv[2];
   if (!email) {
-    console.error('❌ Please provide an email address.');
-    console.log('Usage: bun src/make-admin.ts <user-email>');
+    console.error("❌ Please provide an email address.");
+    console.log("Usage: bun src/make-admin.ts <user-email>");
     process.exit(1);
   }
 
   const updated = await db
     .update(user)
-    .set({ role: 'admin' })
+    .set({ role: "admin" })
     .where(eq(user.email, email))
     .returning();
 
@@ -26,6 +26,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('❌ Error updating user role:', err);
+  console.error("❌ Error updating user role:", err);
   process.exit(1);
 });
