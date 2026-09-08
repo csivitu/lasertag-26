@@ -144,7 +144,7 @@
     width: 0ch;
   }
   to {
-    width: 7ch;
+    width: 7.5ch;
   }
 }
 
@@ -159,7 +159,7 @@
     animation: none !important;
   }
   .pew-pew-typewriter {
-    width: 7ch !important;
+    width: 7.5ch !important;
   }
   .cursor-blink {
     opacity: 1 !important;
@@ -198,7 +198,7 @@
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  text-shadow: 3px 5px 0 var(--color-brand-pink);
+  text-shadow: 0.044em 0.044em 0 var(--color-brand-pink);
 }
 
 .hero-btn__shine {

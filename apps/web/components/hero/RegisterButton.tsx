@@ -71,7 +71,7 @@ export function RegisterButton() {
             <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
           ))}
           {[...RESTING_SIDE_LEFT, ...RESTING_SIDE_RIGHT].map(([x0, x1, fill]) => (
-            <rect key={x0} x={x0} y={14} width={x1 - x0} height={59} fill={fill} />
+            <rect key={x0} x={x0} y={31} width={x1 - x0} height={32} fill={fill} />
           ))}
         </g>
         <g className="hero-btn__pressed" clipPath="url(#hero-btn-press-clip)">
@@ -79,7 +79,7 @@ export function RegisterButton() {
             <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
           ))}
           {[...PRESSED_SIDE_LEFT, ...PRESSED_SIDE_RIGHT].map(([x0, x1, fill]) => (
-            <rect key={x0} x={x0} y={22} width={x1 - x0} height={59} fill={fill} />
+            <rect key={x0} x={x0} y={37} width={x1 - x0} height={29} fill={fill} />
           ))}
         </g>
       </svg>
