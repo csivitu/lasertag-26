@@ -48,6 +48,13 @@ body {
   }
 }
 
+.nav-arrow-marker {
+  width: 0.6em;
+  height: 0.75em;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
 .group:hover .nav-arrow-marker,
 .group:focus-visible .nav-arrow-marker {
   animation: nav-arrow-nudge 0.7s steps(3, jump-none) infinite;
@@ -315,13 +322,13 @@ body {
     of the 4096x3650 frame, measured from gun-beam.png's alpha), so the same keyframes work on desktop (rotated
     wrapper) and mobile at any width without per-layout numbers. Linear
     timing so both sweeps travel at a constant speed. */
-.gun-fire-beam {
+.hero-beam {
   opacity: 0;
   clip-path: polygon(26.9% 116.4%, 111.8% -17.5%, 111.8% -17.5%, 26.9% 116.4%);
 }
 
-.gun-fire-beam.is-firing {
-  animation: gun-fire-reveal 1.6s linear;
+.hero-beam.is-firing {
+  animation: gun-fire-reveal var(--laser-duration, 1.6s) linear;
 }
 
 @keyframes gun-fire-reveal {
@@ -342,7 +349,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gun-fire-beam.is-firing {
+  .hero-beam.is-firing {
     animation: none !important;
     opacity: 1 !important;
     clip-path: none !important;
