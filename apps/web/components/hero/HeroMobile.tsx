@@ -96,7 +96,7 @@ export function HeroMobile() {
             alt=""
             width={240}
             height={240}
-            priority
+            loading="lazy"
             unoptimized
             className="size-full object-contain"
           />
@@ -149,7 +149,7 @@ export function HeroMobile() {
             alt="LaserTag"
             width={2436}
             height={309}
-            priority
+            loading="lazy"
             unoptimized
             className="h-auto w-full"
           />
@@ -183,7 +183,7 @@ export function HeroMobile() {
               alt="Register now"
               width={1197}
               height={285}
-              priority
+              loading="lazy"
               unoptimized
               className="h-auto w-full opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
             />
@@ -193,6 +193,7 @@ export function HeroMobile() {
               aria-hidden
               width={1197}
               height={261}
+              loading="lazy"
               unoptimized
               className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
             />
@@ -256,8 +257,10 @@ export function HeroMobile() {
             alt=""
             width={4096}
             height={3650}
-            priority
-            unoptimized
+            sizes="165vw"
+            loading="eager"
+            fetchPriority="high"
+            quality={90}
             className="pointer-events-none absolute inset-0 size-full object-contain"
           />
 
@@ -268,8 +271,10 @@ export function HeroMobile() {
               alt=""
               width={4096}
               height={3650}
-              priority
-              unoptimized
+              sizes="165vw"
+              loading="eager"
+              fetchPriority="high"
+              quality={90}
               className={`gun-fire-beam pointer-events-none size-full object-contain ${
                 firing ? "is-firing" : ""
               }`}

@@ -172,23 +172,20 @@ export function HeroDesktop() {
                 alt=""
                 fill
                 sizes="70vw"
-                priority
+                loading="eager"
+                fetchPriority="high"
+                quality={90}
                 className="object-fill"
               />
-              {/* Beam + muzzle sparks: a real separate Figma layer (not
-                  carved out of the flattened gun art by hand), pre-composited
-                  onto a transparent canvas at the exact same 4096x3650 frame
-                  as gun-only.png (affine-aligned to the source art's own
-                  socket, not guessed CSS percentages), so it needs no
-                  position/size of its own here — just `fill`, identical to
-                  the base image. Hidden by default; handleFire reveals it. */}
               <Image
                 src="/hero/gun-beam.png"
                 alt=""
                 aria-hidden
                 fill
                 sizes="70vw"
-                priority
+                loading="eager"
+                fetchPriority="high"
+                quality={90}
                 className={`gun-fire-beam pointer-events-none object-fill ${firing ? "is-firing" : ""}`}
               />
               <button
@@ -228,7 +225,7 @@ export function HeroDesktop() {
             alt=""
             width={240}
             height={240}
-            priority
+            loading="lazy"
             unoptimized
             className="size-full object-contain"
           />
@@ -248,7 +245,7 @@ export function HeroDesktop() {
                 aria-hidden
                 width={72}
                 height={90}
-                priority
+                loading="lazy"
                 unoptimized
                 className="nav-arrow-marker pointer-events-none absolute object-contain opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
                 style={{
@@ -288,7 +285,7 @@ export function HeroDesktop() {
             alt="LaserTag"
             width={2436}
             height={309}
-            priority
+            loading="lazy"
             unoptimized
             className="mx-auto h-auto max-w-full"
             style={{ width: "var(--cw)" }}
@@ -351,7 +348,7 @@ export function HeroDesktop() {
             alt="Register now"
             width={1197}
             height={285}
-            priority
+            loading="lazy"
             unoptimized
             className="h-auto w-full opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
           />
@@ -361,6 +358,7 @@ export function HeroDesktop() {
             aria-hidden
             width={1197}
             height={261}
+            loading="lazy"
             unoptimized
             className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
           />
