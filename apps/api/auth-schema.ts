@@ -14,6 +14,12 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  phNumber: text("ph_number"),
+  qrToken: text("qr_token"),
+  isCheckedIn: boolean("is_checked_in").default(false),
+  checkedInAt: timestamp("checked_in_at"),
+  paid: boolean("paid").default(false),
+  role: text("role").default("user"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

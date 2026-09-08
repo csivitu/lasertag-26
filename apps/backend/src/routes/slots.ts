@@ -1,7 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { db } from '../../../../packages/database';
-import { slots, bookings, users, teams } from '../../../../packages/database/schema';
-import { eq } from 'drizzle-orm';
+import { validateRequest } from '../middlewares/validate';
+import { requireAdmin } from '../middlewares/auth.middleware';
+import {
+  reserveSlotSchema,
+  createSlotSchema,
+  deleteSlotSchema,
+} from '../schemas/slot.schema';
+import { slotService } from '../services/slot.service';
+import { AppError } from '../services/team.service';
 
 const router = Router();
 
@@ -15,10 +21,9 @@ const router = Router();
  *       200:
  *         description: List of all slots
  */
-router.get('/', async (req: Request, res: Response): Promise<void> => {
+router.get('/', async (_req: Request, res: Response): Promise<void> => {
   try {
-    const allSlots = await db.select().from(slots);
-
+    const allSlots = await slotService.getAllSlots();
     res.status(200).json({
       success: true,
       data: allSlots,
@@ -32,6 +37,106 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     });
   }
 });
+
+/**
+ * @openapi
+ * /slots:
+ *   post:
+ *     summary: Create a new slot (Admin Only)
+ *     tags: [Slots]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [startTime, endTime, capacity]
+ *             properties:
+ *               startTime:
+ *                 type: string
+ *                 format: date-time
+ *               endTime:
+ *                 type: string
+ *                 format: date-time
+ *               capacity:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Slot created successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin only)
+ */
+router.post(
+  '/',
+  requireAdmin,
+  validateRequest(createSlotSchema),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const createdSlot = await slotService.createSlot(req.body);
+      res.status(201).json({
+        success: true,
+        message: 'Slot created successfully.',
+        data: createdSlot,
+      });
+    } catch (error: unknown) {
+      console.error('Error creating slot:', error);
+      const err = error as Error;
+      const status = error instanceof AppError ? error.statusCode : 500;
+      res.status(status).json({
+        success: false,
+        error: err.message || 'Failed to create slot.',
+        details: err.message || String(error),
+      });
+    }
+  }
+);
+
+/**
+ * @openapi
+ * /slots/{slot_id}:
+ *   delete:
+ *     summary: Delete a slot (Admin Only)
+ *     tags: [Slots]
+ *     parameters:
+ *       - in: path
+ *         name: slot_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Slot deleted successfully
+ *       403:
+ *         description: Forbidden (Admin only)
+ */
+router.delete(
+  '/:slot_id',
+  requireAdmin,
+  validateRequest(deleteSlotSchema),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const result = await slotService.deleteSlot(req.params.slot_id as string);
+      res.status(200).json({
+        success: true,
+        message: 'Slot deleted successfully.',
+        data: result,
+      });
+    } catch (error: unknown) {
+      console.error('Error deleting slot:', error);
+      const err = error as Error;
+      const status = error instanceof AppError ? error.statusCode : 500;
+      res.status(status).json({
+        success: false,
+        error: err.message || 'Failed to delete slot.',
+        details: err.message || String(error),
+      });
+    }
+  }
+);
 
 /**
  * @openapi
@@ -63,104 +168,36 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
  *     responses:
  *       201:
  *         description: Slot reserved successfully
+ *     
  */
-router.post('/:slot_id/reserve', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const slot_id = req.params.slot_id as string;
-    const { user_id, type, team_code } = req.body;
-
-    if (!user_id || !type) {
-      res.status(400).json({
-        success: false,
-        error: 'user_id and type (individual/team) are required fields.',
+router.post(
+  '/:slot_id/reserve',
+  validateRequest(reserveSlotSchema),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const newBooking = await slotService.reserveSlot({
+        slot_id: req.params.slot_id as string,
+        user_id: req.body.user_id,
+        type: req.body.type,
+        team_code: req.body.team_code,
       });
-      return;
-    }
 
-    if (type !== 'individual' && type !== 'team') {
-      res.status(400).json({
-        success: false,
-        error: 'type must be either "individual" or "team".',
+      res.status(201).json({
+        success: true,
+        message: 'Slot reserved successfully.',
+        data: newBooking,
       });
-      return;
-    }
-
-    const [targetSlot] = await db
-      .select()
-      .from(slots)
-      .where(eq(slots.id, slot_id));
-
-    if (!targetSlot) {
-      res.status(404).json({
+    } catch (error: unknown) {
+      console.error('Error reserving slot:', error);
+      const err = error as Error;
+      const status = error instanceof AppError ? error.statusCode : 500;
+      res.status(status).json({
         success: false,
-        error: 'Slot not found.',
+        error: err.message || 'Failed to reserve slot.',
+        details: err.message || String(error),
       });
-      return;
     }
-
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, user_id as string));
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: 'User not found.',
-      });
-      return;
-    }
-
-    if (type === 'team') {
-      if (!team_code) {
-        res.status(400).json({
-          success: false,
-          error: 'team_code is required for team booking.',
-        });
-        return;
-      }
-
-      const [team] = await db
-        .select()
-        .from(teams)
-        .where(eq(teams.teamCode, team_code as string));
-
-      if (!team) {
-        res.status(404).json({
-          success: false,
-          error: 'Team not found.',
-        });
-        return;
-      }
-    }
-
-    const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-    const [newBooking] = await db
-      .insert(bookings)
-      .values({
-        id: bookingId,
-        type,
-        userId: user_id as string,
-        teamCode: type === 'team' ? (team_code as string) : null,
-        slotId: slot_id,
-        confirmationEmailSent: false,
-      })
-      .returning();
-
-    res.status(201).json({
-      success: true,
-      message: 'Slot reserved successfully.',
-      data: newBooking,
-    });
-  } catch (error: unknown) {
-    console.error('Error reserving slot:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to reserve slot.',
-      details: error instanceof Error ? error.message : String(error),
-    });
   }
-});
+);
 
 export default router;

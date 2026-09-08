@@ -1,4 +1,3 @@
-
 import {
   pgTable,
   pgEnum,
@@ -10,25 +9,28 @@ import {
   primaryKey,
 } from 'drizzle-orm/pg-core';
 
-// 1. Enum Definition
+// 1. Enum Definitions
+export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 export const bookingTypeEnum = pgEnum('booking_type', ['individual', 'team']);
 
-// 2. Users Table
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
+// 2. Users Table (Mapped to PostgreSQL "user" table)
+export const users = pgTable('user', {
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull(),
-  phNumber: text('ph_number').notNull(),
+  phNumber: text('ph_number'),
   qrToken: text('qr_token'),
   isCheckedIn: boolean('is_checked_in').default(false),
   checkedInAt: timestamp('checked_in_at'),
   paid: boolean('paid').notNull().default(false),
+  role: text('role').default('user'),
 });
+export const user = users;
 
 // 3. Teams Table
 export const teams = pgTable('teams', {
   teamCode: text('team_code').primaryKey(),
-  leaderId: uuid('leader_id')
+  leaderId: text('leader_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   members: integer('members').notNull(),
@@ -49,7 +51,7 @@ export const teamMembers = pgTable(
     teamCode: text('team_code')
       .notNull()
       .references(() => teams.teamCode, { onDelete: 'cascade' }),
-    userId: uuid('user_id')
+    userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
   },
@@ -60,9 +62,9 @@ export const teamMembers = pgTable(
 
 // 6. Bookings Table
 export const bookings = pgTable('bookings', {
-  id: text('id').primaryKey(), // Or uuid('id').defaultRandom().primaryKey()
+  id: text('id').primaryKey(),
   type: bookingTypeEnum('type').notNull(),
-  userId: uuid('user_id')
+  userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   teamCode: text('team_code').references(() => teams.teamCode, {
@@ -75,5 +77,3 @@ export const bookings = pgTable('bookings', {
     .notNull()
     .default(false),
 });
-
-

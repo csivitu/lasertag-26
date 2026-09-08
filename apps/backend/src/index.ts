@@ -7,6 +7,7 @@ import { swaggerSpec } from './swagger';
 import teamsRouter from './routes/teams';
 import slotsRouter from './routes/slots';
 import verificationRouter from './routes/verification';
+import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,6 +24,8 @@ app.get('/health', (req, res) => {
 app.use('/teams', teamsRouter);
 app.use('/slots', slotsRouter);
 app.use('/verification', verificationRouter);
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`🚀 LaserTag Backend API running on port ${PORT}`);
