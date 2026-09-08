@@ -1,9 +1,9 @@
 import { describe, expect, mock, test } from "bun:test";
 
 import { NotFoundError } from "../errors";
-import { makePaymentsService, type PaymentsDeps } from "./payments";
+import { makePaymentsService, type PaymentDetail, type PaymentsDeps } from "./payments";
 
-const detail = {
+const detail: PaymentDetail = {
   bookingId: "reg-2026-0001",
   type: "individual",
   userId: "user-1",

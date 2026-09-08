@@ -15,8 +15,10 @@ const optionalFilter = z.preprocess((value) => {
 
 /** Non-strict: unknown query params are ignored rather than rejected. */
 export const registrationQuerySchema = z.object({
-  reg_no: optionalFilter,
-  name: optionalFilter,
-  phone: optionalFilter,
-  email: optionalFilter,
+  query: z.object({
+    reg_no: optionalFilter,
+    name: optionalFilter,
+    phone: optionalFilter,
+    email: optionalFilter,
+  }),
 });

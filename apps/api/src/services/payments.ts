@@ -2,7 +2,8 @@ import { NotFoundError } from "../errors";
 
 export type PaymentDetail = {
   bookingId: string;
-  type: string;
+  /** Mirrors `bookingTypeEnum` in packages/database/schema.ts. */
+  type: "individual" | "team";
   userId: string;
   paid: boolean;
   userName: string;

@@ -4,11 +4,11 @@ import { toNodeHandler } from "better-auth/node";
 import swaggerUi from "swagger-ui-express";
 
 import { auth } from "./auth";
-import { openapiDocument } from "./docs/openapi";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 import { adminAuthRouter } from "./routes/admin-auth";
 import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
+import { openapiDocument } from "./swagger";
 import type { Env } from "./env";
 
 /**

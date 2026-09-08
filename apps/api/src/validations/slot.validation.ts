@@ -23,29 +23,38 @@ const slotFields = createInsertSchema(slots, {
   .omit({ id: true })
   .extend({ startTime: isoDate, endTime: isoDate });
 
-export const createSlotSchema = slotFields.refine(
+export const slotInputSchema = slotFields.refine(
   (value) => value.startTime < value.endTime,
   { message: "startTime must be before endTime", path: ["startTime"] },
 );
-
-export const bulkCreateSlotsSchema = z
-  .array(createSlotSchema)
-  .min(1, "Request body must be a non-empty array of slots");
 
 /**
  * Shape only. The start-before-end rule needs the stored row to compare
  * against when just one of the two fields is supplied, so it lives in
  * `resolveSlotWindow` in the service instead of being half-expressed here.
  */
-export const patchSlotSchema = slotFields
+export const slotPatchSchema = slotFields
   .partial()
   .refine((value) => Object.keys(value).length > 0, {
     message: "No valid fields to update",
   });
 
-export const slotIdParamsSchema = z.object({
+const slotIdParams = z.object({
   slot_id: z.uuid("slot_id must be a valid UUID"),
 });
+
+export const createSlotSchema = z.object({ body: slotInputSchema });
+
+export const bulkCreateSlotsSchema = z.object({
+  body: z.array(slotInputSchema).min(1, "Request body must be a non-empty array of slots"),
+});
+
+export const patchSlotSchema = z.object({
+  params: slotIdParams,
+  body: slotPatchSchema,
+});
+
+export const slotIdSchema = z.object({ params: slotIdParams });
 
 /**
  * Response shape, for the OpenAPI document only — never used to parse input.

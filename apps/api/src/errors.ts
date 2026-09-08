@@ -53,3 +53,10 @@ export class ConflictError extends AppError {
     super(409, "conflict", message, detail);
   }
 }
+
+/** A route that exists and is wired up, but whose implementation is pending. */
+export class NotImplementedError extends AppError {
+  constructor(message: string, detail?: ErrorDetail) {
+    super(501, "not_implemented", message, detail);
+  }
+}

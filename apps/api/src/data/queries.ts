@@ -8,6 +8,7 @@ import {
   user,
 } from "@lasertag-26/database";
 
+import type { UserDeps } from "../services/adminAuth";
 import type { PaymentsDeps } from "../services/payments";
 import type { RegistrationsDeps, RegistrationRow } from "../services/registrations";
 import type { SlotsDeps } from "../services/slots";
@@ -162,8 +163,8 @@ export const paymentQueries: PaymentsDeps = {
 };
 
 /** Only what admin login needs to decide whether to attempt sign-in at all. */
-export const userQueries = {
-  findRoleByEmail: async (email: string): Promise<string | null> => {
+export const userQueries: UserDeps = {
+  findRoleByEmail: async (email) => {
     const [row] = await db.select({ role: user.role }).from(user).where(eq(user.email, email));
     return row?.role ?? null;
   },

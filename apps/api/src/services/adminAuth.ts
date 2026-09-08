@@ -1,9 +1,12 @@
 import { UnauthorizedError } from "../errors";
 import type { AuthDeps } from "./auth";
 
-export interface AdminAuthDeps extends AuthDeps {
+/** The user lookup admin login needs, split out so data/queries.ts can be typed against it. */
+export interface UserDeps {
   findRoleByEmail(email: string): Promise<string | null>;
 }
+
+export interface AdminAuthDeps extends AuthDeps, UserDeps {}
 
 export function makeAdminAuthService(deps: AdminAuthDeps) {
   return {

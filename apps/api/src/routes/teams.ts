@@ -1,14 +1,9 @@
 import { Router } from "express";
 
-import { teamQueries } from "../data/queries";
-import { teamIdParamsSchema } from "../schemas/common";
-import { makeTeamsService } from "../services/teams";
-
-const teams = makeTeamsService(teamQueries);
+import { getTeamDetail } from "../controllers/teams.controller";
+import { validate } from "../middleware/validate";
+import { teamIdSchema } from "../validations/team.validation";
 
 export const teamsRouter = Router();
 
-teamsRouter.get("/:team_id", async (req, res) => {
-  const { team_id } = teamIdParamsSchema.parse(req.params);
-  res.json(await teams.getDetail(team_id));
-});
+teamsRouter.get("/:team_id", validate(teamIdSchema), getTeamDetail);
