@@ -75,8 +75,52 @@ body {
   }
 }
 
+.hero-star {
+  animation: star-twinkle 2.4s steps(4, jump-none) infinite;
+}
+
+.hero-star-p0 {
+  animation-duration: 1.7s;
+  animation-delay: 0s;
+}
+
+.hero-star-p1 {
+  animation-duration: 2.9s;
+  animation-delay: 0.37s;
+}
+
+.hero-star-p2 {
+  animation-duration: 2.1s;
+  animation-delay: 1.14s;
+}
+
+.hero-star-p3 {
+  animation-duration: 3.4s;
+  animation-delay: 0.61s;
+}
+
+.hero-star-p4 {
+  animation-duration: 1.9s;
+  animation-delay: 2.03s;
+}
+
+.hero-star-p5 {
+  animation-duration: 3.1s;
+  animation-delay: 1.48s;
+}
+
+.hero-star-p6 {
+  animation-duration: 2.5s;
+  animation-delay: 0.22s;
+}
+
+.hero-star-p7 {
+  animation-duration: 3.6s;
+  animation-delay: 2.6s;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  [style*="star-twinkle"] {
+  .hero-star {
     animation: none !important;
     opacity: 1 !important;
   }

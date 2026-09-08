@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-import { pixelDots, sparkles, twinkleStyle } from "./heroDecor";
+import { Starfield } from "./Starfield";
 
 /**
  * Mobile hero (<1024px). Feature-parity with HeroDesktop — logo/nav,
@@ -50,39 +50,7 @@ export function HeroMobile() {
 
   return (
     <section className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden bg-[#08080d] lg:hidden">
-      {/* Background pixel dots + sparkles wrapped in an absolute overflow-clipped container */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        {pixelDots.map((d, i) => (
-          <span
-            key={`dot-${i}`}
-            className="absolute"
-            style={{
-              left: `${d.l}%`,
-              top: `${d.t}%`,
-              width: `${d.w}vw`,
-              height: `${d.h}vw`,
-              backgroundColor: d.c,
-              ...twinkleStyle(i),
-            }}
-          />
-        ))}
-        {sparkles.map((s, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={`sparkle-${i}`}
-            src={`/hero/${s.src}.svg`}
-            alt=""
-            className="absolute block max-w-none"
-            style={{
-              left: `${s.l}%`,
-              top: `${s.t}%`,
-              width: `${s.w}vw`,
-              height: `${s.h}vw`,
-              ...twinkleStyle(pixelDots.length + i),
-            }}
-          />
-        ))}
-      </div>
+      <Starfield />
 
       {/* Header: logo left, hamburger right */}
       <div className="relative z-20 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">

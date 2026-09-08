@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 
-import { pixelDots, sparkles, twinkleStyle } from "./heroDecor";
+import { Starfield } from "./Starfield";
 
 /**
  * Fluid desktop hero, calibrated against the Figma "Landing - Hero" frame.
@@ -101,41 +101,7 @@ export function HeroDesktop() {
         } as CSSProperties
       }
     >
-      {/* Background pixel dots. Positions stretch across the hero; sizes are
-          height-driven so the marks stay square at any aspect ratio. */}
-      {pixelDots.map((d, i) => (
-        <span
-          key={`dot-${i}`}
-          aria-hidden
-          className="absolute"
-          style={{
-            left: `${d.l}%`,
-            top: `${d.t}%`,
-            width: `${(d.w * 1.40625).toFixed(4)}cqh`,
-            height: `${d.h}cqh`,
-            backgroundColor: d.c,
-            ...twinkleStyle(i),
-          }}
-        />
-      ))}
-
-      {sparkles.map((s, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={`sparkle-${i}`}
-          src={`/hero/${s.src}.svg`}
-          alt=""
-          aria-hidden
-          className="absolute block max-w-none"
-          style={{
-            left: `${s.l}%`,
-            top: `${s.t}%`,
-            width: `${(s.w * 1.40625).toFixed(4)}cqh`,
-            height: `${s.h}cqh`,
-            ...twinkleStyle(pixelDots.length + i),
-          }}
-        />
-      ))}
+      <Starfield />
 
       {/* Artwork layer. This box is the frame's own coordinate space scaled to
           the hero height. Enlarged (1.18x) and nudged right of its Figma
