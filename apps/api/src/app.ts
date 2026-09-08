@@ -6,7 +6,9 @@ import swaggerUi from "swagger-ui-express";
 import { auth } from "./auth";
 import { openapiDocument } from "./docs/openapi";
 import { errorHandler, notFound } from "./middleware/errorHandler";
+import { adminAuthRouter } from "./routes/admin-auth";
 import { adminRouter } from "./routes/admin";
+import { authRouter } from "./routes/auth";
 import type { Env } from "./env";
 
 /**
@@ -36,6 +38,11 @@ export function createApp(env: Env): Express {
     app.get("/", (_req, res) => {
         res.send("API is running!");
     });
+
+    // Not under /admin: that whole subtree requires an existing admin
+    // session, and neither of these can presuppose one.
+    app.use("/auth", authRouter);
+    app.use("/admin-auth", adminAuthRouter);
 
     app.use("/admin", adminRouter);
 

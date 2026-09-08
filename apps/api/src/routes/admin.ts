@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { requireAdmin } from "../middleware/requireAdmin";
+import { paymentsRouter } from "./payments";
 import { registrationsRouter } from "./registrations";
 import { slotsRouter } from "./slots";
 import { teamsRouter } from "./teams";
@@ -15,3 +16,4 @@ adminRouter.use(requireAdmin);
 adminRouter.use("/slots", slotsRouter);
 adminRouter.use("/registrations", registrationsRouter);
 adminRouter.use("/teams", teamsRouter);
+adminRouter.use("/payments", paymentsRouter);

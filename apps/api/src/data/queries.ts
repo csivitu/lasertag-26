@@ -8,6 +8,7 @@ import {
   user,
 } from "@lasertag-26/database";
 
+import type { PaymentsDeps } from "../services/payments";
 import type { RegistrationsDeps, RegistrationRow } from "../services/registrations";
 import type { SlotsDeps } from "../services/slots";
 import type { TeamsDeps } from "../services/teams";
@@ -121,5 +122,49 @@ export const registrationQueries: RegistrationsDeps = {
       .from(bookings)
       .innerJoin(user, eq(bookings.userId, user.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined);
+  },
+};
+
+export const paymentQueries: PaymentsDeps = {
+  findBookingWithUser: async (registrationId) => {
+    const [row] = await db
+      .select({
+        bookingId: bookings.id,
+        type: bookings.type,
+        userId: user.id,
+        paid: user.paid,
+        userName: user.name,
+        userEmail: user.email,
+      })
+      .from(bookings)
+      .innerJoin(user, eq(bookings.userId, user.id))
+      .where(eq(bookings.id, registrationId));
+    return row;
+  },
+
+  findBookingUserId: async (registrationId) => {
+    const [row] = await db
+      .select({ userId: bookings.userId })
+      .from(bookings)
+      .where(eq(bookings.id, registrationId));
+    return row?.userId;
+  },
+
+  setUserPaid: async (userId, paid) => {
+    const [row] = await db
+      .update(user)
+      .set({ paid })
+      .where(eq(user.id, userId))
+      .returning({ id: user.id, name: user.name, email: user.email, paid: user.paid });
+    // The caller has already established the row exists.
+    return row!;
+  },
+};
+
+/** Only what admin login needs to decide whether to attempt sign-in at all. */
+export const userQueries = {
+  findRoleByEmail: async (email: string): Promise<string | null> => {
+    const [row] = await db.select({ role: user.role }).from(user).where(eq(user.email, email));
+    return row?.role ?? null;
   },
 };

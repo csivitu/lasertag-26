@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+import { loginResponseSchema, loginSchema } from "../schemas/auth";
+import {
+  paymentDetailResponseSchema,
+  updatePaymentResponseSchema,
+  updatePaymentSchema,
+} from "../schemas/payments";
 import {
   createSlotSchema,
   patchSlotSchema,
@@ -52,6 +58,11 @@ export const openapiDocument = {
       Slot: toSchema(slotResponseSchema),
       SlotInput: toSchema(createSlotSchema),
       SlotPatch: toSchema(patchSlotSchema),
+      Login: toSchema(loginSchema),
+      LoginResponse: toSchema(loginResponseSchema),
+      PaymentDetail: toSchema(paymentDetailResponseSchema),
+      PaymentPatch: toSchema(updatePaymentSchema),
+      PaymentUpdateResponse: toSchema(updatePaymentResponseSchema),
       Error: errorSchema,
       Conflict: conflictSchema,
     },
@@ -66,6 +77,119 @@ export const openapiDocument = {
   },
   security: [{ sessionCookie: [] }],
   paths: {
+    "/auth/login": {
+      post: {
+        summary: "Sign in",
+        tags: ["Auth"],
+        security: [],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/Login" } } },
+        },
+        responses: {
+          200: {
+            description: "Signed in; session cookie set on the response",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/LoginResponse" } } },
+          },
+          401: {
+            description: "Invalid email or password",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+        },
+      },
+    },
+    "/auth/logout": {
+      post: {
+        summary: "Sign out",
+        tags: ["Auth"],
+        responses: {
+          200: { description: "Signed out" },
+          401: {
+            description: "Not authenticated",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+        },
+      },
+    },
+    "/admin-auth/login": {
+      post: {
+        summary: "Sign in as an admin",
+        description:
+          "Same as /auth/login, but rejects the attempt before checking the password if the email isn't an admin's — with the same 401 either way, so the response can't be used to tell 'unknown email' apart from 'exists, not an admin'.",
+        tags: ["Auth"],
+        security: [],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/Login" } } },
+        },
+        responses: {
+          200: {
+            description: "Signed in; session cookie set on the response",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/LoginResponse" } } },
+          },
+          401: {
+            description: "Invalid email or password, or not an admin",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+        },
+      },
+    },
+    "/admin-auth/logout": {
+      post: {
+        summary: "Sign out of an admin session",
+        tags: ["Auth"],
+        responses: {
+          200: { description: "Signed out" },
+          401: {
+            description: "Not authenticated",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+        },
+      },
+    },
+    "/admin/payments/verify": {
+      post: {
+        summary: "Bulk-verify payments",
+        description: "Not implemented yet — waiting on the payment gateway's CSV format.",
+        tags: ["Payments"],
+        responses: {
+          501: {
+            description: "Not implemented",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+          },
+        },
+      },
+    },
+    "/admin/payments/{registration_id}": {
+      get: {
+        summary: "Get payment detail for a registration",
+        tags: ["Payments"],
+        parameters: [
+          { in: "path", name: "registration_id", required: true, schema: { type: "string" }, description: "bookings.id" },
+        ],
+        responses: {
+          200: { description: "Payment detail", content: { "application/json": { schema: { $ref: "#/components/schemas/PaymentDetail" } } } },
+          404: { description: "Registration not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+        },
+      },
+      patch: {
+        summary: "Set a registration's payment status",
+        description: "Updates the paid flag on the booking's user, not the booking itself.",
+        tags: ["Payments"],
+        parameters: [
+          { in: "path", name: "registration_id", required: true, schema: { type: "string" }, description: "bookings.id" },
+        ],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/PaymentPatch" } } },
+        },
+        responses: {
+          200: { description: "The updated user's payment status", content: { "application/json": { schema: { $ref: "#/components/schemas/PaymentUpdateResponse" } } } },
+          400: { description: "Invalid registration_id or paid value", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+          404: { description: "Registration not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+        },
+      },
+    },
     "/admin/slots": {
       get: {
         summary: "List all slots",
