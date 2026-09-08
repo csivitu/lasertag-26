@@ -12,10 +12,8 @@
 }
 
 .nav-arrow-marker {
-  width: 0.6em;
-  height: 0.75em;
-  background: currentColor;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  width: 1em;
+  height: 1.25em;
 }
 
 .group:hover .nav-arrow-marker,

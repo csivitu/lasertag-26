@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { HeroMenu } from "./HeroMenu";
+import { NavArrow } from "./NavArrow";
 
 export const navLinks = [
   { label: "HOME", href: "#" },
@@ -40,8 +41,10 @@ export function HeroHeader() {
           >
             <span
               aria-hidden
-              className="nav-arrow-marker pointer-events-none absolute right-full top-1/2 mr-[0.85em] -mt-[0.375em] opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
-            />
+              className="nav-arrow-marker pointer-events-none absolute right-full top-1/2 mr-[0.5em] -mt-[0.625em] opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+              <NavArrow />
+            </span>
             {link.label}
           </a>
         ))}
