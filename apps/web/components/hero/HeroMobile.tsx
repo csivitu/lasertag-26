@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { RegisterButton } from "./RegisterButton";
 import { Starfield } from "./Starfield";
+import { HeroTitle } from "./HeroTitle";
 
 /**
  * Mobile hero (<1024px). Feature-parity with HeroDesktop — logo/nav,
@@ -112,17 +113,7 @@ export function HeroMobile() {
 
       {/* Content block: Wordmark, tagline typewriter, Register CTA (enlarged for mobile) */}
       <div className="relative z-10 flex flex-col items-center px-3 pt-3 pb-2 sm:px-6 sm:pt-6 sm:pb-3">
-        <div className="relative mx-auto w-[min(96%,460px)] sm:w-[min(88%,540px)]">
-          <Image
-            src="/hero/title-wordmark.png"
-            alt="LaserTag"
-            width={2436}
-            height={309}
-            loading="lazy"
-            unoptimized
-            className="h-auto w-full"
-          />
-        </div>
+        <HeroTitle />
 
         {/* Scalable terminal-typewriter tagline — clamps from 12px on 320px up to 26px on tablet */}
         <p

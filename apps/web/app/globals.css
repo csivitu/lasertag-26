@@ -249,6 +249,21 @@ body {
   }
 }
 
+.hero-wordmark {
+  font-family: var(--font-logo);
+  font-size: clamp(3rem, 11vw, 9rem);
+  line-height: 0.62;
+  letter-spacing: -0.027em;
+  transform: skewX(-7.3deg);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #fee18a 0%, #fed14b 24%, #fec414 50%, #fecf41 74%, #fed865 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0.048em 0.042em 0 var(--color-brand-pink);
+}
+
 .hero-btn__shine {
   clip-path: polygon(
     8.27% 0%, 91.73% 0%, 91.73% 2.11%, 92.73% 2.11%, 92.73% 6.32%, 94.99% 6.32%,

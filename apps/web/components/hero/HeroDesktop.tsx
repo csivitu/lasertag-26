@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { RegisterButton } from "./RegisterButton";
 import { Starfield } from "./Starfield";
+import { HeroTitle } from "./HeroTitle";
 
 /**
  * Fluid desktop hero, calibrated against the Figma "Landing - Hero" frame.
@@ -244,20 +245,7 @@ export function HeroDesktop() {
           } as CSSProperties
         }
       >
-        {/* ArcadeClassic is not a web font, so the lettering is exported from
-            Figma; the accessible name lives on the heading. */}
-        <h1 className="m-0 w-full">
-          <Image
-            src="/hero/title-wordmark.png"
-            alt="LaserTag"
-            width={2436}
-            height={309}
-            loading="lazy"
-            unoptimized
-            className="mx-auto h-auto max-w-full"
-            style={{ width: "var(--cw)" }}
-          />
-        </h1>
+        <HeroTitle />
 
         {/* Plain block, not flex/grid: both wrap mixed text + inline-block
             children into separate anonymous items per contiguous run (one
