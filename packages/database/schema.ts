@@ -1,8 +1,9 @@
+import { user } from './auth-schema';
 import {
   pgTable,
   pgEnum,
-  uuid,
   text,
+  uuid,
   boolean,
   timestamp,
   integer,
@@ -13,26 +14,16 @@ import {
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 export const bookingTypeEnum = pgEnum('booking_type', ['individual', 'team']);
 
-// 2. Users Table (Mapped to PostgreSQL "user" table)
-export const users = pgTable('user', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull(),
-  phNumber: text('ph_number'),
-  qrToken: text('qr_token'),
-  isCheckedIn: boolean('is_checked_in').default(false),
-  checkedInAt: timestamp('checked_in_at'),
-  paid: boolean('paid').notNull().default(false),
-  role: text('role').default('user'),
-});
-export const user = users;
+// Alias users -> user for backward compatibility
+export const users = user;
+export { user };
 
 // 3. Teams Table
 export const teams = pgTable('teams', {
   teamCode: text('team_code').primaryKey(),
   leaderId: text('leader_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => user.id, { onDelete: 'cascade' }),
   members: integer('members').notNull(),
 });
 
@@ -53,10 +44,13 @@ export const teamMembers = pgTable(
       .references(() => teams.teamCode, { onDelete: 'cascade' }),
     userId: text('user_id')
       .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+      .references(() => user.id, { onDelete: 'cascade' }),
   },
   (table) => [
-    primaryKey({ columns: [table.teamCode, table.userId] }),
+    primaryKey({
+      columns: [table.teamCode, table.userId],
+      name: 'team_members_team_code_user_id_pk',
+    }),
   ]
 );
 
@@ -66,7 +60,7 @@ export const bookings = pgTable('bookings', {
   type: bookingTypeEnum('type').notNull(),
   userId: text('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => user.id, { onDelete: 'cascade' }),
   teamCode: text('team_code').references(() => teams.teamCode, {
     onDelete: 'set null',
   }),
