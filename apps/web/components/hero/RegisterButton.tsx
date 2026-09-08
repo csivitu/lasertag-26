@@ -8,9 +8,7 @@ const RESTING_BANDS: [number, number, string][] = [
   [0, 4, "var(--color-brand-purple)"],
   [4, 9, "var(--color-btn-bevel)"],
   [9, 14, "var(--color-btn-lip)"],
-  [14, 32, "var(--color-brand-pink)"],
-  [32, 53, "#e94daa"],
-  [53, 73, "var(--color-brand-pink)"],
+  [14, 73, "var(--color-brand-pink)"],
   [73, 78, "var(--color-btn-bevel)"],
   [78, 82, "var(--color-brand-purple)"],
   [82, 95, "var(--color-btn-shadow)"],
@@ -20,16 +18,35 @@ const PRESSED_BANDS: [number, number, string][] = [
   [8, 12, "var(--color-btn-bevel)"],
   [12, 17, "var(--color-brand-purple)"],
   [17, 22, "var(--color-btn-shadow)"],
-  [22, 40, "var(--color-brand-pink)"],
-  [40, 61, "#e94daa"],
-  [61, 81, "var(--color-brand-pink)"],
+  [22, 81, "var(--color-brand-pink)"],
   [81, 86, "var(--color-btn-bevel)"],
   [86, 90, "var(--color-brand-purple)"],
   [90, 95, "var(--color-btn-shadow)"],
 ];
 
-const REST_SHADOW_OFFSET = "6 10";
-const PRESS_SHADOW_OFFSET = "3 4";
+const RESTING_SIDE_LEFT: [number, number, string][] = [
+  [0, 5, "var(--color-btn-shadow)"],
+  [5, 10, "var(--color-btn-bevel)"],
+  [10, 17, "var(--color-btn-lip)"],
+];
+
+const RESTING_SIDE_RIGHT: [number, number, string][] = [
+  [382, 389, "var(--color-btn-lip)"],
+  [389, 394, "var(--color-btn-bevel)"],
+  [394, 399, "var(--color-btn-shadow)"],
+];
+
+const PRESSED_SIDE_LEFT: [number, number, string][] = [
+  [0, 5, "var(--color-btn-bevel)"],
+  [5, 10, "var(--color-brand-purple)"],
+  [10, 17, "var(--color-btn-shadow)"],
+];
+
+const PRESSED_SIDE_RIGHT: [number, number, string][] = [
+  [382, 389, "var(--color-btn-shadow)"],
+  [389, 394, "var(--color-brand-purple)"],
+  [394, 399, "var(--color-btn-bevel)"],
+];
 
 export function RegisterButton() {
   return (
@@ -38,7 +55,7 @@ export function RegisterButton() {
       className="hero-btn group relative block w-full outline-offset-4 transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <svg
-        viewBox="0 0 406 106"
+        viewBox="0 0 399 95"
         aria-hidden
         shapeRendering="crispEdges"
         className="block h-auto w-full"
@@ -49,35 +66,21 @@ export function RegisterButton() {
         <clipPath id="hero-btn-press-clip">
           <path d={PRESSED_OUTLINE} />
         </clipPath>
-        <g className="hero-btn__resting">
-          <path d={RESTING_OUTLINE} fill="var(--color-btn-shadow)" transform={`translate(${REST_SHADOW_OFFSET})`} />
-          <g clipPath="url(#hero-btn-rest-clip)">
-            {RESTING_BANDS.map(([y0, y1, fill]) => (
-              <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
-            ))}
-          </g>
-          <path
-            d={RESTING_OUTLINE}
-            fill="none"
-            stroke="var(--color-brand-purple)"
-            strokeWidth={6}
-            strokeLinejoin="miter"
-          />
+        <g className="hero-btn__resting" clipPath="url(#hero-btn-rest-clip)">
+          {RESTING_BANDS.map(([y0, y1, fill]) => (
+            <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
+          ))}
+          {[...RESTING_SIDE_LEFT, ...RESTING_SIDE_RIGHT].map(([x0, x1, fill]) => (
+            <rect key={x0} x={x0} y={14} width={x1 - x0} height={59} fill={fill} />
+          ))}
         </g>
-        <g className="hero-btn__pressed">
-          <path d={PRESSED_OUTLINE} fill="var(--color-btn-shadow)" transform={`translate(${PRESS_SHADOW_OFFSET})`} />
-          <g clipPath="url(#hero-btn-press-clip)">
-            {PRESSED_BANDS.map(([y0, y1, fill]) => (
-              <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
-            ))}
-          </g>
-          <path
-            d={PRESSED_OUTLINE}
-            fill="none"
-            stroke="var(--color-brand-purple)"
-            strokeWidth={6}
-            strokeLinejoin="miter"
-          />
+        <g className="hero-btn__pressed" clipPath="url(#hero-btn-press-clip)">
+          {PRESSED_BANDS.map(([y0, y1, fill]) => (
+            <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
+          ))}
+          {[...PRESSED_SIDE_LEFT, ...PRESSED_SIDE_RIGHT].map(([x0, x1, fill]) => (
+            <rect key={x0} x={x0} y={22} width={x1 - x0} height={59} fill={fill} />
+          ))}
         </g>
       </svg>
       <span className="hero-btn__label pointer-events-none absolute inset-0 grid place-items-center font-pixel text-[3.4vw] uppercase tracking-wide text-white sm:text-[2vw] lg:text-[1.15vw]">
