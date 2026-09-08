@@ -249,6 +249,43 @@ body {
   }
 }
 
+.hero-btn__shine {
+  clip-path: polygon(
+    8.27% 0%, 91.73% 0%, 91.73% 2.11%, 92.73% 2.11%, 92.73% 6.32%, 94.99% 6.32%,
+    94.99% 14.74%, 97.49% 14.74%, 97.49% 32.63%, 100% 32.63%, 100% 66.32%,
+    98.75% 66.32%, 98.75% 75.79%, 95.74% 75.79%, 95.74% 85.26%, 93.98% 85.26%,
+    93.98% 94.74%, 90.23% 94.74%, 90.23% 100%, 9.77% 100%, 9.77% 94.74%,
+    6.02% 94.74%, 6.02% 85.26%, 4.26% 85.26%, 4.26% 75.79%, 1.25% 75.79%,
+    1.25% 66.32%, 0% 66.32%, 0% 32.63%, 2.51% 32.63%, 2.51% 14.74%,
+    5.01% 14.74%, 5.01% 6.32%, 7.27% 6.32%, 7.27% 2.11%, 8.27% 2.11%
+  );
+  background: linear-gradient(75deg, transparent, rgba(255, 255, 255, 0.55) 50%, transparent);
+  background-size: 250% 100%;
+  background-repeat: no-repeat;
+  background-position: -60% 0;
+}
+
+.hero-btn__frame,
+.hero-btn__label {
+  transition: transform 120ms steps(2, jump-none);
+}
+
+.hero-btn:active .hero-btn__base {
+  opacity: 0;
+}
+
+.hero-btn:active .hero-btn__frame,
+.hero-btn:active .hero-btn__label {
+  transform: translateY(8.42%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-btn__frame,
+  .hero-btn__label {
+    transition: none;
+  }
+}
+
 /* Gun "fire" reveal: gun-beam.png (the beam + muzzle sparks, a real
    separate Figma layer — not carved out of the flattened gun art by hand)
    sits over gun-only.png, hidden by default and revealed on click.

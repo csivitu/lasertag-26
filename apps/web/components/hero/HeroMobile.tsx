@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
+import { RegisterButton } from "./RegisterButton";
 import { Starfield } from "./Starfield";
 
 /**
@@ -139,68 +140,10 @@ export function HeroMobile() {
           />
         </p>
 
-        {/* CTA Register button (enlarged for mobile) */}
         <div className="mt-4 flex w-full justify-center sm:mt-5">
-          <a
-            href="#register"
-            className="group relative block w-[min(85%,350px)] sm:w-[min(60%,400px)] overflow-hidden outline-offset-4 transition-[transform,filter] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-[#01daec] active:translate-y-0.5 active:scale-y-[0.94] motion-reduce:transition-none"
-            style={{ transformOrigin: "bottom" }}
-          >
-            <Image
-              src="/hero/register-button.png"
-              alt="Register now"
-              width={1197}
-              height={285}
-              loading="lazy"
-              unoptimized
-              className="h-auto w-full opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
-            />
-            <Image
-              src="/hero/register-button-pressed.png"
-              alt=""
-              aria-hidden
-              width={1197}
-              height={261}
-              loading="lazy"
-              unoptimized
-              className="absolute inset-x-0 bottom-0 h-auto w-full opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
-            />
-            <span
-              aria-hidden
-              className="button-shine pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-200 ease-out group-active:opacity-0"
-              style={{
-                maskImage: "url(/hero/register-button-mask.png)",
-                maskSize: "100% 100%",
-                maskRepeat: "no-repeat",
-                WebkitMaskImage: "url(/hero/register-button-mask.png)",
-                WebkitMaskSize: "100% 100%",
-                WebkitMaskRepeat: "no-repeat",
-                background:
-                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
-                backgroundSize: "250% 100%",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "-60% 0",
-              }}
-            />
-            <span
-              aria-hidden
-              className="button-shine pointer-events-none absolute inset-x-0 bottom-0 opacity-0 transition-opacity duration-200 ease-out group-active:opacity-100"
-              style={{
-                aspectRatio: "1197 / 261",
-                maskImage: "url(/hero/register-button-pressed-mask.png)",
-                maskSize: "100% 100%",
-                maskRepeat: "no-repeat",
-                WebkitMaskImage: "url(/hero/register-button-pressed-mask.png)",
-                WebkitMaskSize: "100% 100%",
-                WebkitMaskRepeat: "no-repeat",
-                background:
-                  "linear-gradient(75deg, transparent, rgba(255,255,255,0.55) 50%, transparent)",
-                backgroundSize: "250% 100%",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "-60% 0",
-              }}
-            />
-          </a>
+          <div className="w-[min(85%,350px)] sm:w-[min(60%,400px)]">
+            <RegisterButton />
+          </div>
         </div>
       </div>
 
