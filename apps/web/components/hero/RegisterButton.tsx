@@ -1,52 +1,29 @@
-const RESTING_OUTLINE =
-  "M33,0 L366,0 L366,2 L370,2 L370,6 L379,6 L379,14 L389,14 L389,31 L399,31 L399,63 L394,63 L394,72 L382,72 L382,81 L375,81 L375,90 L360,90 L360,95 L39,95 L39,90 L24,90 L24,81 L17,81 L17,72 L5,72 L5,63 L0,63 L0,31 L10,31 L10,14 L20,14 L20,6 L29,6 L29,2 L33,2 Z";
+import {
+  BUTTON_H,
+  BUTTON_W,
+  PALETTE,
+  PRESSED_BANDS,
+  RESTING_BANDS,
+} from "./registerButton.data";
 
-const PRESSED_OUTLINE =
-  "M33,8 L366,8 L366,10 L370,10 L370,14 L379,14 L379,22 L389,22 L389,37 L399,37 L399,66 L394,66 L394,74 L382,74 L382,82 L375,82 L375,90 L360,90 L360,95 L39,95 L39,90 L24,90 L24,82 L17,82 L17,74 L5,74 L5,66 L0,66 L0,37 L10,37 L10,22 L20,22 L20,14 L29,14 L29,10 L33,10 Z";
-
-const RESTING_BANDS: [number, number, string][] = [
-  [0, 4, "var(--color-brand-purple)"],
-  [4, 9, "var(--color-btn-bevel)"],
-  [9, 14, "var(--color-btn-lip)"],
-  [14, 73, "var(--color-brand-pink)"],
-  [73, 78, "var(--color-btn-bevel)"],
-  [78, 82, "var(--color-brand-purple)"],
-  [82, 95, "var(--color-btn-shadow)"],
-];
-
-const PRESSED_BANDS: [number, number, string][] = [
-  [8, 12, "var(--color-btn-bevel)"],
-  [12, 17, "var(--color-brand-purple)"],
-  [17, 22, "var(--color-btn-shadow)"],
-  [22, 81, "var(--color-brand-pink)"],
-  [81, 86, "var(--color-btn-bevel)"],
-  [86, 90, "var(--color-brand-purple)"],
-  [90, 95, "var(--color-btn-shadow)"],
-];
-
-const RESTING_SIDE_LEFT: [number, number, string][] = [
-  [0, 5, "var(--color-btn-shadow)"],
-  [5, 10, "var(--color-btn-bevel)"],
-  [10, 17, "var(--color-btn-lip)"],
-];
-
-const RESTING_SIDE_RIGHT: [number, number, string][] = [
-  [382, 389, "var(--color-btn-lip)"],
-  [389, 394, "var(--color-btn-bevel)"],
-  [394, 399, "var(--color-btn-shadow)"],
-];
-
-const PRESSED_SIDE_LEFT: [number, number, string][] = [
-  [0, 5, "var(--color-btn-bevel)"],
-  [5, 10, "var(--color-brand-purple)"],
-  [10, 17, "var(--color-btn-shadow)"],
-];
-
-const PRESSED_SIDE_RIGHT: [number, number, string][] = [
-  [382, 389, "var(--color-btn-shadow)"],
-  [389, 394, "var(--color-brand-purple)"],
-  [394, 399, "var(--color-btn-bevel)"],
-];
+function Face({ bands, className }: { bands: typeof RESTING_BANDS; className: string }) {
+  return (
+    <g className={className}>
+      {bands.map(([y0, y1, runs]) =>
+        runs.map(([x0, x1, color]) => (
+          <rect
+            key={`${y0}-${x0}`}
+            x={x0}
+            y={y0}
+            width={x1 - x0}
+            height={y1 - y0}
+            fill={PALETTE[color]}
+          />
+        )),
+      )}
+    </g>
+  );
+}
 
 export function RegisterButton() {
   return (
@@ -55,33 +32,13 @@ export function RegisterButton() {
       className="hero-btn group relative block w-full outline-offset-4 transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <svg
-        viewBox="0 0 399 95"
+        viewBox={`0 0 ${BUTTON_W} ${BUTTON_H}`}
         aria-hidden
         shapeRendering="crispEdges"
         className="block h-auto w-full"
       >
-        <clipPath id="hero-btn-rest-clip">
-          <path d={RESTING_OUTLINE} />
-        </clipPath>
-        <clipPath id="hero-btn-press-clip">
-          <path d={PRESSED_OUTLINE} />
-        </clipPath>
-        <g className="hero-btn__resting" clipPath="url(#hero-btn-rest-clip)">
-          {RESTING_BANDS.map(([y0, y1, fill]) => (
-            <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
-          ))}
-          {[...RESTING_SIDE_LEFT, ...RESTING_SIDE_RIGHT].map(([x0, x1, fill]) => (
-            <rect key={x0} x={x0} y={31} width={x1 - x0} height={32} fill={fill} />
-          ))}
-        </g>
-        <g className="hero-btn__pressed" clipPath="url(#hero-btn-press-clip)">
-          {PRESSED_BANDS.map(([y0, y1, fill]) => (
-            <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
-          ))}
-          {[...PRESSED_SIDE_LEFT, ...PRESSED_SIDE_RIGHT].map(([x0, x1, fill]) => (
-            <rect key={x0} x={x0} y={37} width={x1 - x0} height={29} fill={fill} />
-          ))}
-        </g>
+        <Face bands={RESTING_BANDS} className="hero-btn__resting" />
+        <Face bands={PRESSED_BANDS} className="hero-btn__pressed" />
       </svg>
       <span className="hero-btn__label pointer-events-none absolute inset-0 grid place-items-center font-pixel text-[3.4vw] uppercase tracking-wide text-white sm:text-[2vw] lg:text-[1.15vw]">
         Register Now
