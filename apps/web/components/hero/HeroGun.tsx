@@ -25,7 +25,7 @@ export function HeroGun() {
 
   return (
     <div
-      className="pointer-events-none absolute bottom-[-4vw] left-[-6vw] aspect-[4096/3650] w-[min(165vw,820px)] [--gun-rot:0deg] [transform:scaleX(-1)_rotate(var(--gun-rot))] lg:bottom-[-2vh] lg:left-[-2vw] lg:h-[min(100vh,900px)] lg:w-auto lg:[--gun-rot:22.52deg]"
+      className="pointer-events-none absolute bottom-[2vw] left-[-6vw] aspect-[4096/3650] w-[min(165vw,820px)] [--gun-rot:0deg] [transform:scaleX(-1)_rotate(var(--gun-rot))] lg:bottom-[8vh] lg:left-[-2vw] lg:h-[min(100vh,900px)] lg:w-auto lg:[--gun-rot:22.52deg]"
     >
       <Image
         src="/hero/gun-only.png"

@@ -29,6 +29,7 @@ export function Starfield() {
             width={s}
             height={s}
             fill={c}
+            transform={`rotate(45 ${x + s / 2} ${y + s / 2})`}
           />
         ))}
       </g>

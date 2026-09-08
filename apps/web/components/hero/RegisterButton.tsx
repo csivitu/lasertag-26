@@ -28,6 +28,30 @@ const PRESSED_BANDS: [number, number, string][] = [
   [90, 95, "var(--color-btn-shadow)"],
 ];
 
+const RESTING_SIDE_LEFT: [number, number, string][] = [
+  [0, 4, "var(--color-brand-purple)"],
+  [4, 9, "var(--color-btn-bevel)"],
+  [9, 14, "var(--color-btn-lip)"],
+];
+
+const RESTING_SIDE_RIGHT: [number, number, string][] = [
+  [385, 390, "var(--color-btn-lip)"],
+  [390, 395, "var(--color-btn-bevel)"],
+  [395, 399, "var(--color-brand-purple)"],
+];
+
+const PRESSED_SIDE_LEFT: [number, number, string][] = [
+  [0, 4, "var(--color-btn-bevel)"],
+  [4, 9, "var(--color-brand-purple)"],
+  [9, 14, "var(--color-btn-shadow)"],
+];
+
+const PRESSED_SIDE_RIGHT: [number, number, string][] = [
+  [385, 390, "var(--color-btn-shadow)"],
+  [390, 395, "var(--color-brand-purple)"],
+  [395, 399, "var(--color-btn-bevel)"],
+];
+
 export function RegisterButton() {
   return (
     <a
@@ -50,10 +74,16 @@ export function RegisterButton() {
           {RESTING_BANDS.map(([y0, y1, fill]) => (
             <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
           ))}
+          {[...RESTING_SIDE_LEFT, ...RESTING_SIDE_RIGHT].map(([x0, x1, fill]) => (
+            <rect key={x0} x={x0} y={0} width={x1 - x0} height={95} fill={fill} />
+          ))}
         </g>
         <g className="hero-btn__pressed" clipPath="url(#hero-btn-press-clip)">
           {PRESSED_BANDS.map(([y0, y1, fill]) => (
             <rect key={y0} x={0} y={y0} width={399} height={y1 - y0} fill={fill} />
+          ))}
+          {[...PRESSED_SIDE_LEFT, ...PRESSED_SIDE_RIGHT].map(([x0, x1, fill]) => (
+            <rect key={x0} x={x0} y={0} width={x1 - x0} height={95} fill={fill} />
           ))}
         </g>
       </svg>

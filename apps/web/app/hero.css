@@ -198,7 +198,7 @@
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0.048em 0.042em 0 var(--color-brand-pink);
+  text-shadow: 0 0.09em 0 var(--color-brand-pink);
 }
 
 .hero-btn__shine {
