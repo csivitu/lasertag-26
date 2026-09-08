@@ -1,28 +1,16 @@
-import express from "express";
-import swaggerUi from "swagger-ui-express";
-import { toNodeHandler } from "better-auth/node";
-import { auth } from "./auth";
-import { swaggerSpec } from "./config/swagger.js";
-import { adminSlotsRouter } from "./routes/adminSlots";
-import { adminRegistrationsRouter } from "./routes/adminRegistrations";
-import { adminTeamsRouter } from "./routes/adminTeams";
+import { createApp } from "./app";
+import { env } from "./env";
 
-const app = express();
-app.all("/api/auth/*splat", toNodeHandler(auth));
-app.use(express.json());
+const app = createApp(env);
 
-app.get("/", (req, res) => {
-    res.send("API is running!");
+const server = app.listen(env.PORT, () => {
+    console.log(`Server running on http://localhost:${env.PORT}`);
 });
 
-app.use("/admin/slots", adminSlotsRouter);
-app.use("/admin/registrations", adminRegistrationsRouter);
-app.use("/admin/teams", adminTeamsRouter);
+function shutdown(signal: string) {
+    console.log(`${signal} received, closing server`);
+    server.close(() => process.exit(0));
+}
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-const PORT = 3001;
-
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
