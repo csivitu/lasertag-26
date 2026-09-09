@@ -36,7 +36,7 @@ const cardStyle: CSSProperties = {
 };
 
 const titleStyle: CSSProperties = {
-  fontFamily: "'Press Start 2P', monospace",
+  fontFamily: "var(--ft-pixel), monospace",
   fontSize: "22px",
   color: "#FEDC02",
   textAlign: "center",

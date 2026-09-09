@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
-import { ArcadeButton } from "./ArcadeButton";
+import { PixelButton } from "../hero/PixelButton";
 import { INPUT_BORDER_SVG, PINK_INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
 
 const labelStyle: CSSProperties = {
-  fontFamily: "'Press Start 2P', monospace",
+  fontFamily: "var(--ft-pixel), monospace",
   fontSize: "12px",
   color: "#ffffff",
   letterSpacing: "0.1em",
@@ -26,7 +26,7 @@ const inputStyle: CSSProperties = {
   width: "100%",
   background: "transparent",
   color: "#ffffff",
-  fontFamily: "'Oxanium', sans-serif",
+  fontFamily: "var(--ft-body), sans-serif",
   fontWeight: 400,
   fontSize: "16px",
   padding: "10px 14px",
@@ -122,7 +122,12 @@ export function CreateTeamForm() {
         </div>
 
         <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-          <ArcadeButton type="submit" label="CREATE TEAM" />
+          <PixelButton
+            type="submit"
+            label="Create Team"
+            className="w-[240px]"
+            labelClassName="text-[13px]"
+          />
         </div>
       </div>
     </form>

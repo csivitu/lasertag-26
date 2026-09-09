@@ -26,7 +26,7 @@ interface ArcadeButtonProps {
 }
 
 const btnStyle: CSSProperties = {
-  fontFamily: "'Press Start 2P', monospace",
+  fontFamily: "var(--ft-pixel), monospace",
   fontSize: "clamp(9px, 1.4vw, 13px)",
   letterSpacing: "0.12em",
   color: "#ffffff",

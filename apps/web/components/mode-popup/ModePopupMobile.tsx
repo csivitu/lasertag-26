@@ -34,7 +34,7 @@ const cardContainerStyle: CSSProperties = {
 };
 
 const titleStyle: CSSProperties = {
-  fontFamily: "'Press Start 2P', monospace",
+  fontFamily: "var(--ft-pixel), monospace",
   fontSize: "clamp(11px, 4vw, 16px)",
   color: "#FEDC02",
   textAlign: "center",
