@@ -1,2 +1,2 @@
 #test will be added later
-npm run build --workspace=apps/api
+npx tsc --noEmit --project apps/api/tsconfig.json
