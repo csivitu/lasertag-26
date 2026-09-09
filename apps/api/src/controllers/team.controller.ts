@@ -2,12 +2,8 @@ import { db } from "@lasertag-26/database";
 import { teams, teamMembers, user } from "@lasertag-26/database/schema";
 import { eq, and } from "drizzle-orm";
 
-export class AppError extends Error {
-  constructor(public statusCode: number, message: string) {
-    super(message);
-    this.name = "AppError";
-  }
-}
+import { HttpError as AppError } from "../errors";
+
 
 export interface CreateTeamInput {
   leader_id: string;

@@ -3,6 +3,8 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@lasertag-26/database";
 import * as authSchema from "@lasertag-26/database/auth-schema";
 
+import { env } from "./env";
+
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
         provider: "pg",
@@ -11,6 +13,21 @@ export const auth = betterAuth({
     emailAndPassword: {
         enabled: true,
     },
-    baseURL: process.env.BETTER_AUTH_URL,
-    secret: process.env.BETTER_AUTH_SECRET,
+    user: {
+        additionalFields: {
+            // `role` already exists on the `user` table (auth-schema.ts); this
+            // just tells better-auth to select it into the session payload.
+            // `input: false` is not optional — without it a client can pass
+            // {"role":"admin"} to sign-up/update-user and self-grant admin.
+            role: {
+                type: "string",
+                required: false,
+                defaultValue: "user",
+                input: false,
+            },
+        },
+    },
+    baseURL: env.BETTER_AUTH_URL,
+    secret: env.BETTER_AUTH_SECRET,
+    trustedOrigins: [env.WEB_ORIGIN],
 });

@@ -1,7 +1,7 @@
 import { db } from "@lasertag-26/database";
 import { bookings, user, slots } from "@lasertag-26/database/schema";
 import { eq, or } from "drizzle-orm";
-import { AppError } from "./team.controller";
+import { HttpError as AppError } from "../errors";
 
 export const verificationController = {
   async verifyRegistration(registrationId: string) {

@@ -1,56 +1,62 @@
-import { Request, Response, NextFunction } from "express";
-import { ZodType } from "zod";
+import type { NextFunction, Request, Response } from "express";
+import type { ZodType } from "zod";
 
-export interface RequestValidators {
-  body?: ZodType;
-  params?: ZodType;
-  query?: ZodType;
-}
+type Parsed = { body?: unknown; params?: unknown; query?: unknown };
 
-export const validateRequest = (validators: RequestValidators) => {
-  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-    try {
-      if (validators.body) {
-        req.body = await validators.body.parseAsync(req.body);
-      }
-      if (validators.params) {
-        req.params = (await validators.params.parseAsync(req.params)) as Record<string, string>;
-      }
-      if (validators.query) {
-        req.query = (await validators.query.parseAsync(req.query)) as Record<string, string>;
-      }
-      next();
-    } catch (error) {
-      next(error);
-    }
-  };
-};
-
-export const validate = (schema: ZodType) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const result = schema.safeParse({
+/**
+ * Validates body/params/query against one schema and writes the parsed values
+ * back onto the request, so handlers read validated (and transformed) data.
+ *
+ * Throws rather than responding: `middlewares/errorHandler.ts` is the only
+ * place that turns errors into HTTP responses, so a validation failure comes
+ * out in the same shape as every other error instead of a second one. Express
+ * 5 forwards sync throws from middleware to the error handler.
+ */
+export const validate =
+  (schema: ZodType) => (req: Request, _res: Response, next: NextFunction) => {
+    const parsed = schema.parse({
       body: req.body,
       params: req.params,
       query: req.query,
-    });
+    }) as Parsed;
 
-    if (!result.success) {
-      res.status(400).json({
-        message: "Validation failed",
-        errors: result.error.issues.map((issue) => ({
-          field: issue.path.join("."),
-          message: issue.message,
-        })),
+    if (parsed.body !== undefined) req.body = parsed.body;
+    if (parsed.params !== undefined) req.params = parsed.params as Request["params"];
+
+    // `req.query` is a lazy getter in Express 5 — a plain assignment throws
+    // ("Cannot set property query of #<IncomingMessage> which has only a
+    // getter"), so the parsed value has to be defined over it instead.
+    if (parsed.query !== undefined) {
+      Object.defineProperty(req, "query", {
+        value: parsed.query,
+        configurable: true,
+        enumerable: true,
+        writable: true,
       });
-      return;
     }
-
-    const data = result.data as Record<string, unknown>;
-
-    if (data.body) req.body = data.body;
-    if (data.params) req.params = data.params as typeof req.params;
-    if (data.query) req.query = data.query as typeof req.query;
 
     next();
   };
-};
+
+/**
+ * Per-part variant used by the routes carried over from `dev`.
+ *
+ * Throws like `validate` rather than responding, and defines `req.query` over
+ * the getter instead of assigning to it — a plain assignment throws in
+ * Express 5, which would have surfaced the first time a query schema was used.
+ */
+export const validateRequest =
+  (validators: { body?: ZodType; params?: ZodType; query?: ZodType }) =>
+  (req: Request, _res: Response, next: NextFunction) => {
+    if (validators.body) req.body = validators.body.parse(req.body);
+    if (validators.params) req.params = validators.params.parse(req.params) as Request["params"];
+    if (validators.query) {
+      Object.defineProperty(req, "query", {
+        value: validators.query.parse(req.query),
+        configurable: true,
+        enumerable: true,
+        writable: true,
+      });
+    }
+    next();
+  };

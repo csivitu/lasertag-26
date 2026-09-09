@@ -7,12 +7,12 @@ import {
   joinTeamSchema,
   getTeamMembersSchema,
   inviteTeamSchema,
-} from "../schemas/team.schema";
+} from "../validations/team.validation";
 import { teamController } from "../controllers/team.controller";
 
-const router = Router();
+export const publicTeamsRouter = Router();
 
-router.post(
+publicTeamsRouter.post(
   "/",
   validateRequest(createTeamSchema),
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -25,7 +25,7 @@ router.post(
   })
 );
 
-router.get(
+publicTeamsRouter.get(
   "/code/:code",
   validateRequest(getTeamByCodeSchema),
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -37,7 +37,7 @@ router.get(
   })
 );
 
-router.post(
+publicTeamsRouter.post(
   "/:team_id/join",
   validateRequest(joinTeamSchema),
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -53,7 +53,7 @@ router.post(
   })
 );
 
-router.get(
+publicTeamsRouter.get(
   "/:team_id/members",
   validateRequest(getTeamMembersSchema),
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -65,7 +65,7 @@ router.get(
   })
 );
 
-router.post(
+publicTeamsRouter.post(
   "/:team_id/invite",
   validateRequest(inviteTeamSchema),
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -77,4 +77,3 @@ router.post(
   })
 );
 
-export default router;

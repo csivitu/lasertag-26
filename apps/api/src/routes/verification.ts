@@ -5,7 +5,7 @@ import { asyncHandler } from "../middlewares/errorHandler";
 import {
   verifyRegistrationSchema,
   checkInSchema,
-} from "../schemas/verification.schema";
+} from "../validations/verification.validation";
 import { verificationController } from "../controllers/verification.controller";
 
 const router = Router();

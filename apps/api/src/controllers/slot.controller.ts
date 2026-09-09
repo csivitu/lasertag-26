@@ -1,7 +1,7 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams } from "@lasertag-26/database/schema";
 import { eq } from "drizzle-orm";
-import { AppError } from "./team.controller";
+import { HttpError as AppError } from "../errors";
 
 export interface ReserveSlotInput {
   slot_id: string;

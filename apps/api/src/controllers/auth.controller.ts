@@ -1,72 +1,22 @@
 import type { Request, Response } from "express";
-import { auth } from "../auth";
-import type { LoginInput } from "../validations/auth.validation";
 
-export const login = async (
-    req: Request<unknown, unknown, LoginInput["body"]>,
-    res: Response
-) => {
-    try {
-        const { email, password } = req.body;
+import { credentialQueries } from "../data/credentials";
+import { makeAuthService } from "../services/auth";
 
-        const result = await auth.api.signInEmail({
-            body: {
-                email,
-                password,
-            },
-            returnHeaders: true,
-        });
+const auth = makeAuthService(credentialQueries);
 
-        const cookies = result.headers.getSetCookie();
+// Handlers stay `async` with no try/catch: Express 5 forwards rejections to
+// the error middleware, which is the only place errors become responses.
 
-        cookies.forEach((cookie) => {
-            res.append("Set-Cookie", cookie);
-        });
-
-        const { ...userData } = result.response.user;
-
-        res.status(200).json({
-            message: "Login successful",
-            user: userData,
-        });
-    } catch (error) {
-        console.error("Login error:", error);
-
-        res.status(401).json({
-            message: "Invalid email or password",
-        });
-    }
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  const { user, cookies } = await auth.login(email, password);
+  cookies.forEach((cookie) => res.append("Set-Cookie", cookie));
+  res.json({ message: "Login successful", user });
 };
 
 export const logout = async (req: Request, res: Response) => {
-    try {
-        const headers = new Headers();
-
-        const cookie = req.headers.cookie;
-
-        if (cookie) {
-            headers.set("cookie", cookie);
-        }
-
-        const result = await auth.api.signOut({
-            headers,
-            returnHeaders: true,
-        });
-
-        const cookies = result.headers.getSetCookie();
-
-        cookies.forEach((cookie) => {
-            res.append("Set-Cookie", cookie);
-        });
-
-        res.status(200).json({
-            message: "Logout successful",
-        });
-    } catch (error) {
-        console.error("Logout error:", error);
-
-        res.status(401).json({
-            message: "Not authenticated",
-        });
-    }
+  const { cookies } = await auth.logout(req.headers.cookie);
+  cookies.forEach((cookie) => res.append("Set-Cookie", cookie));
+  res.json({ message: "Logout successful" });
 };

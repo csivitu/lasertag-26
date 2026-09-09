@@ -1,8 +1,9 @@
 import { Router } from "express";
+
 import {
-  verifyPayments,
   getPaymentDetails,
   updatePaymentStatus,
+  verifyPayments,
 } from "../controllers/admin-payments.controller";
 import { validate } from "../middlewares/validate";
 import {
@@ -10,10 +11,8 @@ import {
   updatePaymentSchema,
 } from "../validations/payment.validation";
 
-const router = Router();
+export const adminPaymentsRouter = Router();
 
-router.post("/verify", verifyPayments);
-router.get("/:registration_id", validate(getPaymentDetailsSchema), getPaymentDetails);
-router.patch("/:registration_id", validate(updatePaymentSchema), updatePaymentStatus);
-
-export default router;
+adminPaymentsRouter.post("/verify", verifyPayments);
+adminPaymentsRouter.get("/:registration_id", validate(getPaymentDetailsSchema), getPaymentDetails);
+adminPaymentsRouter.patch("/:registration_id", validate(updatePaymentSchema), updatePaymentStatus);

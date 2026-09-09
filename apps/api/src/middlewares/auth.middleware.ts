@@ -1,17 +1,14 @@
-import { Request, Response, NextFunction } from "express";
-import { db } from "@lasertag-26/database";
-import { user } from "@lasertag-26/database/schema";
-import { eq } from "drizzle-orm";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
+import { fromNodeHeaders } from "better-auth/node";
+
+import { auth } from "../auth";
+import { ForbiddenError, UnauthorizedError } from "../errors";
 
 export interface AuthenticatedUser {
   id: string;
-  name: string;
-  email: string;
-  role: string | null;
-  phNumber?: string | null;
-  qrToken?: string | null;
-  isCheckedIn?: boolean | null;
-  paid?: boolean | null;
+  name?: string;
+  email?: string;
+  role?: string | null;
 }
 
 /* eslint-disable @typescript-eslint/no-namespace */
@@ -24,91 +21,48 @@ declare global {
 }
 /* eslint-enable @typescript-eslint/no-namespace */
 
+type Session = { user: AuthenticatedUser };
+type GetSession = (args: { headers: Headers }) => Promise<Session | null>;
+
 /**
- * Middleware to authenticate requests.
- * Accepts user ID from:
- * 1. Authorization header: "Bearer <user_id>"
- * 2. Custom header: "x-user-id: <user_id>"
+ * Identity comes from the signed better-auth session cookie, never from a
+ * client-supplied header.
+ *
+ * The previous implementation read the user id straight out of `x-user-id` /
+ * `Authorization: Bearer <user_id>` and looked it up — but a user id is a
+ * database primary key, not a secret, and it is returned by the unauthenticated
+ * team endpoints. Anyone holding an admin's id could therefore assume that
+ * admin's identity. Verifying the session cookie is what actually proves the
+ * caller authenticated.
+ *
+ * Factory so tests can inject a fake `getSession` — importing `../auth`
+ * directly pulls in @lasertag-26/database, which throws without DATABASE_URL.
  */
-export async function requireAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  try {
-    let userId: string | undefined;
+export function makeRequireAuth(getSession: GetSession): RequestHandler {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    // fromNodeHeaders (not a hand-built Headers()) because IncomingHttpHeaders
+    // values can be string[] (e.g. set-cookie), which Headers() rejects.
+    const session = await getSession({ headers: fromNodeHeaders(req.headers) });
+    if (!session) throw new UnauthorizedError();
 
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      userId = authHeader.substring(7).trim();
-    } else if (req.headers["x-user-id"]) {
-      userId = String(req.headers["x-user-id"]).trim();
-    }
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        error: "Unauthorized: Missing authentication credentials (x-user-id or Authorization header required).",
-      });
-      return;
-    }
-
-    const [foundUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        phNumber: user.phNumber,
-        qrToken: user.qrToken,
-        isCheckedIn: user.isCheckedIn,
-        paid: user.paid,
-      })
-      .from(user)
-      .where(eq(user.id, userId));
-
-    if (!foundUser) {
-      res.status(401).json({
-        success: false,
-        error: "Unauthorized: User not found or invalid token.",
-      });
-      return;
-    }
-
-    req.user = foundUser;
+    req.user = session.user;
     next();
-  } catch (error) {
-    next(error);
-  }
+  };
 }
 
-/**
- * Middleware to restrict endpoints to admin users only.
- */
-export async function requireAdmin(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  if (!req.user) {
-    await requireAuth(req, res, (err?: unknown) => {
-      if (err) return next(err);
-      if (!res.headersSent) {
-        checkAdminRole(req, res, next);
-      }
-    });
-  } else {
-    checkAdminRole(req, res, next);
-  }
+export function makeRequireAdmin(getSession: GetSession): RequestHandler {
+  const authenticate = makeRequireAuth(getSession);
+
+  return async (req: Request, res: Response, next: NextFunction) => {
+    await authenticate(req, res, () => {});
+    if (req.user?.role !== "admin") throw new ForbiddenError();
+
+    res.locals.user = req.user;
+    next();
+  };
 }
 
-function checkAdminRole(req: Request, res: Response, next: NextFunction): void {
-  if (req.user?.role !== "admin") {
-    res.status(403).json({
-      success: false,
-      error: "Forbidden: Admin authorization required to access this resource.",
-    });
-    return;
-  }
-  next();
-}
+const getSession: GetSession = (args) => auth.api.getSession(args);
+
+export const requireAuth = makeRequireAuth(getSession);
+export const requireAdmin = makeRequireAdmin(getSession);
