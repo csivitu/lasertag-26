@@ -1,0 +1,9 @@
+{
+  "name": "@lasertag/database",
+  "private": true,
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./schema": "./schema.ts"
+  }
+}

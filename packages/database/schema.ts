@@ -17,6 +17,7 @@ export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull(),
+  regNo: text('reg_no').notNull(),
   phNumber: text('ph_number').notNull(),
   qrToken: text('qr_token'),
   isCheckedIn: boolean('is_checked_in').default(false),
@@ -38,7 +39,7 @@ export const slots = pgTable('slots', {
   id: uuid('id').defaultRandom().primaryKey(),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),
-  capacity: integer('capacity').notNull(),
+  capacity: integer('capacity').notNull().default(10),
 });
 
 // 5. Team Members Table (Junction Table with Composite PK)
