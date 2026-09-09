@@ -18,7 +18,8 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": "eslint --fix"
+    "apps/web/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": "bun run --cwd apps/web eslint --fix",
+    "{apps/api,apps/admin,packages}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": "eslint --fix"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

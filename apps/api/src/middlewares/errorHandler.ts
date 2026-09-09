@@ -72,3 +72,14 @@ export function errorHandler(
   console.error("[api] unhandled error", err);
   res.status(500).json({ error: "Internal server error", code: "internal_error" });
 }
+
+/**
+ * Kept for the routes carried over from `dev`, which wrap their handlers in it.
+ * Express 5 already forwards rejected promises from handlers, so new code does
+ * not need this — it is a no-op safety net rather than a requirement.
+ */
+export const asyncHandler =
+  (fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) =>
+  (req: Request, res: Response, next: NextFunction): void => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };

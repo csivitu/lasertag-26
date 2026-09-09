@@ -1,5 +1,6 @@
 import { paymentPaths, paymentSchemas } from "./admin-payments.swagger";
 import { authPaths, authSchemas } from "./auth.swagger";
+import { participantPaths } from "./participant.swagger";
 import { registrationPaths } from "./registrations.swagger";
 import { conflictSchema, errorSchema } from "./shared";
 import { slotPaths, slotSchemas } from "./slots.swagger";
@@ -40,6 +41,7 @@ export const openapiDocument = {
   security: [{ sessionCookie: [] }],
   paths: {
     ...authPaths,
+    ...participantPaths,
     ...paymentPaths,
     ...slotPaths,
     ...teamPaths,
