@@ -49,7 +49,7 @@ export function JoinTeamForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+    <form className="mode-popup-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       <BaseFields
         fullName={fullName}
         registrationNumber={registrationNumber}
@@ -62,17 +62,18 @@ export function JoinTeamForm() {
       />
 
       {/* Team Code (full width) */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        <label htmlFor="popup-join-code" style={labelStyle}>
+      <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <label className="mode-popup-label" htmlFor="popup-join-code" style={labelStyle}>
           TEAM CODE
         </label>
-        <div style={inputWrapStyle}>
+        <div className="mode-popup-input-wrap" style={inputWrapStyle}>
           <input
             id="popup-join-code"
             type="text"
             value={teamCode}
             onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
             placeholder="GTFXWY"
+            className="mode-popup-input"
             style={{
               ...inputStyle,
               textTransform: "uppercase",
@@ -84,7 +85,7 @@ export function JoinTeamForm() {
       </div>
 
       {/* Join Team Button (centered below) */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
+      <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
         <ArcadeButton type="submit" label="JOIN TEAM" />
       </div>
     </form>

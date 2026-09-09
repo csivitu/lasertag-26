@@ -26,6 +26,30 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Mobile dialogs remain in one view instead of becoming scroll containers. */
+@media (max-width: 1023px) {
+  .mode-popup-mobile-card {
+    padding: clamp(20px, 4.3dvh, 36px) 24px clamp(18px, 2.9dvh, 24px) !important;
+  }
+
+  .mode-popup-form {
+    gap: clamp(7px, 1.7dvh, 14px) !important;
+  }
+
+  .mode-popup-label {
+    margin-bottom: clamp(5px, 1dvh, 8px) !important;
+  }
+
+  .mode-popup-input {
+    padding-top: clamp(6px, 1.2dvh, 10px) !important;
+    padding-bottom: clamp(6px, 1.2dvh, 10px) !important;
+  }
+
+  .mode-popup-submit {
+    margin-top: clamp(5px, 1.2dvh, 10px) !important;
+  }
+}
+
 /* Arcade-style nudge for the nav's ▶ selector marker: a blocky, stepped
    left-right jab (not an eased glide) while its link is hovered/focused,
    evoking a classic arcade menu cursor pointing at the selection.

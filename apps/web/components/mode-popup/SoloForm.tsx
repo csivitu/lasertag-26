@@ -17,7 +17,7 @@ export function SoloForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+    <form className="mode-popup-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       <BaseFields
         fullName={fullName}
         registrationNumber={registrationNumber}
@@ -28,7 +28,7 @@ export function SoloForm() {
         onEmailIdChange={setEmailId}
         onPhoneNumberChange={setPhoneNumber}
       />
-      <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
+      <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
         <ArcadeButton type="submit" label="SUBMIT" />
       </div>
     </form>

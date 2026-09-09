@@ -28,8 +28,9 @@ const cardContainerStyle: CSSProperties = {
   padding: "36px 24px 24px",
   width: "100%",
   maxWidth: "420px",
-  maxHeight: "88vh",
-  overflowY: "auto",
+  maxHeight: "calc(100dvh - 32px)",
+  overflow: "hidden",
+  boxSizing: "border-box",
 };
 
 const titleStyle: CSSProperties = {
@@ -52,6 +53,7 @@ export function ModePopupMobile({ mode, onClose }: ModePopupMobileProps) {
       aria-label="Registration details"
     >
       <div
+        className="mode-popup-mobile-card"
         style={cardContainerStyle}
         onClick={(e) => e.stopPropagation()}
       >

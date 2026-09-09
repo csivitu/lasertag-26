@@ -61,7 +61,7 @@ export function CreateTeamForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+    <form className="mode-popup-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       <BaseFields
         fullName={fullName}
         registrationNumber={registrationNumber}
@@ -74,50 +74,46 @@ export function CreateTeamForm() {
       />
 
       {/* Team Name */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        <label htmlFor="popup-team-name" style={labelStyle}>
+      <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <label className="mode-popup-label" htmlFor="popup-team-name" style={labelStyle}>
           TEAM NAME
         </label>
-        <div style={inputWrapStyle}>
+        <div className="mode-popup-input-wrap" style={inputWrapStyle}>
           <input
             id="popup-team-name"
             type="text"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
             placeholder="Blah Blah"
+            className="mode-popup-input"
             style={inputStyle}
             autoComplete="off"
           />
         </div>
       </div>
 
-      {/* Team Code row: code badge (PINK border, read-only) + Create Team button */}
+      {/* Team Code row: compact pink code badge + Create Team button */}
       <div style={{ display: "flex", alignItems: "flex-end", gap: "12px", marginTop: "4px" }}>
-        <div style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
-          <label style={labelStyle}>TEAM CODE</label>
-          {/* Team code box uses PINK border and dark magenta fill to match Figma! */}
+        <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
+          <label className="mode-popup-label" style={labelStyle}>TEAM CODE</label>
+          {/* Keep the SVG as the element background so its fill stays inside the stepped border. */}
           <div
+            className="mode-popup-code"
             style={{
               position: "relative",
-              /* Use border-image for 9-slice scaling so corners don't get squished */
-              borderStyle: "solid",
-              borderWidth: "8px",
-              borderImage: `${borderBg(PINK_INPUT_BORDER_SVG).split(" ")[0]} 12 stretch`,
-              width: "160px",
-              padding: "0",
-              /* Adjust margin to counteract the border width so it aligns nicely */
-              margin: "-8px 0",
+              background: borderBg(PINK_INPUT_BORDER_SVG),
+              width: "124px",
             }}
           >
             <div
+              className="mode-popup-input"
               style={{
                 ...inputStyle,
-                color: "#ffffff", // White text for team code
+                color: "#ffffff",
                 textAlign: "center",
                 letterSpacing: "0.12em",
                 userSelect: "all",
-                /* Adjust padding since we have 8px borders now */
-                padding: "2px 6px",
+                padding: "3px 8px",
               }}
             >
               {teamCode}
