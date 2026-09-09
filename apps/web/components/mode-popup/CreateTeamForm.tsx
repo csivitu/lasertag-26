@@ -84,7 +84,7 @@ export function CreateTeamForm() {
             type="text"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
-            placeholder="Blah Blah"
+            placeholder="Code Red"
             className="mode-popup-input"
             style={inputStyle}
             autoComplete="off"
