@@ -7,7 +7,7 @@ type Parsed = { body?: unknown; params?: unknown; query?: unknown };
  * Validates body/params/query against one schema and writes the parsed values
  * back onto the request, so handlers read validated (and transformed) data.
  *
- * Throws rather than responding: `middleware/errorHandler.ts` is the only
+ * Throws rather than responding: `middlewares/errorHandler.ts` is the only
  * place that turns errors into HTTP responses, so a validation failure comes
  * out in the same shape as every other error instead of a second one. Express
  * 5 forwards sync throws from middleware to the error handler.
@@ -35,5 +35,28 @@ export const validate =
       });
     }
 
+    next();
+  };
+
+/**
+ * Per-part variant used by the routes carried over from `dev`.
+ *
+ * Throws like `validate` rather than responding, and defines `req.query` over
+ * the getter instead of assigning to it — a plain assignment throws in
+ * Express 5, which would have surfaced the first time a query schema was used.
+ */
+export const validateRequest =
+  (validators: { body?: ZodType; params?: ZodType; query?: ZodType }) =>
+  (req: Request, _res: Response, next: NextFunction) => {
+    if (validators.body) req.body = validators.body.parse(req.body);
+    if (validators.params) req.params = validators.params.parse(req.params) as Request["params"];
+    if (validators.query) {
+      Object.defineProperty(req, "query", {
+        value: validators.query.parse(req.query),
+        configurable: true,
+        enumerable: true,
+        writable: true,
+      });
+    }
     next();
   };

@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { listRegistrations } from "../controllers/registrations.controller";
-import { validate } from "../middleware/validate";
+import { validate } from "../middlewares/validate";
 import { registrationQuerySchema } from "../validations/registration.validation";
 
 export const registrationsRouter = Router();

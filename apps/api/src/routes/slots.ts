@@ -1,24 +1,39 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 
-import {
-  createSlot,
-  createSlots,
-  deleteSlot,
-  listSlots,
-  updateSlot,
-} from "../controllers/slots.controller";
-import { validate } from "../middleware/validate";
-import {
-  bulkCreateSlotsSchema,
-  createSlotSchema,
-  patchSlotSchema,
-  slotIdSchema,
-} from "../validations/slot.validation";
+import { slotController } from "../controllers/slot.controller";
+import { asyncHandler } from "../middlewares/errorHandler";
+import { validateRequest } from "../middlewares/validate";
+import { reserveSlotSchema } from "../validations/slot.validation";
 
-export const slotsRouter = Router();
+/**
+ * Participant-facing slots, carried over from `dev`. Admin slot CRUD lives at
+ * /admin/slots (routes/admin.ts) behind the session gate — `dev`'s POST / and
+ * DELETE /:slot_id are dropped here rather than duplicated, since that router
+ * also covers bulk create, patch, and the capacity-vs-bookings rule.
+ */
+export const publicSlotsRouter = Router();
 
-slotsRouter.get("/", listSlots);
-slotsRouter.post("/", validate(createSlotSchema), createSlot);
-slotsRouter.post("/bulk", validate(bulkCreateSlotsSchema), createSlots);
-slotsRouter.patch("/:slot_id", validate(patchSlotSchema), updateSlot);
-slotsRouter.delete("/:slot_id", validate(slotIdSchema), deleteSlot);
+publicSlotsRouter.get(
+  "/",
+  asyncHandler(async (_req: Request, res: Response): Promise<void> => {
+    res.status(200).json({ success: true, data: await slotController.getAllSlots() });
+  }),
+);
+
+publicSlotsRouter.post(
+  "/:slot_id/reserve",
+  validateRequest(reserveSlotSchema),
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const newBooking = await slotController.reserveSlot({
+      slot_id: req.params.slot_id as string,
+      user_id: req.body.user_id,
+      type: req.body.type,
+      team_code: req.body.team_code,
+    });
+    res.status(201).json({
+      success: true,
+      message: "Slot reserved successfully.",
+      data: newBooking,
+    });
+  }),
+);

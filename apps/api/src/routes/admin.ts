@@ -1,10 +1,10 @@
 import { Router } from "express";
 
-import { requireAdmin } from "../middleware/requireAdmin";
+import { requireAdmin } from "../middlewares/auth.middleware";
 import { adminPaymentsRouter } from "./admin-payments";
+import { adminTeamsRouter } from "./admin-teams";
 import { registrationsRouter } from "./registrations";
-import { slotsRouter } from "./slots";
-import { teamsRouter } from "./teams";
+import { slotsRouter } from "./admin-slots";
 
 export const adminRouter = Router();
 
@@ -15,5 +15,5 @@ adminRouter.use(requireAdmin);
 
 adminRouter.use("/slots", slotsRouter);
 adminRouter.use("/registrations", registrationsRouter);
-adminRouter.use("/teams", teamsRouter);
+adminRouter.use("/teams", adminTeamsRouter);
 adminRouter.use("/payments", adminPaymentsRouter);

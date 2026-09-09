@@ -4,10 +4,13 @@ import { toNodeHandler } from "better-auth/node";
 import swaggerUi from "swagger-ui-express";
 
 import { auth } from "./auth";
-import { errorHandler, notFound } from "./middleware/errorHandler";
+import { errorHandler, notFound } from "./middlewares/errorHandler";
 import { adminAuthRouter } from "./routes/admin-auth";
 import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
+import { publicSlotsRouter } from "./routes/slots";
+import { publicTeamsRouter } from "./routes/teams";
+import verificationRouter from "./routes/verification";
 import { openapiDocument } from "./swagger";
 import type { Env } from "./env";
 
@@ -43,6 +46,11 @@ export function createApp(env: Env): Express {
     // session, and neither of these can presuppose one.
     app.use("/auth", authRouter);
     app.use("/admin-auth", adminAuthRouter);
+
+    // Participant-facing.
+    app.use("/slots", publicSlotsRouter);
+    app.use("/teams", publicTeamsRouter);
+    app.use("/verification", verificationRouter);
 
     app.use("/admin", adminRouter);
 

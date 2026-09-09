@@ -1,5 +1,5 @@
 /**
- * Domain errors. Services throw these; `middleware/errorHandler.ts` is the
+ * Domain errors. Services throw these; `middlewares/errorHandler.ts` is the
  * only place that turns them into HTTP responses, so nothing below the route
  * layer needs to know about status codes or `res`.
  */
@@ -58,5 +58,21 @@ export class ConflictError extends AppError {
 export class NotImplementedError extends AppError {
   constructor(message: string, detail?: ErrorDetail) {
     super(501, "not_implemented", message, detail);
+  }
+}
+
+/**
+ * Two-argument form used by the team/slot/verification services carried over
+ * from `dev`, whose throw sites read `new AppError(404, "…")`. Extending the
+ * hierarchy means `middlewares/errorHandler.ts` renders them like every other
+ * error instead of falling through to the generic 500 branch.
+ */
+export class HttpError extends AppError {
+  constructor(status: number, message: string, detail?: ErrorDetail) {
+    const code =
+      { 400: "validation_error", 401: "unauthorized", 403: "forbidden", 404: "not_found", 409: "conflict" }[
+        status
+      ] ?? "error";
+    super(status, code, message, detail);
   }
 }
