@@ -21,23 +21,29 @@ export function FaqAccordion() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     return (
-        <div className="relative pl-9 sm:pl-11">
-            <div className="absolute bottom-6 left-[14px] top-6 w-px bg-white/15 sm:left-[16px]" aria-hidden />
+        <div className="relative w-full py-2 sm:py-0">
+            <div
+                className="absolute left-[10px] top-3 bottom-3 w-px bg-white/15 sm:left-3 sm:top-0 sm:bottom-0"
+                aria-hidden
+            />
 
-            <ol className="flex flex-col gap-4">
+            <ol className="flex flex-col gap-3.5 sm:gap-3">
                 {faqItems.map((entry, index) => (
-                    <li key={entry.question} className="relative">
-                        <span
-                            className={`absolute left-[-30px] top-1/2 flex size-4 -translate-y-1/2 items-center justify-center rounded-full border-2 bg-ink sm:left-[-38px] sm:size-5 ${DOT_RING[entry.color]}`}
-                            aria-hidden
-                        >
-                            <span className={`size-1.5 rounded-full sm:size-2 ${DOT_FILL[entry.color]}`} />
-                        </span>
-                        <FaqItem
-                            entry={entry}
-                            isOpen={openIndex === index}
-                            onToggle={() => setOpenIndex(openIndex === index ? null : index)}
-                        />
+                    <li key={entry.question} className="relative flex items-center gap-4 sm:gap-5">
+                        <div className="flex w-5 shrink-0 items-center justify-center sm:w-6">
+                            <span
+                                className={`relative z-10 flex size-5 items-center justify-center rounded-full border-2 bg-ink sm:size-6 ${DOT_RING[entry.color]}`}
+                            >
+                                <span className={`size-2 rounded-full sm:size-2.5 ${DOT_FILL[entry.color]}`} />
+                            </span>
+                        </div>
+                        <div className="flex-1">
+                            <FaqItem
+                                entry={entry}
+                                isOpen={openIndex === index}
+                                onToggle={() => setOpenIndex(openIndex === index ? null : index)}
+                            />
+                        </div>
                     </li>
                 ))}
             </ol>

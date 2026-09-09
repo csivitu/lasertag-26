@@ -1,9 +1,9 @@
 import type { FaqEntry } from "./faqItems.data";
 
-const COLOR_CLASSES: Record<FaqEntry["color"], { border: string; text: string; ring: string }> = {
-    pink: { border: "border-brand-pink", text: "text-brand-pink", ring: "ring-brand-pink" },
-    yellow: { border: "border-brand-yellow", text: "text-brand-yellow", ring: "ring-brand-yellow" },
-    cyan: { border: "border-brand-cyan", text: "text-brand-cyan", ring: "ring-brand-cyan" },
+const COLOR_CLASSES: Record<FaqEntry["color"], { border: string; text: string; bg: string }> = {
+    pink: { border: "border-brand-pink", text: "text-brand-pink", bg: "bg-brand-pink" },
+    yellow: { border: "border-brand-yellow", text: "text-brand-yellow", bg: "bg-brand-yellow" },
+    cyan: { border: "border-brand-cyan", text: "text-brand-cyan", bg: "bg-brand-cyan" },
 };
 
 type FaqItemProps = {
@@ -17,7 +17,7 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
 
     return (
         <div
-            className={`rounded-xl border-2 bg-ink/60 px-4 py-3 shadow-[0_0_14px_-4px_currentColor] transition-colors sm:px-6 sm:py-4 ${colors.border} ${colors.text}`}
+            className={`rounded-lg border-[3px] bg-ink/60 px-4 py-3 shadow-[0_0_14px_-4px_currentColor] transition-colors sm:px-5 sm:py-3 ${colors.border} ${colors.text}`}
         >
             <button
                 type="button"
@@ -25,21 +25,22 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
                 aria-expanded={isOpen}
                 className="flex w-full items-center justify-between gap-4 text-left"
             >
-                <span className="font-pixel text-[11px] leading-relaxed text-white sm:text-sm">
+                <span className="font-pixel text-[10px] leading-relaxed text-white sm:text-sm">
                     {entry.question}
                 </span>
                 <span
-                    className={`faq-item__icon shrink-0 text-xl font-pixel ${colors.text}`}
+                    className="faq-item__icon relative shrink-0 size-5 sm:size-6"
                     data-open={isOpen}
                     aria-hidden
                 >
-                    +
+                    <span className={`absolute inset-0 m-auto h-[68%] w-[2.5px] rounded-sm sm:w-[3px] ${colors.bg}`} />
+                    <span className={`absolute inset-0 m-auto h-[2.5px] w-[68%] rounded-sm sm:h-[3px] ${colors.bg}`} />
                 </span>
             </button>
 
             <div className="faq-item__panel" data-open={isOpen}>
                 <div className="overflow-hidden">
-                    <p className="pt-3 font-body text-sm leading-relaxed text-white/70 sm:pt-4">
+                    <p className="pt-2 font-body text-xs leading-relaxed text-white/70 sm:pt-3 sm:text-sm">
                         {entry.answer}
                     </p>
                 </div>

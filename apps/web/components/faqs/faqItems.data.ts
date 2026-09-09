@@ -8,40 +8,45 @@ export type FaqEntry = {
 
 export const faqItems: FaqEntry[] = [
   {
-    question: "Who can participate in Laser Tag?",
+    question: "What if my slot clashes?",
     answer:
-      "Anyone aged 8 and up can play. Under-12s need a signed guardian waiver, and every player needs closed-toe shoes.",
+      "Reach out to us at least 2 hours before your session and we'll move you to the next available slot, no extra charge.",
     color: "pink",
   },
   {
-    question: "What should I wear to a game?",
+    question: "Do I come solo or in a squad?",
     answer:
-      "Dark, comfortable clothing you can move in. Avoid anything with reflective panels — it makes you an easy target.",
+      "Either works. Solo players get matched into a squad on arrival; groups of 6 or more can book a private session.",
     color: "yellow",
   },
   {
-    question: "How long does a session last?",
+    question: "What's the game time?",
     answer:
-      "Each booking is a 45-minute slot: a 10-minute briefing, two 15-minute rounds, and time to check the leaderboard.",
+      "Each session runs 45 minutes total — a quick briefing, two 15-minute rounds, and a look at the leaderboard.",
     color: "cyan",
   },
   {
-    question: "Do I need to book ahead?",
+    question: "Is it safe?",
     answer:
-      "Yes — walk-ins are only accepted if a slot is open. Booking online guarantees your squad plays together.",
+      "Yes — laser tag uses infrared, not projectiles. All gear is sanitized between sessions and staff run a safety briefing before every game.",
     color: "pink",
   },
   {
-    question: "Is there a minimum group size?",
+    question: "What if I arrive late?",
     answer:
-      "Solo players are welcome and get matched into a squad. Private sessions need at least 6 players.",
+      "You can join mid-round if you're within the first 10 minutes. After that, you'll be slotted into the next available game.",
     color: "yellow",
   },
   {
-    question: "What if someone on my team is a first-timer?",
+    question: "Changes & cancellations?",
     answer:
-      "No problem — every squad gets a 2-minute practice round before the clock starts, and staff walk the floor to help.",
+      "Free rescheduling up to 4 hours before your slot. Cancellations within 4 hours forfeit the booking fee.",
     color: "cyan",
   },
-
+  {
+    question: "Are there prizes?",
+    answer:
+      "Top scorer each session gets a free replay, and the weekly leaderboard winner takes home laser tag merch.",
+    color: "pink",
+  },
 ];
