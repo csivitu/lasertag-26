@@ -8,11 +8,12 @@ import { INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
 
 const labelStyle: CSSProperties = {
   fontFamily: "'Press Start 2P', monospace",
-  fontSize: "clamp(6px, 1.2vw, 9px)",
-  color: "#23EFF1",
+  fontSize: "12px",
+  color: "#ffffff",
   letterSpacing: "0.1em",
-  marginBottom: "4px",
+  marginBottom: "8px",
   display: "block",
+  lineHeight: 1,
 };
 
 const inputWrapStyle: CSSProperties = {
@@ -27,10 +28,11 @@ const inputStyle: CSSProperties = {
   color: "#ffffff",
   fontFamily: "'Oxanium', sans-serif",
   fontWeight: 400,
-  fontSize: "clamp(11px, 1.5vw, 14px)",
+  fontSize: "16px",
   padding: "10px 14px",
   outline: "none",
   border: "none",
+  lineHeight: 1.4,
 };
 
 export function JoinTeamForm() {
@@ -47,7 +49,7 @@ export function JoinTeamForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       <BaseFields
         fullName={fullName}
         registrationNumber={registrationNumber}
@@ -59,8 +61,8 @@ export function JoinTeamForm() {
         onPhoneNumberChange={setPhoneNumber}
       />
 
-      {/* Team Code (user enters it) */}
-      <div className="flex flex-col">
+      {/* Team Code (full width) */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         <label htmlFor="popup-join-code" style={labelStyle}>
           TEAM CODE
         </label>
@@ -71,14 +73,18 @@ export function JoinTeamForm() {
             value={teamCode}
             onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
             placeholder="GTFXWY"
-            style={{ ...inputStyle, letterSpacing: "0.12em" }}
+            style={{
+              ...inputStyle,
+              textTransform: "uppercase",
+            }}
             autoComplete="off"
-            maxLength={8}
+            spellCheck={false}
           />
         </div>
       </div>
 
-      <div className="mt-2 flex justify-center">
+      {/* Join Team Button (centered below) */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
         <ArcadeButton type="submit" label="JOIN TEAM" />
       </div>
     </form>

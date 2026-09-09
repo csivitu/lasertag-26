@@ -17,7 +17,7 @@ export function SoloForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       <BaseFields
         fullName={fullName}
         registrationNumber={registrationNumber}
@@ -28,7 +28,7 @@ export function SoloForm() {
         onEmailIdChange={setEmailId}
         onPhoneNumberChange={setPhoneNumber}
       />
-      <div className="mt-2 flex justify-center">
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
         <ArcadeButton type="submit" label="SUBMIT" />
       </div>
     </form>

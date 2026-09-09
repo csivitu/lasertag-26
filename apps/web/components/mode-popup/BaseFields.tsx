@@ -14,20 +14,30 @@ export interface BaseFieldsProps {
   onPhoneNumberChange: (v: string) => void;
 }
 
+/**
+ * Label style — Press Start 2P, uppercase, white, tight tracking.
+ */
 const labelStyle: CSSProperties = {
   fontFamily: "'Press Start 2P', monospace",
-  fontSize: "clamp(6px, 1.2vw, 9px)",
+  fontSize: "12px",
   color: "#ffffff",
-  letterSpacing: "0.1em",
-  marginBottom: "4px",
+  letterSpacing: "0.08em",
+  marginBottom: "8px",
   display: "block",
+  lineHeight: 1,
 };
 
+/**
+ * Input wrapper — carries the SVG border as its background.
+ */
 const inputWrapStyle: CSSProperties = {
   position: "relative",
   background: borderBg(INPUT_BORDER_SVG),
 };
 
+/**
+ * Input field — Oxanium Regular 400, white text on transparent bg.
+ */
 const inputStyle: CSSProperties = {
   display: "block",
   width: "100%",
@@ -35,10 +45,11 @@ const inputStyle: CSSProperties = {
   color: "#ffffff",
   fontFamily: "'Oxanium', sans-serif",
   fontWeight: 400,
-  fontSize: "clamp(11px, 1.5vw, 14px)",
+  fontSize: "16px",
   padding: "10px 14px",
   outline: "none",
   border: "none",
+  lineHeight: 1.4,
 };
 
 interface FieldProps {
@@ -52,7 +63,7 @@ interface FieldProps {
 
 function Field({ label, id, value, onChange, placeholder = "", type = "text" }: FieldProps) {
   return (
-    <div className="flex flex-col">
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <label htmlFor={id} style={labelStyle}>
         {label}
       </label>

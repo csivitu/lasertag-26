@@ -8,11 +8,12 @@ import { INPUT_BORDER_SVG, PINK_INPUT_BORDER_SVG, borderBg } from "./modePopupDe
 
 const labelStyle: CSSProperties = {
   fontFamily: "'Press Start 2P', monospace",
-  fontSize: "clamp(6px, 1.2vw, 9px)",
+  fontSize: "12px",
   color: "#ffffff",
   letterSpacing: "0.1em",
-  marginBottom: "4px",
+  marginBottom: "8px",
   display: "block",
+  lineHeight: 1,
 };
 
 const inputWrapStyle: CSSProperties = {
@@ -27,10 +28,11 @@ const inputStyle: CSSProperties = {
   color: "#ffffff",
   fontFamily: "'Oxanium', sans-serif",
   fontWeight: 400,
-  fontSize: "clamp(11px, 1.5vw, 14px)",
+  fontSize: "16px",
   padding: "10px 14px",
   outline: "none",
   border: "none",
+  lineHeight: 1.4,
 };
 
 /** Generates a random 6 char uppercase team code, seeded once on mount. */
@@ -59,7 +61,7 @@ export function CreateTeamForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
       <BaseFields
         fullName={fullName}
         registrationNumber={registrationNumber}
@@ -72,7 +74,7 @@ export function CreateTeamForm() {
       />
 
       {/* Team Name */}
-      <div className="flex flex-col">
+      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         <label htmlFor="popup-team-name" style={labelStyle}>
           TEAM NAME
         </label>
@@ -89,24 +91,33 @@ export function CreateTeamForm() {
         </div>
       </div>
 
-      {/* Team Code row: code badge (cyan border, read-only) + Create Team button */}
-      <div className="mt-2 flex items-end gap-3">
-        <div className="flex flex-col flex-shrink-0">
+      {/* Team Code row: code badge (PINK border, read-only) + Create Team button */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: "12px", marginTop: "4px" }}>
+        <div style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
           <label style={labelStyle}>TEAM CODE</label>
-          {/* Team code box uses cyan border to match the other inputs */}
+          {/* Team code box uses PINK border and dark magenta fill to match Figma! */}
           <div
             style={{
               position: "relative",
-              background: borderBg(INPUT_BORDER_SVG),
-              minWidth: "100px",
+              /* Use border-image for 9-slice scaling so corners don't get squished */
+              borderStyle: "solid",
+              borderWidth: "8px",
+              borderImage: `${borderBg(PINK_INPUT_BORDER_SVG).split(" ")[0]} 12 stretch`,
+              width: "160px",
+              padding: "0",
+              /* Adjust margin to counteract the border width so it aligns nicely */
+              margin: "-8px 0",
             }}
           >
             <div
               style={{
                 ...inputStyle,
-                color: "#ffffff",
+                color: "#ffffff", // White text for team code
+                textAlign: "center",
                 letterSpacing: "0.12em",
                 userSelect: "all",
+                /* Adjust padding since we have 8px borders now */
+                padding: "2px 6px",
               }}
             >
               {teamCode}
@@ -114,7 +125,7 @@ export function CreateTeamForm() {
           </div>
         </div>
 
-        <div className="flex-1 flex justify-center">
+        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <ArcadeButton type="submit" label="CREATE TEAM" />
         </div>
       </div>
