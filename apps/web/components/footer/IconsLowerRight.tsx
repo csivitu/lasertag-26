@@ -57,7 +57,7 @@ export default function IconsLowerRight() {
 				style={{ "--icon-accent": "var(--yellow)" } as React.CSSProperties}
 			>
 				<img
-					src="/icons/divsectionxqghtcontainer.svg"
+					src="/footer/divsectionxqghtcontainer.svg"
 					alt="CSI-VIT website"
 					className="block h-8 w-8"
 				/>

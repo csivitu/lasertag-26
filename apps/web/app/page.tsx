@@ -1,7 +1,7 @@
 
-import Footer from "../components/Footer";
-import SvgUpperLeft from "../components/SvgUpperLeft";
-import TextUpperRight from "../components/TextUpperRight";
+import Footer from "../components/footer/Footer";
+import SvgUpperLeft from "../components/footer/SvgUpperLeft";
+import TextUpperRight from "../components/footer/TextUpperRight";
 
 export default function Home() {
   return (

@@ -20,12 +20,12 @@ export default function TextUpperRight() {
         aria-label="Book Now"
       >
         <img
-          src="/icons/group-598.png"
+          src="/footer/group-598.png"
           alt=""
           className="btn-book-now-normal absolute inset-0 h-full w-full"
         />
         <img
-          src="/icons/group-597.svg"
+          src="/footer/group-597.svg"
           alt=""
           className="btn-book-now-pressed absolute inset-0 h-full w-full"
         />

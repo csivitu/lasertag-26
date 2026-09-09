@@ -3,7 +3,7 @@ export default function SvgUpperLeft() {
     <div className="flex w-full items-center justify-center">
       <div className="relative w-full translate-x-[2%] max-w-[360px] sm:max-w-[480px] md:max-w-[580px] lg:max-w-[680px] xl:max-w-[737px]">
         <img
-          src="/icons/upper-left-group.svg"
+          src="/footer/upper-left-group.svg"
           alt="Laser tag arcade cabinet"
           className="h-auto w-full select-none object-contain drop-shadow-[0_0_35px_rgba(237,43,132,0.2)]"
           fetchPriority="high"
@@ -19,7 +19,7 @@ export default function SvgUpperLeft() {
           }}
         >
           <img
-            src="/icons/are-you-ready.svg"
+            src="/footer/are-you-ready.svg"
             alt="ARE YOU READY?"
             className="h-full w-full select-none object-contain drop-shadow-[0_0_8px_rgba(254,220,2,0.5)]"
           />
