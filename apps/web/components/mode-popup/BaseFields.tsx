@@ -63,17 +63,18 @@ interface FieldProps {
 
 function Field({ label, id, value, onChange, placeholder = "", type = "text" }: FieldProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-      <label htmlFor={id} style={labelStyle}>
+    <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      <label className="mode-popup-label" htmlFor={id} style={labelStyle}>
         {label}
       </label>
-      <div style={inputWrapStyle}>
+      <div className="mode-popup-input-wrap" style={inputWrapStyle}>
         <input
           id={id}
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          className="mode-popup-input"
           style={inputStyle}
           autoComplete="off"
           spellCheck={false}
