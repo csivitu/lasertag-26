@@ -1,8 +1,9 @@
-import { redirect } from "next/navigation";
+import { Hero } from "@/components/hero/Hero";
 
-// The hero page is being built by another team member (manan branch).
-// On this branch (shreya), only the /register popup flow is in scope.
-// Redirect root to /register for easy local testing.
 export default function Home() {
-  redirect("/register");
+  return (
+    <div className="flex flex-1 flex-col">
+      <Hero />
+    </div>
+  );
 }

@@ -18,7 +18,7 @@ export interface BaseFieldsProps {
  * Label style — Press Start 2P, uppercase, white, tight tracking.
  */
 const labelStyle: CSSProperties = {
-  fontFamily: "'Press Start 2P', monospace",
+  fontFamily: "var(--ft-pixel), monospace",
   fontSize: "12px",
   color: "#ffffff",
   letterSpacing: "0.08em",
@@ -43,7 +43,7 @@ const inputStyle: CSSProperties = {
   width: "100%",
   background: "transparent",
   color: "#ffffff",
-  fontFamily: "'Oxanium', sans-serif",
+  fontFamily: "var(--ft-body), sans-serif",
   fontWeight: 400,
   fontSize: "16px",
   padding: "10px 14px",

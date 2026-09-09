@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { BaseFields } from "./BaseFields";
-import { ArcadeButton } from "./ArcadeButton";
+import { PixelButton } from "../hero/PixelButton";
 
 export function SoloForm() {
   const [fullName, setFullName] = useState("");
@@ -29,7 +29,7 @@ export function SoloForm() {
         onPhoneNumberChange={setPhoneNumber}
       />
       <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
-        <ArcadeButton type="submit" label="SUBMIT" />
+        <PixelButton type="submit" label="Submit" className="w-[150px]" />
       </div>
     </form>
   );

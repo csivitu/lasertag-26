@@ -3,11 +3,11 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
-import { ArcadeButton } from "./ArcadeButton";
+import { PixelButton } from "../hero/PixelButton";
 import { INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
 
 const labelStyle: CSSProperties = {
-  fontFamily: "'Press Start 2P', monospace",
+  fontFamily: "var(--ft-pixel), monospace",
   fontSize: "12px",
   color: "#ffffff",
   letterSpacing: "0.1em",
@@ -26,7 +26,7 @@ const inputStyle: CSSProperties = {
   width: "100%",
   background: "transparent",
   color: "#ffffff",
-  fontFamily: "'Oxanium', sans-serif",
+  fontFamily: "var(--ft-body), sans-serif",
   fontWeight: 400,
   fontSize: "16px",
   padding: "10px 14px",
@@ -86,7 +86,7 @@ export function JoinTeamForm() {
 
       {/* Join Team Button (centered below) */}
       <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
-        <ArcadeButton type="submit" label="JOIN TEAM" />
+        <PixelButton type="submit" label="Join Team" className="w-[170px]" />
       </div>
     </form>
   );
