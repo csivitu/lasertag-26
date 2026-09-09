@@ -122,7 +122,12 @@ export function CreateTeamForm() {
         </div>
 
         <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-          <PixelButton type="submit" label="Create Team" className="w-[170px]" />
+          <PixelButton
+            type="submit"
+            label="Create Team"
+            className="w-[240px]"
+            labelClassName="text-[13px]"
+          />
         </div>
       </div>
     </form>

@@ -29,7 +29,12 @@ export function SoloForm() {
         onPhoneNumberChange={setPhoneNumber}
       />
       <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
-        <PixelButton type="submit" label="Submit" className="w-[150px]" />
+        <PixelButton
+          type="submit"
+          label="Submit"
+          className="w-[240px]"
+          labelClassName="text-[13px]"
+        />
       </div>
     </form>
   );

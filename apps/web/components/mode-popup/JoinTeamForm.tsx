@@ -86,7 +86,12 @@ export function JoinTeamForm() {
 
       {/* Join Team Button (centered below) */}
       <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
-        <PixelButton type="submit" label="Join Team" className="w-[170px]" />
+        <PixelButton
+          type="submit"
+          label="Join Team"
+          className="w-[240px]"
+          labelClassName="text-[13px]"
+        />
       </div>
     </form>
   );
