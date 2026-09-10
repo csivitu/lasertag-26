@@ -1,5 +1,4 @@
-import { user } from "./auth-schema";
-
+import { user } from './auth-schema';
 import {
   pgTable,
   pgEnum,
@@ -11,8 +10,13 @@ import {
   primaryKey,
 } from 'drizzle-orm/pg-core';
 
-// 1. Enum Definition
+// 1. Enum Definitions
+export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 export const bookingTypeEnum = pgEnum('booking_type', ['individual', 'team']);
+
+// Alias users -> user for backward compatibility
+export const users = user;
+export { user };
 
 // 3. Teams Table
 export const teams = pgTable('teams', {
@@ -45,15 +49,14 @@ export const teamMembers = pgTable(
   (table) => [
     primaryKey({
       columns: [table.teamCode, table.userId],
-      name: "team_members_team_code_user_id_pk",
+      name: 'team_members_team_code_user_id_pk',
     }),
-
   ]
 );
 
 // 6. Bookings Table
 export const bookings = pgTable('bookings', {
-  id: text('id').primaryKey(), // Or uuid('id').defaultRandom().primaryKey()
+  id: text('id').primaryKey(),
   type: bookingTypeEnum('type').notNull(),
   userId: text('user_id')
     .notNull()
