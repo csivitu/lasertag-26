@@ -1,0 +1,68 @@
+import type { NextFunction, Request, RequestHandler, Response } from "express";
+import { fromNodeHeaders } from "better-auth/node";
+
+import { auth } from "../auth";
+import { ForbiddenError, UnauthorizedError } from "../errors";
+
+export interface AuthenticatedUser {
+  id: string;
+  name?: string;
+  email?: string;
+  role?: string | null;
+}
+
+/* eslint-disable @typescript-eslint/no-namespace */
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthenticatedUser;
+    }
+  }
+}
+/* eslint-enable @typescript-eslint/no-namespace */
+
+type Session = { user: AuthenticatedUser };
+type GetSession = (args: { headers: Headers }) => Promise<Session | null>;
+
+/**
+ * Identity comes from the signed better-auth session cookie, never from a
+ * client-supplied header.
+ *
+ * The previous implementation read the user id straight out of `x-user-id` /
+ * `Authorization: Bearer <user_id>` and looked it up — but a user id is a
+ * database primary key, not a secret, and it is returned by the unauthenticated
+ * team endpoints. Anyone holding an admin's id could therefore assume that
+ * admin's identity. Verifying the session cookie is what actually proves the
+ * caller authenticated.
+ *
+ * Factory so tests can inject a fake `getSession` — importing `../auth`
+ * directly pulls in @lasertag-26/database, which throws without DATABASE_URL.
+ */
+export function makeRequireAuth(getSession: GetSession): RequestHandler {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    // fromNodeHeaders (not a hand-built Headers()) because IncomingHttpHeaders
+    // values can be string[] (e.g. set-cookie), which Headers() rejects.
+    const session = await getSession({ headers: fromNodeHeaders(req.headers) });
+    if (!session) throw new UnauthorizedError();
+
+    req.user = session.user;
+    next();
+  };
+}
+
+export function makeRequireAdmin(getSession: GetSession): RequestHandler {
+  const authenticate = makeRequireAuth(getSession);
+
+  return async (req: Request, res: Response, next: NextFunction) => {
+    await authenticate(req, res, () => {});
+    if (req.user?.role !== "admin") throw new ForbiddenError();
+
+    res.locals.user = req.user;
+    next();
+  };
+}
+
+const getSession: GetSession = (args) => auth.api.getSession(args);
+
+export const requireAuth = makeRequireAuth(getSession);
+export const requireAdmin = makeRequireAdmin(getSession);

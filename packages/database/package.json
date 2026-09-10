@@ -1,9 +1,11 @@
 {
-  "name": "@lasertag/database",
+  "name": "@lasertag-26/database",
   "private": true,
-  "main": "./index.ts",
+  "main": "index.ts",
+  "types": "index.ts",
   "exports": {
     ".": "./index.ts",
-    "./schema": "./schema.ts"
+    "./schema": "./schema.ts",
+    "./auth-schema": "./auth-schema.ts"
   }
 }

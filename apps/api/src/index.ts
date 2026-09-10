@@ -1,28 +1,16 @@
-import "dotenv/config";
-import express from "express";
-import { toNodeHandler } from "better-auth/node";
-import { auth } from "./lib/auth";
-import registrationsRouter from "./routes/registrations";
-import usersRouter from "./routes/users";
-import adminRouter from "./routes/admin";
+import { createApp } from "./app";
+import { env } from "./env";
 
-const app = express();
+const app = createApp(env);
 
-// BetterAuth handler — must be mounted BEFORE express.json()
-app.all("/api/auth/*", toNodeHandler(auth));
-
-app.use(express.json());
-
-app.get("/", (req, res) => {
-    res.send("API is running!");
+const server = app.listen(env.PORT, () => {
+    console.log(`Server running on http://localhost:${env.PORT}`);
 });
 
-app.use("/registrations", registrationsRouter);
-app.use("/users", usersRouter);
-app.use("/admin", adminRouter);
+function shutdown(signal: string) {
+    console.log(`${signal} received, closing server`);
+    server.close(() => process.exit(0));
+}
 
-const PORT = 3001;
-
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
