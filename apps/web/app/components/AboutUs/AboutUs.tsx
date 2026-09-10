@@ -1,4 +1,3 @@
-import Image from "next/image";
 import styles from "./AboutSection.module.css";
 import AboutUsHeader from "./AboutUsHeader";
 import AboutUsLeftDisc from "./AboutUsLeftDisc";
