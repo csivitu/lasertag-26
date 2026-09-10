@@ -1,0 +1,66 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+
+const MAX_HEALTH = 5;
+
+export function SponsHealth() {
+  const [health, setHealth] = useState(1);
+  const increasing = useRef(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHealth((current) => {
+        if (current === MAX_HEALTH) {
+          increasing.current = false;
+          return current - 1;
+        }
+
+        if (current === 1) {
+          increasing.current = true;
+          return current + 1;
+        }
+
+        return increasing.current ? current + 1 : current - 1;
+      });
+    }, 700);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex items-center">
+      {/* Heart */}
+      <div className="relative size-[clamp(40px,4.1vw,59px)] shrink-0">
+        <Image
+          src="/spons/heart.svg"
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 4.1vw, 59px"
+          className="object-contain"
+        />
+      </div>
+
+      {/* Health segments */}
+      <div className="ml-[clamp(5px,0.55vw,8px)] flex items-center">
+        {Array.from({ length: MAX_HEALTH }).map((_, index) => (
+          <Image
+            key={index}
+            src={
+              index < health
+                ? "/spons/health-filled.svg"
+                : "/spons/health-empty.svg"
+            }
+            alt=""
+            width={44}
+            height={32}
+            className={`h-auto w-[clamp(30px,3.02vw,44px)] shrink-0 ${
+              index > 0 ? "-ml-[6px]" : ""
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
