@@ -1,0 +1,37 @@
+.faq-wordmark {
+    font-family: var(--ft-heading);
+    font-size: clamp(3rem, 10vw, 7rem);
+    background: linear-gradient(90deg, #fee18a 0%, #fed14b 24%, #fec414 50%, #fecf41 74%, #fed865 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0.044em 0.044em 0 var(--color-brand-pink));
+}
+
+.faq-item__icon {
+    transition: transform 200ms ease;
+}
+
+.faq-item__icon[data-open="true"] {
+    transform: rotate(45deg);
+}
+
+.faq-item__panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 250ms ease;
+}
+
+.faq-item__panel[data-open="true"] {
+    grid-template-rows: 1fr;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .faq-item__icon,
+    .faq-item__panel {
+        transition: none;
+
+    }
+}
