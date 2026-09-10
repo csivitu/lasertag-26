@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { dots, sparkles, VIEWBOX_H, VIEWBOX_W } from "./starfield.data";
+import styles from "./AboutSection.module.css";
 
-const SPARK_SRC = {
+const SPARK_SRC: Record<string, string> = {
     a: "/about/sparkle-burst.svg",
     b: "/about/sparkle-dot.svg",
     c: "/about/sparkle-ring.svg",
@@ -17,6 +18,7 @@ export function PinkStars() {
                 zIndex: 0,
                 width: "100%",
                 height: "100%",
+                overflow: "hidden",
             }}
         >
             {sparkles.map(([x, y, w, h, shape], i) => (
@@ -39,16 +41,7 @@ export function PinkStars() {
 
 export function Starfield() {
     return (
-        <div
-            style={{
-                pointerEvents: "none",
-                position: "absolute",
-                inset: 0,
-                zIndex: 0,
-                width: "100%",
-                height: "100%",
-            }}
-        >
+        <div className={styles.starfield}>
             {/* SVG Pixel Dots */}
             <svg
                 aria-hidden

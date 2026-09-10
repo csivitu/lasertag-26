@@ -11,20 +11,14 @@ const GHOST_SRCS = [
     "/about/ghost-3.png",
     "/about/ghost-4.png",
 ];
-const JOYSTICK_SRC = "/about/joystick.png";
-const CASSETTE_SRC = "/about/cassette-bar.png";
-const WIRE_SRC = "/about/wire.png";
 
 const PERIMETER_PATH_D =
-    "M 105 25 L 1335 25 A 50 50 0 0 1 1385 75 L 1385 795 A 50 50 0 0 1 1335 845 L 105 845 A 50 50 0 0 1 55 795 L 55 75 A 50 50 0 0 1 105 25 Z";
+    "M 120 30 L 1320 30 A 35 35 0 0 1 1355 65 L 1355 830 A 35 35 0 0 1 1320 865 L 120 865 A 35 35 0 0 1 85 830 L 85 65 A 35 35 0 0 1 120 30 Z";
 
 const ANIMATION_DURATION_MS = 16000;
-const GHOST_STAGGER_PX = 65;
+const GHOST_STAGGER_PX = 70;
 const DOT_SPACING_PX = 55;
 const DOT_COUNT = 4;
-
-const PACMAN_SIZE = 64;
-const GHOST_SIZE = 80;
 
 interface Point {
     x: number;
@@ -44,17 +38,14 @@ interface RenderedDot {
 }
 
 export default function Pacman() {
-    const joystickRef = useRef<HTMLDivElement>(null);
     const pathRef = useRef<SVGPathElement>(null);
 
-    const [joystickTilt, setJoystickTilt] = useState({ rotateZ: 0, rotateX: 0 });
-
-    const [pacmanPos, setPacmanPos] = useState<Point>({ x: 105, y: 25, angle: 0 });
+    const [pacmanPos, setPacmanPos] = useState<Point>({ x: 120, y: 30, angle: 0 });
     const [ghostPositions, setGhostPositions] = useState<Point[]>([
-        { x: 105, y: 25, angle: 0 },
-        { x: 105, y: 25, angle: 0 },
-        { x: 105, y: 25, angle: 0 },
-        { x: 105, y: 25, angle: 0 },
+        { x: 120, y: 30, angle: 0 },
+        { x: 120, y: 30, angle: 0 },
+        { x: 120, y: 30, angle: 0 },
+        { x: 120, y: 30, angle: 0 },
     ]);
     const [renderedDots, setRenderedDots] = useState<RenderedDot[]>([]);
 
@@ -144,32 +135,8 @@ export default function Pacman() {
         return () => cancelAnimationFrame(animationFrameId);
     }, []);
 
-    function handleJoystickMove(e: React.MouseEvent<HTMLDivElement>) {
-        const el = joystickRef.current;
-        if (!el) return;
-
-        const rect = el.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height * 0.35;
-
-        const dx = e.clientX - cx;
-        const dy = e.clientY - cy;
-
-        const clampedDx = Math.max(-1, Math.min(1, dx / (rect.width / 2)));
-        const clampedDy = Math.max(-1, Math.min(1, dy / (rect.height / 2)));
-
-        setJoystickTilt({
-            rotateZ: clampedDx * 12,
-            rotateX: -clampedDy * 8,
-        });
-    }
-
-    function handleJoystickLeave() {
-        setJoystickTilt({ rotateZ: 0, rotateX: 0 });
-    }
-
     return (
-        <>
+        <div className={styles.pacmanOverlay}>
             <svg
                 viewBox="0 0 1440 900"
                 className={styles.arcadePathSvg}
@@ -207,8 +174,7 @@ export default function Pacman() {
                 <Image
                     src={PACMAN_SRC}
                     alt="Pacman"
-                    width={PACMAN_SIZE}
-                    height={PACMAN_SIZE}
+                    fill
                     className={styles.fitImg}
                 />
             </div>
@@ -226,37 +192,11 @@ export default function Pacman() {
                     <Image
                         src={GHOST_SRCS[index]}
                         alt={`Ghost ${index + 1}`}
-                        width={GHOST_SIZE}
-                        height={GHOST_SIZE}
+                        fill
                         className={styles.fitImg}
                     />
                 </div>
             ))}
-
-            <div className={styles.cassetteWrap}>
-                <Image src={CASSETTE_SRC} alt="" fill className={styles.fitImg} />
-            </div>
-
-            <div className={styles.wireWrap}>
-                <Image src={WIRE_SRC} alt="" fill className={styles.fitImg} unoptimized />
-            </div>
-
-            <div
-                ref={joystickRef}
-                className={styles.joystickWrap}
-                onMouseMove={handleJoystickMove}
-                onMouseLeave={handleJoystickLeave}
-            >
-                <div
-                    className={styles.joystickTiltInner}
-                    style={{
-                        transform: `perspective(600px) rotateX(${joystickTilt.rotateX}deg) rotateZ(${joystickTilt.rotateZ}deg)`,
-                        transformOrigin: "50% 88%",
-                    }}
-                >
-                    <Image src={JOYSTICK_SRC} alt="" fill className={styles.fitImg} />
-                </div>
-            </div>
-        </>
+        </div>
     );
 }
