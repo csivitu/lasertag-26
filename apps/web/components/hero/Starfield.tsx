@@ -6,6 +6,7 @@ export function Starfield() {
       aria-hidden
       viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}
       preserveAspectRatio="xMidYMid slice"
+      shapeRendering="crispEdges"
       className="pointer-events-none absolute inset-0 z-0 size-full"
     >
       <defs>
