@@ -43,7 +43,7 @@
 
 .slot-title {
   font-family: var(--font-heading);
-  font-size: clamp(3rem, 7.2vw, 6.8rem);
+  font-size: clamp(3.25rem, 7.35vw, 6.8rem);
   line-height: 1;
   color: #FEDC02;
   text-shadow: -4px 0 0 #E5349E;
@@ -52,38 +52,63 @@
 }
 
 .slot-booking-screen {
-  padding: clamp(20px, 3.4vh, 64px) clamp(14px, 6vw, 100px) clamp(14px, 2.6vh, 34px);
-  gap: clamp(18px, 2.8vh, 38px);
+  padding: clamp(20px, 3.2vh, 58px) clamp(14px, 6vw, 100px) clamp(14px, 2.6vh, 34px);
+  gap: clamp(14px, 2.2vh, 30px);
 }
 
 .slot-current-badge {
+  --badge-frame-height: clamp(42px, 4.9vw, 63px);
+  --badge-frame-width: clamp(19px, 2.15vw, 28px);
+  --badge-height: clamp(34px, 4.1vw, 46px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: min(56vw, 612px);
-  padding: clamp(10px, 1.25vh, 16px) clamp(18px, 4vw, 54px);
+  min-height: var(--badge-height);
+  min-width: min(54vw, 370px);
+  padding: 0 clamp(34px, 4.8vw, 58px);
+  position: relative;
+}
+
+.slot-current-badge::before,
+.slot-current-badge::after {
+  background: url("/slot-booking/Group%20495.svg") no-repeat center / 100% 100%;
+  content: "";
+  height: var(--badge-frame-height);
+  position: absolute;
+  top: 50%;
+  width: var(--badge-frame-width);
+}
+
+.slot-current-badge::before {
+  left: 0;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.slot-current-badge::after {
+  right: 0;
+  transform: translateY(-50%);
 }
 
 .slot-current-badge span {
   color: #ffffff;
   font-family: var(--font-pixel);
-  font-size: clamp(14px, 2.1vw, 32px);
+  font-size: clamp(14px, 1.65vw, 24px);
   font-weight: 400;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   line-height: 1;
   white-space: nowrap;
 }
 
 .slot-date-switcher {
-  gap: clamp(16px, 2.2vh, 30px);
+  gap: clamp(12px, 1.65vh, 22px);
 }
 
 .slot-date-heading {
   display: grid;
   grid-template-columns: minmax(84px, 1fr) auto minmax(84px, 1fr);
   align-items: center;
-  gap: clamp(18px, 3vw, 42px);
-  width: min(78vw, 900px);
+  gap: clamp(20px, 3.5vw, 48px);
+  width: min(79vw, 810px);
 }
 
 .slot-date-heading div {
@@ -105,10 +130,12 @@
 .slot-date-options {
   display: flex;
   justify-content: center;
-  gap: clamp(18px, 2.4vw, 32px);
+  gap: clamp(26px, 3.3vw, 46px);
 }
 
 .slot-date-link {
+  --date-border: var(--color-brand-pink);
+  position: relative;
   transition: filter 120ms ease-out, transform 120ms ease-out;
 }
 
@@ -118,32 +145,89 @@
   transform: translateY(-1px);
 }
 
+.slot-date-link[aria-current="page"] {
+  --date-border: var(--color-brand-cyan);
+}
+
 .slot-date-box {
   align-items: center;
+  clip-path: polygon(
+    0 8px,
+    8px 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    calc(100% - 8px) 8px,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    8px calc(100% - 8px),
+    0 calc(100% - 8px)
+  );
   display: flex;
   flex-direction: column;
   gap: clamp(3px, 0.5vh, 6px);
-  height: clamp(46px, 4.7vw, 58px);
+  height: clamp(48px, 4.3vw, 58px);
+  isolation: isolate;
   justify-content: center;
-  width: clamp(56px, 5.2vw, 70px);
+  padding-top: 2px;
+  position: relative;
+  width: clamp(62px, 5.6vw, 76px);
+}
+
+.slot-date-box::before,
+.slot-date-box::after {
+  content: "";
+  position: absolute;
+}
+
+.slot-date-box::before {
+  background: var(--date-border);
+  inset: 0;
+  z-index: -2;
+}
+
+.slot-date-box::after {
+  background: var(--color-ink);
+  clip-path: polygon(
+    0 6px,
+    6px 6px,
+    6px 0,
+    calc(100% - 6px) 0,
+    calc(100% - 6px) 6px,
+    100% 6px,
+    100% calc(100% - 6px),
+    calc(100% - 6px) calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    6px 100%,
+    6px calc(100% - 6px),
+    0 calc(100% - 6px)
+  );
+  inset: 2px;
+  z-index: -1;
 }
 
 .slot-date-day {
   color: #ffffff;
   font-family: var(--font-pixel);
-  font-size: clamp(18px, 1.6vw, 24px);
+  font-size: clamp(19px, 1.85vw, 28px);
   font-weight: 400;
   letter-spacing: 0.03em;
   line-height: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .slot-date-month {
   color: var(--color-brand-pink);
   font-family: var(--font-pixel);
-  font-size: clamp(8px, 0.8vw, 12px);
+  font-size: clamp(8px, 0.82vw, 12px);
   font-weight: 400;
   letter-spacing: 0.06em;
   line-height: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .slot-grid-shell {
@@ -262,66 +346,37 @@
   margin-left: 2px;
 }
 
-/* Active Date Decor */
-.date-decor-line {
-  position: absolute;
-  width: 2px;
-  height: 16px;
-  background-color: var(--color-brand-cyan);
-}
-
-.date-decor-tl {
-  top: -8px;
-  left: -8px;
-  transform: rotate(-45deg);
-}
-
-.date-decor-tr {
-  top: -8px;
-  right: -8px;
-  transform: rotate(45deg);
-}
-
-.date-decor-bl {
-  bottom: -8px;
-  left: -8px;
-  transform: rotate(45deg);
-}
-
-.date-decor-br {
-  bottom: -8px;
-  right: -8px;
-  transform: rotate(-45deg);
-}
-
 @media (max-width: 767px) {
   .slot-booking-screen {
-    padding: 30px 34px 22px;
-    gap: 18px;
+    padding: 30px 28px 22px;
+    gap: 16px;
   }
 
   .slot-title {
-    font-size: clamp(2.9rem, 13.5vw, 3.6rem);
+    font-size: clamp(3rem, 13.8vw, 3.85rem);
     text-shadow: -3px 0 0 #E5349E;
   }
 
   .slot-current-badge {
-    min-width: min(100%, 304px);
-    padding: 12px 15px;
+    --badge-frame-height: 50px;
+    --badge-frame-width: 22px;
+    --badge-height: 36px;
+    min-width: min(100%, 352px);
+    padding: 0 34px;
   }
 
   .slot-current-badge span {
-    font-size: clamp(14px, 4vw, 17px);
-    letter-spacing: 0.06em;
+    font-size: clamp(14px, 3.55vw, 17px);
+    letter-spacing: 0.05em;
   }
 
   .slot-date-switcher {
-    gap: 17px;
+    gap: 15px;
   }
 
   .slot-date-heading {
-    gap: 16px;
-    grid-template-columns: minmax(96px, 1fr) auto minmax(96px, 1fr);
+    gap: 20px;
+    grid-template-columns: minmax(74px, 1fr) auto minmax(74px, 1fr);
     width: 100%;
   }
 
@@ -332,16 +387,16 @@
   }
 
   .slot-date-options {
-    gap: clamp(36px, 9vw, 48px);
+    gap: clamp(36px, 8.5vw, 48px);
   }
 
   .slot-date-box {
-    height: 44px;
-    width: 60px;
+    height: 50px;
+    width: 66px;
   }
 
   .slot-date-day {
-    font-size: 18px;
+    font-size: 21px;
   }
 
   .slot-date-month {

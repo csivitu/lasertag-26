@@ -9,9 +9,6 @@ interface DateSwitcherProps {
   onSelect: (day: string) => void;
 }
 
-const svgBg = (url: string) =>
-  `url("${url}") no-repeat center / 100% 100%`;
-
 export function DateSwitcher({ dates, onSelect }: DateSwitcherProps) {
   return (
     <div className="slot-date-switcher flex flex-col items-center">
@@ -33,30 +30,10 @@ export function DateSwitcher({ dates, onSelect }: DateSwitcherProps) {
             aria-current={d.active ? "page" : undefined}
             className="slot-date-link relative block"
           >
-            {/* SVG border box */}
-            <div
-              className="slot-date-box"
-              style={{
-                background: svgBg(
-                  d.active
-                    ? "/slot-booking/date-box-cyan.svg"
-                    : "/slot-booking/date-box-pink.svg"
-                ),
-              }}
-            >
+            <div className="slot-date-box">
               <span className="slot-date-day">{d.day}</span>
               <span className="slot-date-month">{d.month}</span>
             </div>
-
-            {/* Corner tick marks for active date */}
-            {d.active && (
-              <>
-                <span className="date-decor-line date-decor-tl" />
-                <span className="date-decor-line date-decor-tr" />
-                <span className="date-decor-line date-decor-bl" />
-                <span className="date-decor-line date-decor-br" />
-              </>
-            )}
           </button>
         ))}
       </div>

@@ -11,10 +11,7 @@ const DATES = [
   { day: "20", month: "SEPT" },
 ];
 
-const BOOKING_TIMES = ["9:00AM", "10:00AM", "11:00AM", "12:00PM"];
-
-const svgBg = (url: string) =>
-  `url("${url}") no-repeat center / 100% 100%`;
+const BOOKING_TIMES = ["9:30AM", "10:30AM", "11:30AM", "12:30PM"];
 
 interface SlotBookingProps {
   activeDay?: string;
@@ -56,14 +53,9 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
 
       {/* ── Current booking badge ── */}
       <div className="relative z-10">
-        <div
-          className="slot-current-badge"
-          style={{
-            background: svgBg("/mode-popup/textboxborder-outline.svg"),
-          }}
-        >
+        <div className="slot-current-badge">
           <span>
-            SEPT {bookingDay}TH, {BOOKING_TIMES[Math.floor(selectedSlot / 6)]}
+            SEPT {bookingDay}TH,{BOOKING_TIMES[Math.floor(selectedSlot / 6)]}
           </span>
         </div>
       </div>
