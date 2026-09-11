@@ -17,14 +17,16 @@ const isoDate = z.iso.datetime({ offset: true }).transform((value) => new Date(v
  * omit, drizzle-zod would expose it as optional and let a client choose its own
  * primary key.
  */
-const slotFields = createInsertSchema(slots, {
-  capacity: (schema) => schema.min(0, "capacity must be a non-negative integer"),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- drizzle-zod Table type mismatch in monorepo
+const slotFields = createInsertSchema(slots as any, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  capacity: (schema: any) => schema.min(0, "capacity must be a non-negative integer"),
 })
   .omit({ id: true })
   .extend({ startTime: isoDate, endTime: isoDate });
 
 export const slotInputSchema = slotFields.refine(
-  (value) => value.startTime < value.endTime,
+  (value) => value.startTime! < value.endTime!,
   { message: "startTime must be before endTime", path: ["startTime"] },
 );
 
@@ -62,7 +64,8 @@ export const slotIdSchema = z.object({ params: slotIdParams });
  * serialisation produces, whereas `createSelectSchema` types them as `Date`,
  * which has no JSON Schema representation.
  */
-export const slotResponseSchema = createSelectSchema(slots).extend({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- drizzle-zod Table type mismatch in monorepo
+export const slotResponseSchema = createSelectSchema(slots as any).extend({
   startTime: z.iso.datetime(),
   endTime: z.iso.datetime(),
 });

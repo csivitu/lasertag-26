@@ -17,7 +17,8 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
 
     return (
         <div
-            className={`rounded-lg border-[3px] bg-ink/60 px-4 py-3 shadow-[0_0_14px_-4px_currentColor] transition-colors sm:px-5 sm:py-3 ${colors.border} ${colors.text}`}
+            data-color={entry.color}
+            className={`faq-pixel-corners border-[3px] bg-ink/60 px-4 py-3 transition-colors sm:px-5 sm:py-3 ${colors.border} ${colors.text}${isOpen ? " faq-item--open" : ""}`}
         >
             <button
                 type="button"
@@ -33,8 +34,8 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
                     data-open={isOpen}
                     aria-hidden
                 >
-                    <span className={`absolute inset-0 m-auto h-[68%] w-[2.5px] rounded-sm sm:w-[3px] ${colors.bg}`} />
-                    <span className={`absolute inset-0 m-auto h-[2.5px] w-[68%] rounded-sm sm:h-[3px] ${colors.bg}`} />
+                    <span className={`absolute inset-0 m-auto h-[68%] w-[2.5px] rounded-sm sm:w-[3px] bg-white`} />
+                    <span className={`absolute inset-0 m-auto h-[2.5px] w-[68%] rounded-sm sm:h-[3px] bg-white`} />
                 </span>
             </button>
 

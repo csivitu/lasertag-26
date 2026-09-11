@@ -17,7 +17,7 @@ const DOT_FILL: Record<string, string> = {
     cyan: "bg-brand-cyan",
 };
 
-export function FaqAccordion() {
+export function FaqAccordion({ onToggle: onToggleCallback, onActiveChange }: { onToggle?: () => void; onActiveChange?: (isActive: boolean) => void } = {}) {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     return (
@@ -32,7 +32,8 @@ export function FaqAccordion() {
                     <li key={entry.question} className="relative flex items-center gap-4 sm:gap-5">
                         <div className="flex w-5 shrink-0 items-center justify-center sm:w-6">
                             <span
-                                className={`relative z-10 flex size-5 items-center justify-center rounded-full border-2 bg-ink sm:size-6 ${DOT_RING[entry.color]}`}
+                                data-color={entry.color}
+                                className={`relative z-10 flex size-5 items-center justify-center rounded-full border-2 bg-ink sm:size-6 ${DOT_RING[entry.color]}${openIndex === index ? " faq-dot--open" : ""}`}
                             >
                                 <span className={`size-2 rounded-full sm:size-2.5 ${DOT_FILL[entry.color]}`} />
                             </span>
@@ -41,7 +42,12 @@ export function FaqAccordion() {
                             <FaqItem
                                 entry={entry}
                                 isOpen={openIndex === index}
-                                onToggle={() => setOpenIndex(openIndex === index ? null : index)}
+                                onToggle={() => {
+                                    const nextIndex = openIndex === index ? null : index;
+                                    setOpenIndex(nextIndex);
+                                    onActiveChange?.(nextIndex !== null);
+                                    onToggleCallback?.();
+                                }}
                             />
                         </div>
                     </li>

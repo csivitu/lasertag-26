@@ -1,3 +1,60 @@
+.hero-grid-title {
+  font-family: var(--ft-pixel), monospace;
+  color: #08d5ea;
+  font-weight: 400;
+  text-align: center;
+  letter-spacing: 0.1em;
+  line-height: 52px;
+}
+
+.btn-book-now {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  user-select: none;
+}
+
+.btn-book-now-normal,
+.btn-book-now-pressed {
+  transition: opacity 0.1s ease;
+}
+
+.btn-book-now-pressed {
+  opacity: 0;
+}
+
+.btn-book-now:hover {
+  transform: scale(1.04);
+  filter: brightness(1.08) drop-shadow(0 0 12px rgba(229, 52, 158, 0.9));
+}
+
+.btn-book-now:active {
+  transform: scale(0.98);
+  filter: brightness(1) drop-shadow(0 0 6px rgba(229, 52, 158, 0.5));
+}
+
+.btn-book-now:active .btn-book-now-normal {
+  opacity: 0;
+}
+
+.btn-book-now:active .btn-book-now-pressed {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-book-now,
+  .btn-book-now-normal,
+  .btn-book-now-pressed {
+    transition: none !important;
+  }
+  .btn-book-now:hover,
+  .btn-book-now:active {
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
 @keyframes nav-arrow-nudge {
   0%,
   20% {

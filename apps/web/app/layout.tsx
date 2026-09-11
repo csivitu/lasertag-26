@@ -3,8 +3,8 @@ import "./globals.css";
 import { anton, arcade, oxanium, pressStart } from "./fonts";
 
 export const metadata: Metadata = {
-  title: "LaserTag",
-  description: "From Pixels to Pew Pew",
+    title: "LaserTag",
+    description: "From Pixels to Pew Pew",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
