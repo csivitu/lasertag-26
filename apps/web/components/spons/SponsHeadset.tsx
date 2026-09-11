@@ -2,24 +2,16 @@ import Image from "next/image";
 
 export function SponsHeadset() {
   return (
-    <div className="relative w-[clamp(280px,80vw,1160px)]">
+    <div className="relative w-[min(80vw,1163px)]">
+
       {/* BOTTOM — middle section */}
-      <div
-        className="absolute z-0"
-        style={{
-          left: "16.6%",
-          top: "32.9%",
-          width: "66.8%",
-        }}
-      >
-        <Image
-          src="/spons/headset-middle.svg"
-          alt=""
-          width={777}
-          height={320}
-          className="h-auto w-full"
-        />
-      </div>
+      <Image
+        src="/spons/headset-middle.svg"
+        alt=""
+        width={777}
+        height={320}
+        className="absolute left-[16.6%] top-[32.9%] z-0 h-auto w-[66.8%]"
+      />
 
       {/* MIDDLE — main headset */}
       <Image
@@ -31,17 +23,9 @@ export function SponsHeadset() {
         priority
       />
 
-      {/* TOP — hover shine */}
-      <div
-        className="group absolute z-20 overflow-hidden"
-        style={{
-          left: "16.6%",
-          top: "32.9%",
-          width: "66.8%",
-          height: "46.3%",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-[30%] -translate-x-[200%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[450%]" />
+      {/* TOP — hover only over middle section */}
+      <div className="group absolute left-[16.6%] top-[32.9%] z-20 h-[46.3%] w-[66.8%] overflow-hidden">
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-[20%] -translate-x-[200%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[700%]" />
       </div>
 
       {/* XGT logo */}
@@ -54,6 +38,7 @@ export function SponsHeadset() {
           className="h-auto w-full"
         />
       </div>
+
     </div>
   );
 }

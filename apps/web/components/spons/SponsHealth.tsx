@@ -31,19 +31,17 @@ export function SponsHealth() {
 
   return (
     <div className="flex items-center">
-      {/* Heart */}
-      <div className="relative size-[clamp(40px,4.1vw,59px)] shrink-0">
+      <div className="relative size-[clamp(28px,4.1vw,59px)] shrink-0">
         <Image
           src="/spons/heart.svg"
           alt=""
           fill
-          sizes="(min-width: 1024px) 4.1vw, 59px"
+          sizes="(min-width: 1024px) 4.1vw, 4.1vw"
           className="object-contain"
         />
       </div>
 
-      {/* Health segments */}
-      <div className="ml-[clamp(5px,0.55vw,8px)] flex items-center">
+      <div className="ml-[clamp(4px,0.55vw,8px)] flex items-center">
         {Array.from({ length: MAX_HEALTH }).map((_, index) => (
           <Image
             key={index}
@@ -55,8 +53,8 @@ export function SponsHealth() {
             alt=""
             width={44}
             height={32}
-            className={`h-auto w-[clamp(30px,3.02vw,44px)] shrink-0 ${
-              index > 0 ? "-ml-[6px]" : ""
+            className={`h-auto w-[clamp(20px,3.02vw,44px)] shrink-0 ${
+              index > 0 ? "-ml-[0.42vw]" : ""
             }`}
           />
         ))}
