@@ -128,6 +128,7 @@ export function CreateTeamForm() {
           <PixelButton
             type="submit"
             label="Create Team"
+            interaction="simple"
             className="w-[240px]"
             labelClassName="text-[13px]"
           />
