@@ -130,11 +130,14 @@
 .slot-date-options {
   display: flex;
   justify-content: center;
-  gap: clamp(26px, 3.3vw, 46px);
+  gap: clamp(16px, 2vw, 24px);
 }
 
 .slot-date-link {
-  --date-border: var(--color-brand-pink);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
   position: relative;
   transition: filter 120ms ease-out, transform 120ms ease-out;
 }
@@ -145,89 +148,46 @@
   transform: translateY(-1px);
 }
 
-.slot-date-link[aria-current="page"] {
-  --date-border: var(--color-brand-cyan);
-}
-
 .slot-date-box {
   align-items: center;
-  clip-path: polygon(
-    0 8px,
-    8px 8px,
-    8px 0,
-    calc(100% - 8px) 0,
-    calc(100% - 8px) 8px,
-    100% 8px,
-    100% calc(100% - 8px),
-    calc(100% - 8px) calc(100% - 8px),
-    calc(100% - 8px) 100%,
-    8px 100%,
-    8px calc(100% - 8px),
-    0 calc(100% - 8px)
-  );
+  aspect-ratio: 124 / 88;
+  background: url("/slot-booking/date-box-pink.svg") no-repeat center / 100% 100%;
   display: flex;
   flex-direction: column;
-  gap: clamp(3px, 0.5vh, 6px);
-  height: clamp(48px, 4.3vw, 58px);
-  isolation: isolate;
+  gap: clamp(2px, 0.4vh, 4px);
+  height: clamp(52px, 4.6vw, 68px);
   justify-content: center;
-  padding-top: 2px;
+  padding: 4px 10px 2px;
   position: relative;
-  width: clamp(62px, 5.6vw, 76px);
+  transition: background-image 120ms ease-out;
+  width: auto;
 }
 
-.slot-date-box::before,
-.slot-date-box::after {
-  content: "";
-  position: absolute;
-}
-
-.slot-date-box::before {
-  background: var(--date-border);
-  inset: 0;
-  z-index: -2;
-}
-
-.slot-date-box::after {
-  background: var(--color-ink);
-  clip-path: polygon(
-    0 6px,
-    6px 6px,
-    6px 0,
-    calc(100% - 6px) 0,
-    calc(100% - 6px) 6px,
-    100% 6px,
-    100% calc(100% - 6px),
-    calc(100% - 6px) calc(100% - 6px),
-    calc(100% - 6px) 100%,
-    6px 100%,
-    6px calc(100% - 6px),
-    0 calc(100% - 6px)
-  );
-  inset: 2px;
-  z-index: -1;
+.slot-date-link[aria-current="page"] .slot-date-box {
+  background-image: url("/slot-booking/date-box-cyan.svg");
 }
 
 .slot-date-day {
   color: #ffffff;
   font-family: var(--font-pixel);
-  font-size: clamp(19px, 1.85vw, 28px);
+  font-size: clamp(18px, 1.75vw, 26px);
   font-weight: 400;
   letter-spacing: 0.03em;
   line-height: 1;
-  position: relative;
-  z-index: 1;
 }
 
 .slot-date-month {
   color: var(--color-brand-pink);
   font-family: var(--font-pixel);
-  font-size: clamp(8px, 0.82vw, 12px);
+  font-size: clamp(8px, 0.8vw, 11px);
   font-weight: 400;
   letter-spacing: 0.06em;
   line-height: 1;
-  position: relative;
-  z-index: 1;
+  transition: color 120ms ease-out;
+}
+
+.slot-date-link[aria-current="page"] .slot-date-month {
+  color: var(--color-brand-cyan);
 }
 
 .slot-grid-shell {
@@ -382,8 +342,7 @@
 
   .slot-date-heading span {
     font-size: clamp(13px, 4vw, 17px);
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.2;
   }
 
   .slot-date-options {
@@ -391,8 +350,8 @@
   }
 
   .slot-date-box {
-    height: 50px;
-    width: 66px;
+    height: 52px;
+    width: auto;
   }
 
   .slot-date-day {
@@ -455,8 +414,8 @@
   }
 
   .slot-date-box {
-    height: 58px;
-    width: 70px;
+    height: 56px;
+    width: auto;
   }
 
   .slot-grid {

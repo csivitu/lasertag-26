@@ -15,7 +15,14 @@ export function DateSwitcher({ dates, onSelect }: DateSwitcherProps) {
       {/* "SELECT DATE" label with cyan lines */}
       <div className="slot-date-heading">
         <div />
-        <span>SELECT DATE</span>
+        <span>
+          <span className="hidden md:inline">SELECT DATE</span>
+          <span className="md:hidden block text-center leading-[1.2]">
+            SELECT
+            <br />
+            DATE
+          </span>
+        </span>
         <div />
       </div>
 

@@ -55,7 +55,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       <div className="relative z-10">
         <div className="slot-current-badge">
           <span>
-            SEPT {bookingDay}TH,{BOOKING_TIMES[Math.floor(selectedSlot / 6)]}
+            SEPT {bookingDay}TH, {BOOKING_TIMES[Math.floor(selectedSlot / 6)]}
           </span>
         </div>
       </div>
