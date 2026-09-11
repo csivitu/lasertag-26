@@ -97,8 +97,8 @@ export function ArcadeScene() {
         </button>
       </div>
 
-      {/* Arcade Controls Communication Pill */}
-      <div className="mt-1 flex shrink-0 items-center justify-center gap-2 font-mono text-[clamp(0.65rem,1.4svh,0.85rem)] tracking-wider text-guideline-cyan">
+      {/* Arcade Controls Communication Pill (centered directly under the monitor) */}
+      <div className="mt-1 flex w-[94.20%] shrink-0 items-center justify-center font-mono text-[clamp(0.65rem,1.4svh,0.85rem)] tracking-wider text-guideline-cyan">
         <span className="rounded bg-black/70 px-2.5 py-0.5 border border-guideline-cyan/40 shadow-sm">
           ◄ / ► ARROW KEYS TO MOVE • SPACE TO SHOOT
         </span>
