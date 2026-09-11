@@ -94,13 +94,6 @@ export function ArcadeScene() {
             sizes="130px"
           />
         </button>
-
-        {/* Arcade Controls Communication Pill (centered relative to PC graphic) */}
-        <div className="absolute top-[102%] left-0 w-[94.20%] flex shrink-0 items-center justify-center pointer-events-none z-20">
-          <span className="rounded bg-black/85 px-3 py-1 border border-guideline-cyan/40 font-mono text-[clamp(0.65rem,1.4svh,0.85rem)] tracking-wider text-guideline-cyan shadow-sm whitespace-nowrap">
-            ◄ / ► ARROW KEYS TO MOVE • SPACE TO SHOOT
-          </span>
-        </div>
       </div>
   );
 }

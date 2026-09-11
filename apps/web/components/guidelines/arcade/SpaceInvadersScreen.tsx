@@ -644,15 +644,19 @@ export function SpaceInvadersScreen() {
         className="absolute inset-0 h-full w-full [image-rendering:pixelated]"
       />
 
-      {/* Controls Overlay Banner (Idle State) */}
+      {/* Controls Communication Bar in CRT Screen */}
+      <div className="pointer-events-none absolute bottom-1.5 left-0 right-0 z-20 text-center">
+        <span className="rounded bg-black/80 px-2 py-0.5 font-mono text-[7px] tracking-wider text-guideline-cyan border border-guideline-cyan/30 shadow-sm">
+          ◄ / ► ARROW KEYS TO MOVE • SPACE TO SHOOT
+        </span>
+      </div>
+
+      {/* Attract Mode Start Prompt (Idle State) */}
       {gameStatus === 'idle' && (
-        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-end pb-3 bg-black/40">
-          <div className="flex flex-col items-center gap-1 rounded bg-black/85 px-2 py-1.5 border border-brand-pink/50 shadow-lg text-center">
+        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/40">
+          <div className="flex flex-col items-center gap-1 rounded bg-black/85 px-2.5 py-1.5 border border-brand-pink/50 shadow-lg text-center">
             <span className="animate-pulse font-mono text-[8px] font-bold tracking-wider text-guideline-yellow">
               PRESS SPACE OR CLICK TO START
-            </span>
-            <span className="font-mono text-[7px] tracking-wide text-guideline-cyan">
-              ◄ / ► ARROWS TO MOVE • SPACE TO FIRE
             </span>
           </div>
         </div>

@@ -6,7 +6,7 @@ export const INVADER_HEIGHT = 18;
 
 export const PLAYER_WIDTH = 18;
 export const PLAYER_HEIGHT = 17;
-export const PLAYER_INITIAL_Y = 146;
+export const PLAYER_INITIAL_Y = 136;
 export const PLAYER_SPEED = 2.8;
 
 export const BULLET_WIDTH = 4;
