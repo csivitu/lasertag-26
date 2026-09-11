@@ -38,7 +38,12 @@ export function ArcadeScene() {
   }, []);
 
   return (
-    <div className="relative aspect-[621/645.37] h-[77svh] max-h-[730px] w-auto max-w-full">
+    <div
+      className="relative aspect-[621/645.37] max-h-full max-w-full"
+      style={{
+        width: "min(100%, calc(min(77svh, 730px) * 621 / 645.37))",
+      }}
+    >
       {/* Pink Arcade Monitor (585 x 541 within 621 x 645.37 scene) */}
         <div className="absolute left-0 top-0 h-[83.83%] w-[94.20%]">
           <Image

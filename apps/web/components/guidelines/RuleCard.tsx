@@ -15,7 +15,7 @@ const ACCENT_BG: Record<RuleCardData["accent"], string> = {
 export function RuleCard({ id, accent, items }: RuleCardData) {
   return (
     <div
-      className={`relative flex flex-1 items-center gap-4 px-[2.2vw] py-[1.5svh] sm:gap-6 ${ACCENT_TEXT[accent]}`}
+      className={`relative flex items-center gap-3 px-4 py-3.5 sm:gap-6 sm:px-6 sm:py-5 lg:flex-1 lg:gap-6 lg:px-[2.2vw] lg:py-[1.5svh] ${ACCENT_TEXT[accent]}`}
     >
       <svg
         aria-hidden
@@ -27,12 +27,12 @@ export function RuleCard({ id, accent, items }: RuleCardData) {
       </svg>
 
       <span
-        className={`relative grid aspect-[91/85] w-[clamp(3.25rem,8.5svh,5.75rem)] shrink-0 place-items-center rounded-full font-digit text-[clamp(1.6rem,4.2svh,3.1rem)] text-ink ${ACCENT_BG[accent]}`}
+        className={`relative grid aspect-[91/85] w-12 shrink-0 place-items-center rounded-full font-digit text-xl text-ink sm:w-16 sm:text-3xl lg:w-[clamp(3.25rem,8.5svh,5.75rem)] lg:text-[clamp(1.6rem,4.2svh,3.1rem)] ${ACCENT_BG[accent]}`}
       >
         {String(id).padStart(2, "0")}
       </span>
 
-      <ul className="relative list-disc space-y-[0.6svh] pl-4 text-[clamp(0.75rem,1.8svh,1.1rem)] lg:text-[clamp(0.9rem,1.9svh,1.25rem)] lg:space-y-[0.5svh] leading-normal lg:leading-snug text-white marker:text-white/70">
+      <ul className="relative min-w-0 flex-1 list-disc space-y-1 pl-4 text-xs leading-relaxed text-white marker:text-white/70 sm:space-y-2 sm:text-sm lg:space-y-[0.5svh] lg:text-[clamp(0.9rem,1.9svh,1.25rem)] lg:leading-snug">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
