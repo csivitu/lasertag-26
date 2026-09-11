@@ -1,6 +1,6 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams } from "@lasertag-26/database/schema";
-import { eq } from "drizzle-orm";
+import { eq, gte, lte, and, asc } from "drizzle-orm";
 import { HttpError as AppError } from "../errors";
 
 export interface ReserveSlotInput {
@@ -18,10 +18,29 @@ export interface CreateSlotInput {
 
 export const slotController = {
   async getAllSlots() {
-    return db.select().from(slots);
+    return db.select().from(slots).orderBy(asc(slots.startTime));
   },
 
   async createSlot(input: CreateSlotInput) {
+    const slotDate = new Date(input.startTime);
+    const startOfDay = new Date(slotDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(slotDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingSlotsToday = await db
+      .select()
+      .from(slots)
+      .where(and(gte(slots.startTime, startOfDay), lte(slots.startTime, endOfDay)));
+
+    if (existingSlotsToday.length >= 100) {
+      throw new AppError(
+        400,
+        "Daily slot limit reached. Maximum 100 slots allowed per day."
+      );
+    }
+
     const [newSlot] = await db
       .insert(slots)
       .values({

@@ -1,6 +1,6 @@
 import { db } from "@lasertag-26/database";
-import { teams, teamMembers, user } from "@lasertag-26/database/schema";
-import { eq, and } from "drizzle-orm";
+import { teams, teamMembers, user, bookings, slots } from "@lasertag-26/database/schema";
+import { eq, and, or, inArray, asc } from "drizzle-orm";
 
 import { HttpError as AppError } from "../errors";
 
@@ -12,6 +12,68 @@ export interface CreateTeamInput {
 }
 
 export const teamController = {
+  async getAllTeams() {
+    const allTeams = await db.select().from(teams);
+
+    const teamsWithDetails = await Promise.all(
+      allTeams.map(async (t) => {
+        const [leader] = await db
+          .select({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          })
+          .from(user)
+          .where(eq(user.id, t.leaderId));
+
+        const membersList = await db
+          .select({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          })
+          .from(teamMembers)
+          .innerJoin(user, eq(teamMembers.userId, user.id))
+          .where(eq(teamMembers.teamCode, t.teamCode));
+
+        const memberIds = [t.leaderId, ...membersList.map((m) => m.id)];
+
+        const teamBookings = await db
+          .select({
+            id: bookings.id,
+            type: bookings.type,
+            userId: bookings.userId,
+            slotId: bookings.slotId,
+            confirmationEmailSent: bookings.confirmationEmailSent,
+            startTime: slots.startTime,
+            endTime: slots.endTime,
+          })
+          .from(bookings)
+          .innerJoin(slots, eq(bookings.slotId, slots.id))
+          .where(
+            or(
+              eq(bookings.teamCode, t.teamCode),
+              inArray(bookings.userId, memberIds)
+            )
+          )
+          .orderBy(asc(slots.startTime));
+
+        return {
+          id: t.teamCode,
+          teamCode: t.teamCode,
+          name: t.teamCode,
+          leaderId: t.leaderId,
+          leader: leader || null,
+          memberCount: t.members,
+          members: membersList,
+          bookings: teamBookings,
+        };
+      })
+    );
+
+    return teamsWithDetails;
+  },
+
   async createTeam(input: CreateTeamInput) {
     const { leader_id, team_code, members } = input;
 
@@ -71,9 +133,45 @@ export const teamController = {
       .from(user)
       .where(eq(user.id, team.leaderId));
 
+    const membersList = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phNumber: user.phNumber,
+      })
+      .from(teamMembers)
+      .innerJoin(user, eq(teamMembers.userId, user.id))
+      .where(eq(teamMembers.teamCode, code));
+
+    const memberIds = [team.leaderId, ...membersList.map((m) => m.id)];
+
+    const teamBookings = await db
+      .select({
+        id: bookings.id,
+        type: bookings.type,
+        userId: bookings.userId,
+        slotId: bookings.slotId,
+        confirmationEmailSent: bookings.confirmationEmailSent,
+        startTime: slots.startTime,
+        endTime: slots.endTime,
+      })
+      .from(bookings)
+      .innerJoin(slots, eq(bookings.slotId, slots.id))
+      .where(
+        or(
+          eq(bookings.teamCode, team.teamCode),
+          inArray(bookings.userId, memberIds)
+        )
+      )
+      .orderBy(asc(slots.startTime));
+
     return {
       ...team,
       leader: leader || null,
+      members: membersList,
+      bookings: teamBookings,
     };
   },
 

@@ -12,6 +12,17 @@ import { teamController } from "../controllers/team.controller";
 
 export const publicTeamsRouter = Router();
 
+publicTeamsRouter.get(
+  "/",
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const teamsList = await teamController.getAllTeams();
+    res.status(200).json({
+      success: true,
+      data: teamsList,
+    });
+  })
+);
+
 publicTeamsRouter.post(
   "/",
   validateRequest(createTeamSchema),
