@@ -17,7 +17,7 @@ describe("slotInputSchema", () => {
     const result = slotInputSchema.parse(validInput);
     expect(result.startTime).toBeInstanceOf(Date);
     expect(result.endTime).toBeInstanceOf(Date);
-    expect(result.capacity).toBe(10);
+    expect(result.capacity).toEqual(10);
   });
 
   test("rejects startTime equal to endTime", () => {
