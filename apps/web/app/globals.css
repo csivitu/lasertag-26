@@ -6,6 +6,7 @@
   --font-pixel: var(--ft-pixel);
   --font-body: var(--ft-body);
   --font-heading: var(--ft-heading);
+  --font-digit: var(--ft-digit);
 
   --color-ink: #08080d;
   --color-brand-pink: #e5349e;
@@ -19,6 +20,15 @@
   --color-btn-shadow: #46005d;
   --color-btn-bevel: #bb37cd;
   --color-btn-lip: #fe95f6;
+
+  /*
+   * The Guidelines section's title/tagline colours, measured from the Figma
+   * export. Close to but distinct from brand-yellow (#fec414) and accent
+   * (#01daec) above — kept as their own tokens rather than reused, since
+   * collapsing them would be a guess that the difference is unintentional.
+   */
+  --color-guideline-yellow: #fedc02;
+  --color-guideline-cyan: #02cfe9;
 }
 
 html,
