@@ -59,9 +59,20 @@ interface FieldProps {
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
+  inputMode?: "text" | "email" | "tel" | "numeric";
+  maxLength?: number;
 }
 
-function Field({ label, id, value, onChange, placeholder = "", type = "text" }: FieldProps) {
+function Field({
+  label,
+  id,
+  value,
+  onChange,
+  placeholder = "",
+  type = "text",
+  inputMode,
+  maxLength,
+}: FieldProps) {
   return (
     <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <label className="mode-popup-label" htmlFor={id} style={labelStyle}>
@@ -72,12 +83,16 @@ function Field({ label, id, value, onChange, placeholder = "", type = "text" }: 
           id={id}
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) =>
+            onChange(type === "tel" ? e.target.value.replace(/\D/g, "") : e.target.value)
+          }
           placeholder={placeholder}
           className="mode-popup-input"
           style={inputStyle}
           autoComplete="off"
           spellCheck={false}
+          inputMode={inputMode}
+          maxLength={maxLength}
         />
       </div>
     </div>
@@ -126,6 +141,8 @@ export function BaseFields({
         onChange={onPhoneNumberChange}
         placeholder="9374537484"
         type="tel"
+        inputMode="numeric"
+        maxLength={10}
       />
     </>
   );

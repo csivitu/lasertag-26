@@ -9,11 +9,25 @@ export function SoloForm() {
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: wire up API call for solo registration
-    console.log({ fullName, registrationNumber, emailId, phoneNumber });
+    setError("");
+
+    if (!fullName.trim() || !registrationNumber.trim() || !emailId.trim() || !phoneNumber.trim()) {
+      setError("Please fill in all fields before submitting.");
+      return;
+    }
+
+    if (!emailId.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setStatus("submitting");
+    window.setTimeout(() => setStatus("success"), 700);
   }
 
   return (
@@ -28,13 +42,20 @@ export function SoloForm() {
         onEmailIdChange={setEmailId}
         onPhoneNumberChange={setPhoneNumber}
       />
+      {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
+      {status === "success" && (
+        <p className="mode-popup-form-success" role="status">
+          Registration submitted successfully. We&apos;ll see you at the arena!
+        </p>
+      )}
       <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
         <PixelButton
           type="submit"
-          label="Submit"
+          label={status === "submitting" ? "Submitting..." : status === "success" ? "Submitted" : "Submit"}
           interaction="simple"
           className="w-[240px]"
           labelClassName="text-[13px]"
+          disabled={status === "submitting" || status === "success"}
         />
       </div>
     </form>
