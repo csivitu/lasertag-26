@@ -38,9 +38,8 @@ export function ArcadeScene() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative aspect-[621/645.37] h-[77svh] max-h-[730px] w-auto max-w-full">
-        {/* Pink Arcade Monitor (585 x 541 within 621 x 645.37 scene) */}
+    <div className="relative aspect-[621/645.37] h-[77svh] max-h-[730px] w-auto max-w-full">
+      {/* Pink Arcade Monitor (585 x 541 within 621 x 645.37 scene) */}
         <div className="absolute left-0 top-0 h-[83.83%] w-[94.20%]">
           <Image
             src="/guidelines/arcade-monitor.svg"
@@ -95,14 +94,13 @@ export function ArcadeScene() {
             sizes="130px"
           />
         </button>
-      </div>
 
-      {/* Arcade Controls Communication Pill (centered directly under the monitor) */}
-      <div className="mt-1 flex w-[94.20%] shrink-0 items-center justify-center font-mono text-[clamp(0.65rem,1.4svh,0.85rem)] tracking-wider text-guideline-cyan">
-        <span className="rounded bg-black/70 px-2.5 py-0.5 border border-guideline-cyan/40 shadow-sm">
-          ◄ / ► ARROW KEYS TO MOVE • SPACE TO SHOOT
-        </span>
+        {/* Arcade Controls Communication Pill (centered relative to PC graphic) */}
+        <div className="absolute top-[102%] left-0 w-[94.20%] flex shrink-0 items-center justify-center pointer-events-none z-20">
+          <span className="rounded bg-black/85 px-3 py-1 border border-guideline-cyan/40 font-mono text-[clamp(0.65rem,1.4svh,0.85rem)] tracking-wider text-guideline-cyan shadow-sm whitespace-nowrap">
+            ◄ / ► ARROW KEYS TO MOVE • SPACE TO SHOOT
+          </span>
+        </div>
       </div>
-    </div>
   );
 }
