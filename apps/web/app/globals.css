@@ -54,3 +54,20 @@ body {
     margin-top: clamp(5px, 1.2dvh, 10px) !important;
   }
 }
+
+.mode-popup-form-error,
+.mode-popup-form-success {
+  margin: 0;
+  font-family: var(--ft-body), sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.mode-popup-form-error {
+  color: #ff7abf;
+}
+
+.mode-popup-form-success {
+  color: var(--color-brand-cyan);
+}

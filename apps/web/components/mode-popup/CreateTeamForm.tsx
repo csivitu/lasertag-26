@@ -49,15 +49,35 @@ export function CreateTeamForm() {
   const [emailId, setEmailId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [teamName, setTeamName] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [error, setError] = useState("");
 
   // Generated once when the component mounts; frozen for the session.
   // TODO: swap with API-returned code once backend is ready.
   const teamCode = useMemo(() => generateCode(), []);
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: wire up API call for create-team registration
-    console.log({ fullName, registrationNumber, emailId, phoneNumber, teamName, teamCode });
+    setError("");
+
+    if (
+      !fullName.trim() ||
+      !registrationNumber.trim() ||
+      !emailId.trim() ||
+      !phoneNumber.trim() ||
+      !teamName.trim()
+    ) {
+      setError("Please fill in all fields before creating your team.");
+      return;
+    }
+
+    if (!emailId.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setStatus("submitting");
+    window.setTimeout(() => setStatus("success"), 700);
   }
 
   return (
@@ -90,6 +110,12 @@ export function CreateTeamForm() {
             autoComplete="off"
           />
         </div>
+        {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
+        {status === "success" && (
+          <p className="mode-popup-form-success" role="status">
+            Team created! Share code <strong>{teamCode}</strong> with your teammates.
+          </p>
+        )}
       </div>
 
       {/* Team Code row: pink code badge + Create Team button */}
@@ -127,10 +153,11 @@ export function CreateTeamForm() {
         <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <PixelButton
             type="submit"
-            label="Create Team"
+            label={status === "submitting" ? "Creating..." : status === "success" ? "Created" : "Create Team"}
             interaction="simple"
             className="w-[240px]"
             labelClassName="text-[13px]"
+            disabled={status === "submitting" || status === "success"}
           />
         </div>
       </div>

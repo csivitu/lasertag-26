@@ -41,11 +41,36 @@ export function JoinTeamForm() {
   const [emailId, setEmailId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [teamCode, setTeamCode] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: wire up API call for join-team registration
-    console.log({ fullName, registrationNumber, emailId, phoneNumber, teamCode });
+    setError("");
+
+    if (
+      !fullName.trim() ||
+      !registrationNumber.trim() ||
+      !emailId.trim() ||
+      !phoneNumber.trim() ||
+      !teamCode.trim()
+    ) {
+      setError("Please fill in all fields and enter a team code.");
+      return;
+    }
+
+    if (!emailId.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!/^[A-Z]{6}$/.test(teamCode)) {
+      setError("Team codes contain exactly 6 letters.");
+      return;
+    }
+
+    setStatus("submitting");
+    window.setTimeout(() => setStatus("success"), 700);
   }
 
   return (
@@ -82,16 +107,23 @@ export function JoinTeamForm() {
             spellCheck={false}
           />
         </div>
+        {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
+        {status === "success" && (
+          <p className="mode-popup-form-success" role="status">
+            Request submitted! You&apos;ve been added to the team flow.
+          </p>
+        )}
       </div>
 
       {/* Join Team Button (centered below) */}
       <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
         <PixelButton
           type="submit"
-          label="Join Team"
+          label={status === "submitting" ? "Joining..." : status === "success" ? "Joined" : "Join Team"}
           interaction="simple"
           className="w-[240px]"
           labelClassName="text-[13px]"
+          disabled={status === "submitting" || status === "success"}
         />
       </div>
     </form>
