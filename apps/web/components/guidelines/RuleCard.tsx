@@ -15,7 +15,7 @@ const ACCENT_BG: Record<RuleCardData["accent"], string> = {
 export function RuleCard({ id, accent, items }: RuleCardData) {
   return (
     <div
-      className={`relative flex items-center gap-3 px-4 py-3.5 sm:gap-6 sm:px-6 sm:py-5 lg:flex-1 lg:gap-6 lg:px-[2.2vw] lg:py-[1.5svh] ${ACCENT_TEXT[accent]}`}
+      className={`relative flex items-start gap-3 px-4 py-3.5 sm:gap-6 sm:px-6 sm:py-5 lg:flex-1 lg:gap-6 lg:px-[2.2vw] lg:py-[1.8svh] ${ACCENT_TEXT[accent]}`}
     >
       <svg
         aria-hidden
@@ -27,7 +27,7 @@ export function RuleCard({ id, accent, items }: RuleCardData) {
       </svg>
 
       <span
-        className={`relative grid aspect-[91/85] w-12 shrink-0 place-items-center rounded-full font-digit text-xl text-ink sm:w-16 sm:text-3xl lg:w-[clamp(3.25rem,8.5svh,5.75rem)] lg:text-[clamp(1.6rem,4.2svh,3.1rem)] ${ACCENT_BG[accent]}`}
+        className={`relative grid aspect-[91/85] w-12 shrink-0 place-items-center rounded-full font-digit font-bold text-xl text-ink sm:w-16 sm:text-3xl lg:w-[clamp(3.25rem,8.5svh,5.75rem)] lg:text-[clamp(1.6rem,4.2svh,3.1rem)] ${ACCENT_BG[accent]}`}
       >
         {String(id).padStart(2, "0")}
       </span>

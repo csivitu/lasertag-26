@@ -41,7 +41,7 @@ export function ArcadeScene() {
     <div
       className="relative aspect-[621/645.37] max-h-full max-w-full"
       style={{
-        width: "min(100%, calc(min(77svh, 730px) * 621 / 645.37))",
+        width: "min(100%, calc(min(72svh, 680px) * 621 / 645.37))",
       }}
     >
       {/* Pink Arcade Monitor (585 x 541 within 621 x 645.37 scene) */}
@@ -89,7 +89,7 @@ export function ArcadeScene() {
           type="button"
           onClick={handleControllerCyanClick}
           aria-label="Cyan Arcade Controller (Move Right & Fire)"
-          className="absolute left-[49.11%] top-[82.55%] h-[17.46%] w-[21.86%] cursor-pointer transition-transform duration-100 active:scale-95 focus:outline-none"
+          className="absolute left-[49.11%] top-[77.5%] h-[17.46%] w-[21.86%] cursor-pointer transition-transform duration-100 active:scale-95 focus:outline-none"
         >
           <Image
             src="/guidelines/controller-cyan.svg"

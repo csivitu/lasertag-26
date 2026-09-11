@@ -11,9 +11,9 @@ export function Guidelines() {
     >
       <Starfield />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] min-w-0 flex-1 flex-col lg:min-h-0">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1536px] min-w-0 flex-1 flex-col lg:min-h-0">
         <h2
-          className="shrink-0 text-center font-heading text-[clamp(2rem,9vw,3.75rem)] tracking-[0.06em] text-guideline-yellow lg:text-[clamp(2.5rem,6.5svh,6.25rem)] lg:tracking-[0.08em]"
+          className="shrink-0 text-center font-heading text-[clamp(2rem,9vw,3.75rem)] tracking-[0.06em] text-guideline-yellow lg:text-[112px] lg:leading-[0.95] lg:tracking-[0.06em]"
           style={{ textShadow: "-5px 0 0 var(--color-brand-pink)" }}
         >
           GUIDELINES
@@ -22,7 +22,7 @@ export function Guidelines() {
           PLAY SMART. PLAY FAIR. PLAY ON.
         </p>
 
-        <div className="mt-6 flex flex-col gap-4 sm:gap-6 lg:mt-[2svh] lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.3fr)] lg:items-stretch lg:gap-8">
+        <div className="mt-6 flex flex-col gap-4 sm:gap-6 lg:mt-[2svh] lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.45fr)] lg:items-stretch lg:gap-8">
           {/* Absent on mobile in Figma, not just shrunk — the mobile frame has no equivalent node. */}
           <div className="hidden min-h-0 items-center justify-center lg:flex lg:h-full">
             <ArcadeScene />
