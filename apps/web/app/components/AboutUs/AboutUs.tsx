@@ -7,7 +7,7 @@ import AboutUsLeftDisc from "./AboutUsLeftDisc";
 import AboutUsVid from "./AboutUsVid";
 import ArcadeAccessories from "./Arcadeaccessories";
 import Pacman from "./pacman";
-import { Starfield } from "./Starfield";
+import { Starfield } from "@/components/hero/Starfield";
 
 const DESIGN_WIDTH = 1440;
 const DESIGN_HEIGHT = 900;
