@@ -119,8 +119,8 @@ export function CreateTeamForm() {
       </div>
 
       {/* Team Code row: pink code badge + Create Team button */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}>
-        <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
+      <div className="create-team-submit-row" style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}>
+        <div className="mode-popup-field create-team-code-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
           <label className="mode-popup-label" style={labelStyle}>TEAM CODE</label>
           {/* Keep the SVG as the element background so its fill stays inside the stepped border. */}
           <div
@@ -150,13 +150,13 @@ export function CreateTeamForm() {
           </div>
         </div>
 
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+        <div className="create-team-button-wrap" style={{ flex: "1 1 0", minWidth: 0, display: "flex", justifyContent: "center" }}>
           <PixelButton
             type="submit"
             label={status === "submitting" ? "Creating..." : status === "success" ? "Created" : "Create Team"}
             interaction="simple"
-            className="w-[240px]"
-            labelClassName="text-[13px]"
+            className="w-full max-w-[240px]"
+            labelClassName="text-[clamp(10px,2.4vw,13px)]"
             disabled={status === "submitting" || status === "success"}
           />
         </div>

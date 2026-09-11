@@ -53,6 +53,9 @@ body {
 
   .mode-popup-label {
     margin-bottom: clamp(5px, 1dvh, 8px) !important;
+    font-size: 10px !important;
+    letter-spacing: 0.04em !important;
+    white-space: nowrap;
   }
 
   .mode-popup-input {
@@ -62,6 +65,25 @@ body {
 
   .mode-popup-submit {
     margin-top: clamp(5px, 1.2dvh, 10px) !important;
+  }
+
+  .create-team-submit-row {
+    gap: 8px !important;
+  }
+
+  .create-team-code-field {
+    flex: 0 1 38%;
+    min-width: 0;
+  }
+
+  .create-team-code-field .mode-popup-code {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  .create-team-button-wrap {
+    flex: 1 1 62% !important;
+    min-width: 0;
   }
 }
 
