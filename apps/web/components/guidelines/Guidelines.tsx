@@ -7,27 +7,27 @@ export function Guidelines() {
   return (
     <section
       id="guidelines"
-      className="relative isolate overflow-hidden bg-ink px-6 py-16 sm:px-8 lg:px-[3.4vw] lg:py-24"
+      className="relative isolate flex h-[100svh] flex-col overflow-hidden bg-ink px-6 py-[2svh] sm:px-8 lg:px-[3.4vw]"
     >
       <Starfield />
 
-      <div className="relative z-10 mx-auto max-w-[1440px]">
+      <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col">
         <h2
-          className="text-center font-heading text-[clamp(2.5rem,9vw,6.25rem)] tracking-[0.1em] text-guideline-yellow"
+          className="shrink-0 text-center font-heading text-[clamp(1.5rem,6.5svh,6.25rem)] tracking-[0.08em] text-guideline-yellow"
           style={{ textShadow: "-5px 0 0 var(--color-brand-pink)" }}
         >
           GUIDELINES
         </h2>
-        <p className="mt-3 text-center font-pixel text-[clamp(0.8rem,2vw,2rem)] tracking-[0.1em] text-guideline-cyan">
+        <p className="mt-[0.5svh] shrink-0 text-center font-pixel text-[clamp(0.55rem,1.7svh,2rem)] tracking-[0.08em] text-guideline-cyan">
           PLAY SMART. PLAY FAIR. PLAY ON.
         </p>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center lg:gap-8">
+        <div className="mt-[2svh] grid min-h-0 flex-1 gap-[2svh] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-stretch lg:gap-8">
           {/* Absent on mobile in Figma, not just shrunk — the mobile frame has no equivalent node. */}
-          <div className="hidden justify-center lg:flex lg:justify-start lg:-ml-[3.4vw]">
+          <div className="hidden min-h-0 items-center justify-center lg:flex lg:h-full lg:justify-start lg:-ml-[3.4vw]">
             <ArcadeScene />
           </div>
-          <div className="flex flex-col gap-8">
+          <div className="flex min-h-0 flex-1 flex-col gap-[2svh] overflow-hidden lg:h-full">
             {ruleCards.map((card) => (
               <RuleCard key={card.id} {...card} />
             ))}

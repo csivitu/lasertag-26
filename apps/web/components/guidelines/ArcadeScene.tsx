@@ -8,7 +8,7 @@ import Image from "next/image";
  */
 export function ArcadeScene() {
   return (
-    <div className="relative aspect-[621/645.37] w-full max-w-[560px]">
+    <div className="relative aspect-[621/645.37] h-[68svh] max-h-[640px] w-auto max-w-full">
       <div className="absolute left-0 top-0 h-[83.74%] w-full">
         <Image src="/guidelines/arcade-monitor.svg" alt="" fill loading="lazy" sizes="560px" />
       </div>
