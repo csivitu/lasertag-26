@@ -1,7 +1,7 @@
 "use client";
 
-import React, { CSSProperties } from "react";
-import { pixelDots, sparkles, twinkleStyle } from "../hero/heroDecor";
+import React from "react";
+import { Starfield } from "../hero/Starfield";
 
 export function SelectModeMobile() {
   return (
@@ -9,38 +9,7 @@ export function SelectModeMobile() {
       className="relative block min-h-[100svh] overflow-hidden bg-[#08080d] lg:hidden font-pixel"
     >
       {/* Background Decor */}
-      {pixelDots.map((d, i) => (
-        <span
-          key={`dot-${i}`}
-          aria-hidden
-          className="absolute"
-          style={{
-            left: `${d.l}%`,
-            top: `${d.t}%`,
-            width: `${(d.w * 1.40625).toFixed(4)}cqh`,
-            height: `${d.h}cqh`,
-            backgroundColor: d.c,
-            ...twinkleStyle(i),
-          }}
-        />
-      ))}
-      {sparkles.map((s, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={`sparkle-${i}`}
-          src={`/hero/${s.src}.svg`}
-          alt=""
-          aria-hidden
-          className="absolute block max-w-none"
-          style={{
-            left: `${s.l}%`,
-            top: `${s.t}%`,
-            width: `${(s.w * 1.40625).toFixed(4)}cqh`,
-            height: `${s.h}cqh`,
-            ...twinkleStyle(pixelDots.length + i),
-          }}
-        />
-      ))}
+      <Starfield />
 
       {/* Main Content Layout */}
       <div className="relative z-10 flex flex-col items-center justify-start p-6 pt-20 pb-12 gap-10">

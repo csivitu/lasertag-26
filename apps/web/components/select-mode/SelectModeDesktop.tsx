@@ -1,46 +1,15 @@
 "use client"; 
  
-import React, { CSSProperties } from "react"; 
-import { pixelDots, sparkles, twinkleStyle } from "../hero/heroDecor"; 
-import Image from "next/image"; 
+import React from "react";
+import { Starfield } from "../hero/Starfield"; 
  
 export function SelectModeDesktop() { 
   return ( 
     <section 
       className="relative hidden h-[100svh] min-h-[640px] overflow-hidden bg-[#08080d] lg:block font-pixel" 
     > 
-      {/* Background Decor */} 
-      {pixelDots.map((d, i) => ( 
-        <span 
-          key={`dot-${i}`}
-          aria-hidden 
-          className="absolute" 
-          style={{ 
-            left: `${d.l}%`, 
-            top: `${d.t}%`, 
-            width: `${(d.w * 1.40625).toFixed(4)}cqh`, 
-            height: `${d.h}cqh`, 
-            backgroundColor: d.c, 
-            ...twinkleStyle(i), 
-          }} 
-        /> 
-      ))} 
-      {sparkles.map((s, i) => ( 
-        <img 
-          key={`sparkle-${i}`} 
-          src={`/hero/${s.src}.svg`} 
-          alt="" 
-          aria-hidden 
-          className="absolute block max-w-none" 
-          style={{ 
-            left: `${s.l}%`, 
-            top: `${s.t}%`, 
-            width: `${(s.w * 1.40625).toFixed(4)}cqh`, 
-            height: `${s.h}cqh`, 
-            ...twinkleStyle(pixelDots.length + i), 
-          }} 
-        /> 
-      ))} 
+      {/* Background Decor */}
+      <Starfield /> 
  
       {/* Main Content Layout */} 
       <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-10 pt-16"> 
