@@ -1,32 +1,8 @@
-@import "tailwindcss";
-@import "./hero.css";
-@import "./faqs.css";
-
-@theme inline {
-  --font-logo: var(--ft-logo);
-  --font-pixel: var(--ft-pixel);
-  --font-body: var(--ft-body);
-  --font-heading: var(--ft-heading);
-
-  --color-ink: #08080d;
-  --color-brand-pink: #e5349e;
-  --color-brand-cyan: #23eff1;
-  --color-brand-yellow: #fec414;
-  --color-brand-purple: #75109b;
-  --color-accent: #01daec;
-
-  --color-nav-arrow-shade: #da9200;
-
-  --color-btn-shadow: #46005d;
-  --color-btn-bevel: #bb37cd;
-  --color-btn-lip: #fe95f6;
-}
-
-html,
-body {
-  overflow-x: hidden;
-  max-width: 100vw;
-  background: var(--color-ink);
-  color: white;
-  font-family: var(--font-body);
+/* globals.css — base resets imported by layout */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
