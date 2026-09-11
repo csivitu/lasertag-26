@@ -38,62 +38,71 @@ export function ArcadeScene() {
   }, []);
 
   return (
-    <div className="relative aspect-[621/645.37] h-[80svh] max-h-[760px] w-auto max-w-full">
-      {/* Pink Arcade Monitor (585 x 541 within 621 x 645.37 scene) */}
-      <div className="absolute left-0 top-0 h-[83.83%] w-[94.20%]">
-        <Image
-          src="/guidelines/arcade-monitor.svg"
-          alt="LaserTag Arcade Computer"
-          fill
-          priority
-          sizes="560px"
-        />
+    <div className="flex flex-col items-center">
+      <div className="relative aspect-[621/645.37] h-[77svh] max-h-[730px] w-auto max-w-full">
+        {/* Pink Arcade Monitor (585 x 541 within 621 x 645.37 scene) */}
+        <div className="absolute left-0 top-0 h-[83.83%] w-[94.20%]">
+          <Image
+            src="/guidelines/arcade-monitor.svg"
+            alt="LaserTag Arcade Computer"
+            fill
+            priority
+            sizes="560px"
+          />
 
-        {/* Interactive Space Invaders Screen Overlay */}
-        <div
-          className="absolute z-10"
-          style={{
-            left: `${SCREEN_LEFT_PERCENT}%`,
-            top: `${SCREEN_TOP_PERCENT}%`,
-            width: `${SCREEN_WIDTH_PERCENT}%`,
-            height: `${SCREEN_HEIGHT_PERCENT}%`,
-          }}
-        >
-          <SpaceInvadersScreen />
+          {/* Interactive Space Invaders Screen Overlay */}
+          <div
+            className="absolute z-10"
+            style={{
+              left: `${SCREEN_LEFT_PERCENT}%`,
+              top: `${SCREEN_TOP_PERCENT}%`,
+              width: `${SCREEN_WIDTH_PERCENT}%`,
+              height: `${SCREEN_HEIGHT_PERCENT}%`,
+            }}
+          >
+            <SpaceInvadersScreen />
+          </div>
         </div>
+
+        {/* Yellow Gamepad Controller */}
+        <button
+          type="button"
+          onClick={handleControllerYellowClick}
+          aria-label="Yellow Arcade Controller (Move Left & Fire)"
+          className="absolute left-[27.65%] top-[66.94%] h-[21.71%] w-[25.15%] cursor-pointer transition-transform duration-100 active:scale-95 focus:outline-none"
+        >
+          <Image
+            src="/guidelines/controller-yellow.svg"
+            alt=""
+            fill
+            loading="lazy"
+            sizes="150px"
+          />
+        </button>
+
+        {/* Cyan Gamepad Controller */}
+        <button
+          type="button"
+          onClick={handleControllerCyanClick}
+          aria-label="Cyan Arcade Controller (Move Right & Fire)"
+          className="absolute left-[49.11%] top-[82.55%] h-[17.46%] w-[21.86%] cursor-pointer transition-transform duration-100 active:scale-95 focus:outline-none"
+        >
+          <Image
+            src="/guidelines/controller-cyan.svg"
+            alt=""
+            fill
+            loading="lazy"
+            sizes="130px"
+          />
+        </button>
       </div>
 
-      {/* Yellow Gamepad Controller */}
-      <button
-        type="button"
-        onClick={handleControllerYellowClick}
-        aria-label="Yellow Arcade Controller (Move Left & Fire)"
-        className="absolute left-[27.65%] top-[66.94%] h-[21.71%] w-[25.15%] cursor-pointer transition-transform duration-100 active:scale-95 focus:outline-none"
-      >
-        <Image
-          src="/guidelines/controller-yellow.svg"
-          alt=""
-          fill
-          loading="lazy"
-          sizes="150px"
-        />
-      </button>
-
-      {/* Cyan Gamepad Controller */}
-      <button
-        type="button"
-        onClick={handleControllerCyanClick}
-        aria-label="Cyan Arcade Controller (Move Right & Fire)"
-        className="absolute left-[49.11%] top-[82.55%] h-[17.46%] w-[21.86%] cursor-pointer transition-transform duration-100 active:scale-95 focus:outline-none"
-      >
-        <Image
-          src="/guidelines/controller-cyan.svg"
-          alt=""
-          fill
-          loading="lazy"
-          sizes="130px"
-        />
-      </button>
+      {/* Arcade Controls Communication Pill */}
+      <div className="mt-1 flex shrink-0 items-center justify-center gap-2 font-mono text-[clamp(0.65rem,1.4svh,0.85rem)] tracking-wider text-guideline-cyan">
+        <span className="rounded bg-black/70 px-2.5 py-0.5 border border-guideline-cyan/40 shadow-sm">
+          ◄ / ► ARROW KEYS TO MOVE • SPACE TO SHOOT
+        </span>
+      </div>
     </div>
   );
 }

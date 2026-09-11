@@ -5,6 +5,10 @@ import {
   BULLET_HEIGHT,
   BULLET_SPEED,
   BULLET_WIDTH,
+  ENEMY_BULLET_HEIGHT,
+  ENEMY_BULLET_SPEED,
+  ENEMY_BULLET_WIDTH,
+  ENEMY_SHOOT_CHANCE_PER_TICK,
   GRID_CENTER_X,
   GRID_ROW_Y,
   GRID_SPACING_X,
@@ -19,6 +23,7 @@ import {
   PARTICLE_SIZE,
   PLAYER_HEIGHT,
   PLAYER_INITIAL_Y,
+  PLAYER_INVULNERABLE_DURATION_MS,
   PLAYER_SPEED,
   PLAYER_WIDTH,
   POINTS_CYAN,
@@ -44,7 +49,9 @@ import type {
 const COLOR_PINK = '#ee218f';
 const COLOR_CYAN = '#00cade';
 const COLOR_YELLOW = '#f6ce01';
+const COLOR_PLAYER_HIT = '#ffffff';
 const MAX_PLAYER_BULLETS = 3;
+const MAX_ENEMY_BULLETS = 3;
 const WAVE_RESPAWN_DELAY_MS = 1200;
 
 function createInitialFleet(): Invader[] {
@@ -123,7 +130,7 @@ export function SpaceInvadersScreen() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [score, setScore] = useState<number>(INITIAL_SCORE);
-  const [lives] = useState<number>(INITIAL_LIVES);
+  const [lives, setLives] = useState<number>(INITIAL_LIVES);
   const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
 
   // Pre-loaded image sprites
@@ -144,8 +151,13 @@ export function SpaceInvadersScreen() {
     speed: PLAYER_SPEED,
   });
 
+  const livesRef = useRef<number>(INITIAL_LIVES);
+  const gameStatusRef = useRef<GameStatus>('idle');
+  const invulnerableUntilRef = useRef<number>(0);
+
   const fleetRef = useRef<Invader[]>(createInitialFleet());
-  const bulletsRef = useRef<Bullet[]>([]);
+  const playerBulletsRef = useRef<Bullet[]>([]);
+  const enemyBulletsRef = useRef<Bullet[]>([]);
   const particlesRef = useRef<Particle[]>([]);
 
   const keysPressedRef = useRef<{ left: boolean; right: boolean }>({
@@ -158,6 +170,11 @@ export function SpaceInvadersScreen() {
   const waveNumberRef = useRef<number>(1);
   const bulletIdCounterRef = useRef<number>(0);
   const particleIdCounterRef = useRef<number>(0);
+
+  // Synchronize ref with state
+  useEffect(() => {
+    gameStatusRef.current = gameStatus;
+  }, [gameStatus]);
 
   // Initialize sprite images
   useEffect(() => {
@@ -176,53 +193,114 @@ export function SpaceInvadersScreen() {
     };
   }, []);
 
-  const fireBullet = useCallback(() => {
-    if (bulletsRef.current.length >= MAX_PLAYER_BULLETS) return;
+  const spawnExplosion = useCallback(
+    (x: number, y: number, color: string, count: number = PARTICLE_COUNT) => {
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count;
+        const speed = 0.8 + Math.random() * 1.6;
+        particleIdCounterRef.current += 1;
+        particlesRef.current.push({
+          id: `particle-${particleIdCounterRef.current}`,
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color,
+          alpha: 1.0,
+          size: PARTICLE_SIZE,
+        });
+      }
+    },
+    []
+  );
+
+  const resetGame = useCallback(() => {
+    setScore(INITIAL_SCORE);
+    setLives(INITIAL_LIVES);
+    livesRef.current = INITIAL_LIVES;
+    playerRef.current.x = GRID_CENTER_X - PLAYER_WIDTH / 2;
+    fleetRef.current = createInitialFleet();
+    playerBulletsRef.current = [];
+    enemyBulletsRef.current = [];
+    particlesRef.current = [];
+    fleetDirectionRef.current = 1;
+    fleetStepTimerRef.current = 0;
+    waveNumberRef.current = 1;
+    invulnerableUntilRef.current = 0;
+    setGameStatus('playing');
+    gameStatusRef.current = 'playing';
+  }, []);
+
+  const handlePlayerHit = useCallback(
+    (now: number) => {
+      if (now < invulnerableUntilRef.current) return;
+      invulnerableUntilRef.current = now + PLAYER_INVULNERABLE_DURATION_MS;
+
+      const player = playerRef.current;
+      spawnExplosion(
+        player.x + player.width / 2,
+        player.y + player.height / 2,
+        COLOR_PLAYER_HIT,
+        14
+      );
+
+      const nextLives = livesRef.current - 1;
+      livesRef.current = nextLives;
+      setLives(Math.max(0, nextLives));
+
+      if (nextLives <= 0) {
+        setGameStatus('gameover');
+        gameStatusRef.current = 'gameover';
+      } else {
+        // Reset player to center after hit
+        player.x = GRID_CENTER_X - PLAYER_WIDTH / 2;
+      }
+    },
+    [spawnExplosion]
+  );
+
+  const firePlayerBullet = useCallback(() => {
+    if (gameStatusRef.current === 'idle') {
+      setGameStatus('playing');
+      gameStatusRef.current = 'playing';
+      return;
+    }
+    if (gameStatusRef.current === 'gameover') {
+      resetGame();
+      return;
+    }
+    if (gameStatusRef.current !== 'playing') return;
+    if (playerBulletsRef.current.length >= MAX_PLAYER_BULLETS) return;
+
     const player = playerRef.current;
     bulletIdCounterRef.current += 1;
-    bulletsRef.current.push({
-      id: `bullet-${bulletIdCounterRef.current}`,
+    playerBulletsRef.current.push({
+      id: `p-bullet-${bulletIdCounterRef.current}`,
       x: player.x + player.width / 2 - BULLET_WIDTH / 2,
       y: player.y - BULLET_HEIGHT,
       width: BULLET_WIDTH,
       height: BULLET_HEIGHT,
       vy: -BULLET_SPEED,
     });
-    setGameStatus('playing');
-  }, []);
-
-  const spawnExplosion = useCallback((x: number, y: number, color: string) => {
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const angle = (Math.PI * 2 * i) / PARTICLE_COUNT;
-      const speed = 0.8 + Math.random() * 1.5;
-      particleIdCounterRef.current += 1;
-      particlesRef.current.push({
-        id: `particle-${particleIdCounterRef.current}`,
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        color,
-        alpha: 1.0,
-        size: PARTICLE_SIZE,
-      });
-    }
-  }, []);
+  }, [resetGame]);
 
   // Handle external arcade controller clicks
   useEffect(() => {
     const handleArcadeControl = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
       const action = customEvent.detail;
-      setGameStatus('playing');
+      if (gameStatusRef.current === 'idle') {
+        setGameStatus('playing');
+        gameStatusRef.current = 'playing';
+      }
       if (action === 'left') {
         playerRef.current.x = Math.max(INVADER_MIN_X, playerRef.current.x - 12);
-        fireBullet();
+        firePlayerBullet();
       } else if (action === 'right') {
         playerRef.current.x = Math.min(INVADER_MAX_X, playerRef.current.x + 12);
-        fireBullet();
+        firePlayerBullet();
       } else if (action === 'fire') {
-        fireBullet();
+        firePlayerBullet();
       }
     };
 
@@ -230,24 +308,22 @@ export function SpaceInvadersScreen() {
     return () => {
       window.removeEventListener('arcade-control', handleArcadeControl);
     };
-  }, [fireBullet]);
+  }, [firePlayerBullet]);
 
-  // Handle keyboard inputs
+  // Handle keyboard inputs (ONLY Arrow keys and Space)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         keysPressedRef.current.left = true;
-        setGameStatus('playing');
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         keysPressedRef.current.right = true;
-        setGameStatus('playing');
       } else if (
         e.code === 'Space' ||
         e.code === 'ArrowUp' ||
-        e.code === 'KeyW'
+        e.code === 'Enter'
       ) {
         e.preventDefault();
-        fireBullet();
+        firePlayerBullet();
       }
     };
 
@@ -265,21 +341,11 @@ export function SpaceInvadersScreen() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [fireBullet]);
+  }, [firePlayerBullet]);
 
-  // Pointer / touch handling
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const relativeX = ((e.clientX - rect.left) / rect.width) * SCREEN_WIDTH;
-    playerRef.current.x = Math.max(
-      INVADER_MIN_X,
-      Math.min(INVADER_MAX_X, relativeX - PLAYER_WIDTH / 2)
-    );
-  };
-
-  const handleClickOrTap = () => {
-    fireBullet();
+  // Click on screen starts game or fires
+  const handleClick = () => {
+    firePlayerBullet();
   };
 
   // Main 60fps Game Loop using Canvas
@@ -287,75 +353,110 @@ export function SpaceInvadersScreen() {
     let animationFrameId: number;
 
     const gameLoop = () => {
+      const now = performance.now();
+      const status = gameStatusRef.current;
       const player = playerRef.current;
       const fleet = fleetRef.current;
       const canvas = canvasRef.current;
 
-      // 1. Update Player Position from keyboard
-      if (keysPressedRef.current.left) {
-        player.x = Math.max(INVADER_MIN_X, player.x - player.speed);
-      }
-      if (keysPressedRef.current.right) {
-        player.x = Math.min(INVADER_MAX_X, player.x + player.speed);
+      // 1. Update Player Position from keyboard ONLY
+      if (status === 'playing') {
+        if (keysPressedRef.current.left) {
+          player.x = Math.max(INVADER_MIN_X, player.x - player.speed);
+        }
+        if (keysPressedRef.current.right) {
+          player.x = Math.min(INVADER_MAX_X, player.x + player.speed);
+        }
       }
 
-      // 2. Update Fleet Movement
+      // 2. Update Fleet Movement & Enemy Attacks
       const aliveInvaders = fleet.filter((inv) => inv.isAlive);
-      if (aliveInvaders.length === 0) {
-        if (gameStatus !== 'cleared') {
+
+      if (status === 'playing') {
+        if (aliveInvaders.length === 0) {
           setGameStatus('cleared');
+          gameStatusRef.current = 'cleared';
           setTimeout(() => {
             waveNumberRef.current += 1;
             fleetRef.current = createInitialFleet();
             setGameStatus('playing');
+            gameStatusRef.current = 'playing';
           }, WAVE_RESPAWN_DELAY_MS);
-        }
-      } else {
-        fleetStepTimerRef.current += 1;
-        const stepInterval = Math.max(8, 24 - waveNumberRef.current * 2);
+        } else {
+          fleetStepTimerRef.current += 1;
+          const stepInterval = Math.max(8, 24 - waveNumberRef.current * 2);
 
-        if (fleetStepTimerRef.current >= stepInterval) {
-          fleetStepTimerRef.current = 0;
+          if (fleetStepTimerRef.current >= stepInterval) {
+            fleetStepTimerRef.current = 0;
 
-          // Check if any alive invader touches boundary
-          let hitBoundary = false;
-          const currentDir = fleetDirectionRef.current;
+            // Check if any alive invader touches boundary
+            let hitBoundary = false;
+            const currentDir = fleetDirectionRef.current;
 
-          for (const inv of aliveInvaders) {
-            if (
-              (currentDir > 0 && inv.x >= INVADER_MAX_X) ||
-              (currentDir < 0 && inv.x <= INVADER_MIN_X)
-            ) {
-              hitBoundary = true;
-              break;
+            for (const inv of aliveInvaders) {
+              if (
+                (currentDir > 0 && inv.x >= INVADER_MAX_X) ||
+                (currentDir < 0 && inv.x <= INVADER_MIN_X)
+              ) {
+                hitBoundary = true;
+                break;
+              }
+            }
+
+            if (hitBoundary) {
+              fleetDirectionRef.current = -currentDir;
+              for (const inv of aliveInvaders) {
+                inv.y += 4;
+              }
+            } else {
+              const stepX = currentDir * (3.0 + waveNumberRef.current * 0.4);
+              for (const inv of aliveInvaders) {
+                inv.x += stepX;
+              }
             }
           }
 
-          if (hitBoundary) {
-            fleetDirectionRef.current = -currentDir;
-            for (const inv of aliveInvaders) {
-              inv.y += 4;
-            }
-          } else {
-            const stepX = currentDir * (3.0 + waveNumberRef.current * 0.4);
-            for (const inv of aliveInvaders) {
-              inv.x += stepX;
+          // Periodic enemy fire
+          if (
+            enemyBulletsRef.current.length < MAX_ENEMY_BULLETS &&
+            Math.random() < ENEMY_SHOOT_CHANCE_PER_TICK &&
+            aliveInvaders.length > 0
+          ) {
+            const randomInvader =
+              aliveInvaders[Math.floor(Math.random() * aliveInvaders.length)];
+            bulletIdCounterRef.current += 1;
+            enemyBulletsRef.current.push({
+              id: `e-bullet-${bulletIdCounterRef.current}`,
+              x: randomInvader.x + randomInvader.width / 2 - ENEMY_BULLET_WIDTH / 2,
+              y: randomInvader.y + randomInvader.height,
+              width: ENEMY_BULLET_WIDTH,
+              height: ENEMY_BULLET_HEIGHT,
+              vy: ENEMY_BULLET_SPEED + waveNumberRef.current * 0.2,
+              isEnemy: true,
+            });
+          }
+
+          // Check direct shuttle collision with descending invaders
+          for (const inv of aliveInvaders) {
+            if (
+              player.x < inv.x + inv.width &&
+              player.x + player.width > inv.x &&
+              player.y < inv.y + inv.height &&
+              player.y + player.height > inv.y
+            ) {
+              handlePlayerHit(now);
+              break;
             }
           }
         }
       }
 
-      // 3. Update Bullets
-      const activeBullets: Bullet[] = [];
-      for (const bullet of bulletsRef.current) {
+      // 3. Update Player Bullets
+      const activePlayerBullets: Bullet[] = [];
+      for (const bullet of playerBulletsRef.current) {
         bullet.y += bullet.vy;
+        if (bullet.y + bullet.height < 0) continue;
 
-        // Check screen boundaries
-        if (bullet.y + bullet.height < 0) {
-          continue;
-        }
-
-        // Collision detection with invaders
         let bulletHit = false;
         for (const inv of aliveInvaders) {
           if (
@@ -377,12 +478,33 @@ export function SpaceInvadersScreen() {
         }
 
         if (!bulletHit) {
-          activeBullets.push(bullet);
+          activePlayerBullets.push(bullet);
         }
       }
-      bulletsRef.current = activeBullets;
+      playerBulletsRef.current = activePlayerBullets;
 
-      // 4. Update Particles
+      // 4. Update Enemy Bullets & Shuttle Hitbox Collision
+      const activeEnemyBullets: Bullet[] = [];
+      for (const bullet of enemyBulletsRef.current) {
+        bullet.y += bullet.vy;
+        if (bullet.y > SCREEN_HEIGHT) continue;
+
+        // Hitbox collision against the Player Shuttle
+        if (
+          bullet.x < player.x + player.width &&
+          bullet.x + bullet.width > player.x &&
+          bullet.y < player.y + player.height &&
+          bullet.y + bullet.height > player.y
+        ) {
+          handlePlayerHit(now);
+          continue;
+        }
+
+        activeEnemyBullets.push(bullet);
+      }
+      enemyBulletsRef.current = activeEnemyBullets;
+
+      // 5. Update Particles
       const activeParticles: Particle[] = [];
       for (const p of particlesRef.current) {
         p.x += p.vx;
@@ -394,7 +516,7 @@ export function SpaceInvadersScreen() {
       }
       particlesRef.current = activeParticles;
 
-      // 5. Draw to Canvas
+      // 6. Draw to Canvas
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
@@ -411,10 +533,10 @@ export function SpaceInvadersScreen() {
               }
             }
 
-            // Draw bullets
+            // Draw player bullets
             const bulletImg = imgs.bullet;
             if (bulletImg && bulletImg.complete) {
-              for (const bullet of activeBullets) {
+              for (const bullet of activePlayerBullets) {
                 ctx.drawImage(
                   bulletImg,
                   bullet.x,
@@ -425,16 +547,40 @@ export function SpaceInvadersScreen() {
               }
             }
 
-            // Draw player ship
-            const shipImg = imgs.ship;
-            if (shipImg && shipImg.complete) {
-              ctx.drawImage(
-                shipImg,
-                player.x,
-                player.y,
-                player.width,
-                player.height
+            // Draw enemy lasers (pulsing red/cyan plasma bars)
+            for (const eBullet of activeEnemyBullets) {
+              ctx.fillStyle = '#ff2a6d';
+              ctx.fillRect(
+                eBullet.x,
+                eBullet.y,
+                eBullet.width,
+                eBullet.height
               );
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(
+                eBullet.x + 1,
+                eBullet.y + 1,
+                1,
+                eBullet.height - 2
+              );
+            }
+
+            // Draw player ship (flashing if invulnerable)
+            const isFlashing =
+              now < invulnerableUntilRef.current &&
+              Math.floor(now / 100) % 2 === 0;
+
+            if (!isFlashing) {
+              const shipImg = imgs.ship;
+              if (shipImg && shipImg.complete) {
+                ctx.drawImage(
+                  shipImg,
+                  player.x,
+                  player.y,
+                  player.width,
+                  player.height
+                );
+              }
             }
           }
 
@@ -455,17 +601,16 @@ export function SpaceInvadersScreen() {
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [gameStatus, spawnExplosion]);
+  }, [handlePlayerHit, spawnExplosion]);
 
   return (
     <div
       ref={containerRef}
-      onPointerMove={handlePointerMove}
-      onClick={handleClickOrTap}
-      className="relative h-full w-full select-none overflow-hidden rounded-[4px] bg-black cursor-crosshair"
+      onClick={handleClick}
+      className="relative h-full w-full select-none overflow-hidden rounded-[4px] bg-black cursor-pointer"
       tabIndex={0}
       role="application"
-      aria-label="Interactive Space Invaders Arcade Screen"
+      aria-label="Space Invaders Arcade Game. Use Left and Right Arrow keys to move, Space to fire."
     >
       {/* HUD Header */}
       <div className="absolute left-0 top-0 z-20 flex w-full items-center justify-between px-3 py-1 text-[9px] font-mono tracking-wider text-[#35ecf0]">
@@ -499,19 +644,40 @@ export function SpaceInvadersScreen() {
         className="absolute inset-0 h-full w-full [image-rendering:pixelated]"
       />
 
-      {/* Attract Mode Prompt */}
+      {/* Controls Overlay Banner (Idle State) */}
       {gameStatus === 'idle' && (
-        <div className="pointer-events-none absolute bottom-1.5 left-0 right-0 z-20 text-center">
-          <span className="animate-pulse rounded bg-black/70 px-1.5 py-0.5 text-[7px] font-mono text-white/90">
-            [ SPACE / CLICK TO PLAY ]
-          </span>
+        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-end pb-3 bg-black/40">
+          <div className="flex flex-col items-center gap-1 rounded bg-black/85 px-2 py-1.5 border border-brand-pink/50 shadow-lg text-center">
+            <span className="animate-pulse font-mono text-[8px] font-bold tracking-wider text-guideline-yellow">
+              PRESS SPACE OR CLICK TO START
+            </span>
+            <span className="font-mono text-[7px] tracking-wide text-guideline-cyan">
+              ◄ / ► ARROWS TO MOVE • SPACE TO FIRE
+            </span>
+          </div>
         </div>
       )}
+
 
       {/* Wave Cleared Message */}
       {gameStatus === 'cleared' && (
         <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/60 font-mono text-xs font-bold text-[#f6ce01]">
           WAVE CLEARED!
+        </div>
+      )}
+
+      {/* Game Over Screen */}
+      {gameStatus === 'gameover' && (
+        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-1 bg-black/80 font-mono">
+          <span className="text-sm font-bold tracking-widest text-[#ff2a6d] animate-pulse">
+            GAME OVER
+          </span>
+          <span className="text-[9px] text-[#35ecf0]">
+            FINAL SCORE: {score.toString().padStart(4, '0')}
+          </span>
+          <span className="mt-1 rounded bg-black px-2 py-0.5 text-[7px] text-white/90 border border-white/30">
+            [ PRESS SPACE OR CLICK TO RESTART ]
+          </span>
         </div>
       )}
 

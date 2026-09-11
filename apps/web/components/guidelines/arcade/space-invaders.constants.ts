@@ -6,12 +6,18 @@ export const INVADER_HEIGHT = 18;
 
 export const PLAYER_WIDTH = 18;
 export const PLAYER_HEIGHT = 17;
-export const PLAYER_INITIAL_Y = 160;
+export const PLAYER_INITIAL_Y = 146;
 export const PLAYER_SPEED = 2.8;
 
 export const BULLET_WIDTH = 4;
 export const BULLET_HEIGHT = 10;
 export const BULLET_SPEED = 5.2;
+
+export const ENEMY_BULLET_WIDTH = 3;
+export const ENEMY_BULLET_HEIGHT = 7;
+export const ENEMY_BULLET_SPEED = 2.2;
+export const ENEMY_SHOOT_CHANCE_PER_TICK = 0.012;
+export const PLAYER_INVULNERABLE_DURATION_MS = 1800;
 
 export const INITIAL_INVADER_SPEED_X = 0.55;
 export const INVADER_DROP_Y = 6;
@@ -23,7 +29,7 @@ export const POINTS_CYAN = 20;
 export const POINTS_YELLOW = 10;
 
 export const INITIAL_LIVES = 3;
-export const INITIAL_SCORE = 100;
+export const INITIAL_SCORE = 0;
 
 export const PARTICLE_COUNT = 8;
 export const PARTICLE_DECAY_RATE = 0.06;

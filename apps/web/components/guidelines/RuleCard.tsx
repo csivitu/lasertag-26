@@ -32,7 +32,7 @@ export function RuleCard({ id, accent, items }: RuleCardData) {
         {String(id).padStart(2, "0")}
       </span>
 
-      <ul className="relative list-disc space-y-[0.6svh] pl-4 text-[clamp(0.7rem,1.9svh,1.2rem)] leading-normal text-white marker:text-white/70">
+      <ul className="relative list-disc space-y-[0.6svh] pl-4 text-[clamp(0.75rem,1.8svh,1.1rem)] lg:text-[clamp(0.9rem,1.9svh,1.25rem)] lg:space-y-[0.5svh] leading-normal lg:leading-snug text-white marker:text-white/70">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}

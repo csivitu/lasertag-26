@@ -18,6 +18,7 @@ export interface Bullet {
   readonly width: number;
   readonly height: number;
   readonly vy: number;
+  readonly isEnemy?: boolean;
 }
 
 export interface Particle {
