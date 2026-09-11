@@ -2,42 +2,42 @@
 
 import { useState } from "react";
 import { Starfield } from "../hero/Starfield";
+import { useSlots } from "../../hooks/useSlots";
 import { DateSwitcher } from "./DateSwitcher";
 import { SlotGrid } from "./SlotGrid";
-
-const DATES = [
-  { day: "18", month: "SEPT" },
-  { day: "19", month: "SEPT" },
-  { day: "20", month: "SEPT" },
-];
-
-const BOOKING_TIMES = ["9:30AM", "10:30AM", "11:30AM", "12:30PM"];
 
 interface SlotBookingProps {
   activeDay?: string;
 }
 
 export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
+  const { slots, isLoading, reserveSlot } = useSlots();
   const [selectedDay, setSelectedDay] = useState(activeDay);
   const [selectedSlot, setSelectedSlot] = useState(1);
   const [selectedPage, setSelectedPage] = useState(1);
   const [bookingDay, setBookingDay] = useState(activeDay);
   const [bookingPage, setBookingPage] = useState(1);
-  const dates = DATES.map((date) => ({
-    ...date,
-    active: date.day === selectedDay,
+  const dates = [...new Map(slots.map((slot) => [slot.day, slot])).values()].map((slot) => ({
+    day: slot.day,
+    month: slot.month,
+    active: slot.day === selectedDay,
   }));
 
   const selectDate = (day: string) => {
-    const page = DATES.findIndex((date) => date.day === day) + 1;
     setSelectedDay(day);
-    setSelectedPage(page);
+    setSelectedPage(1);
   };
 
   const selectPage = (page: number) => {
     setSelectedPage(page);
-    setSelectedDay(DATES[page - 1].day);
   };
+
+  const booking = slots.find(
+    (slot) =>
+      slot.day === bookingDay &&
+      slot.page === bookingPage &&
+      slot.index === selectedSlot,
+  );
 
   return (
     <section
@@ -55,7 +55,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       <div className="relative z-10">
         <div className="slot-current-badge">
           <span>
-            SEPT {bookingDay}TH, {BOOKING_TIMES[Math.floor(selectedSlot / 6)]}
+            {booking ? `${booking.month} ${booking.day}TH, ${booking.time}` : "SELECT A SLOT"}
           </span>
         </div>
       </div>
@@ -78,6 +78,9 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
               ? selectedSlot
               : undefined
           }
+          slots={slots}
+          isLoading={isLoading}
+          reserveSlot={reserveSlot}
           onPageChange={selectPage}
           onSelectSlot={(slot) => {
             setBookingDay(slot.day);
