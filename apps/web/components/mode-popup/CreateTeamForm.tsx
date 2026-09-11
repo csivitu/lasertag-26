@@ -92,8 +92,8 @@ export function CreateTeamForm() {
         </div>
       </div>
 
-      {/* Team Code row: compact pink code badge + Create Team button */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: "12px", marginTop: "4px" }}>
+      {/* Team Code row: pink code badge + Create Team button */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}>
         <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
           <label className="mode-popup-label" style={labelStyle}>TEAM CODE</label>
           {/* Keep the SVG as the element background so its fill stays inside the stepped border. */}
@@ -102,7 +102,10 @@ export function CreateTeamForm() {
             style={{
               position: "relative",
               background: borderBg(PINK_INPUT_BORDER_SVG),
-              width: "124px",
+              width: "140px",
+              height: "40px",
+              display: "flex",
+              alignItems: "center",
             }}
           >
             <div
@@ -113,7 +116,7 @@ export function CreateTeamForm() {
                 textAlign: "center",
                 letterSpacing: "0.12em",
                 userSelect: "all",
-                padding: "3px 8px",
+                padding: "0 12px",
               }}
             >
               {teamCode}
