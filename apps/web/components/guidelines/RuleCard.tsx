@@ -27,7 +27,7 @@ export function RuleCard({ id, accent, items }: RuleCardData) {
       </svg>
 
       <span
-        className={`relative grid aspect-[91/85] w-[clamp(2.25rem,6svh,4.25rem)] shrink-0 place-items-center rounded-full font-digit text-[clamp(1.1rem,2.8svh,2.25rem)] text-ink ${ACCENT_BG[accent]}`}
+        className={`relative grid aspect-[91/85] w-[clamp(3.25rem,8.5svh,5.75rem)] shrink-0 place-items-center rounded-full font-digit text-[clamp(1.6rem,4.2svh,3.1rem)] text-ink ${ACCENT_BG[accent]}`}
       >
         {String(id).padStart(2, "0")}
       </span>

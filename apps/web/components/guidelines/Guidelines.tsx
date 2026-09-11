@@ -22,7 +22,7 @@ export function Guidelines() {
           PLAY SMART. PLAY FAIR. PLAY ON.
         </p>
 
-        <div className="mt-[2svh] grid min-h-0 flex-1 gap-[2svh] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-stretch lg:gap-8">
+        <div className="mt-[2svh] grid min-h-0 flex-1 gap-[2svh] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.3fr)] lg:items-stretch lg:gap-8">
           {/* Absent on mobile in Figma, not just shrunk — the mobile frame has no equivalent node. */}
           <div className="hidden min-h-0 items-center justify-center lg:flex lg:h-full">
             <ArcadeScene />
