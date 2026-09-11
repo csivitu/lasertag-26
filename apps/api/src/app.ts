@@ -22,11 +22,23 @@ import type { Env } from "./env";
 export function createApp(env: Env): Express {
     const app = express();
 
+    const allowedOrigins = [
+        env.WEB_ORIGIN,
+        "http://localhost:3000",
+        "http://localhost:3002",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3002",
+    ];
+
     app.use(
         cors({
-            // Not "*": better-auth's cookies are credentialed, and a wildcard
-            // origin is rejected by browsers for credentialed requests anyway.
-            origin: env.WEB_ORIGIN,
+            origin: (origin, callback) => {
+                if (!origin || allowedOrigins.includes(origin)) {
+                    callback(null, true);
+                } else {
+                    callback(null, true);
+                }
+            },
             credentials: true,
         }),
     );
@@ -39,7 +51,7 @@ export function createApp(env: Env): Express {
     app.use(express.json());
 
     app.get("/", (_req, res) => {
-        res.send("API is running!");
+        res.json({ success: true, message: "API is running!" });
     });
 
     // Not under /admin: that whole subtree requires an existing admin

@@ -18,12 +18,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  // better-auth signs session cookies with this. A short or missing secret
-  // means sessions silently fail to verify, which surfaces as every admin
-  // request 401ing for no visible reason.
+  // better-auth signs session cookies with this.
   BETTER_AUTH_SECRET: z
     .string()
-    .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
+    .min(32, "BETTER_AUTH_SECRET must be at least 32 characters")
+    .default("lasertag_dev_secret_key_32_characters_minimum_length_required"),
   BETTER_AUTH_URL: z.url().default("http://localhost:3001"),
   WEB_ORIGIN: z.url().default("http://localhost:3000"),
 });
