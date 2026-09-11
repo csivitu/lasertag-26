@@ -1,5 +1,5 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { slots } from "@lasertag-26/database";
+import { slots } from "../../../../packages/database/schema";
 import { z } from "zod";
 
 /**
