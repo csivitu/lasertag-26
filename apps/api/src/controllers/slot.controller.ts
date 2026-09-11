@@ -1,7 +1,14 @@
 import { db } from "@lasertag-26/database";
-import { slots, bookings, user, teams } from "@lasertag-26/database/schema";
+import {
+  slots,
+  bookings,
+  user,
+  teams,
+  teamMembers,
+} from "@lasertag-26/database/schema";
 import { eq } from "drizzle-orm";
 import { HttpError as AppError } from "../errors";
+import { sendEmail } from "../services/mailer";
 
 export interface ReserveSlotInput {
   slot_id: string;
@@ -97,6 +104,60 @@ export const slotController = {
         confirmationEmailSent: false,
       })
       .returning();
+
+    if (type === "team" && team_code) {
+      const teamUsers = await db
+        .select({
+          name: user.name,
+          email: user.email,
+        })
+        .from(teamMembers)
+        .innerJoin(user, eq(teamMembers.userId, user.id))
+        .where(eq(teamMembers.teamCode, team_code));
+
+      const emailResults = await Promise.all(
+        teamUsers.map((member) =>
+          sendEmail({
+            to: member.email,
+            subject: "LaserTag Slot Booked",
+            template: "test",
+            variables: {
+              name: member.name,
+              teamCode: team_code,
+            },
+          }),
+        ),
+      );
+
+      const allEmailsSent = emailResults.every((messageId) => messageId !== null);
+
+      if (allEmailsSent && teamUsers.length > 0) {
+        await db
+          .update(bookings)
+          .set({
+            confirmationEmailSent: true,
+          })
+          .where(eq(bookings.id, newBooking.id));
+      }
+    } else {
+      const messageId = await sendEmail({
+        to: targetUser.email,
+        subject: "LaserTag Slot Booked",
+        template: "test",
+        variables: {
+          name: targetUser.name,
+        },
+      });
+
+      if (messageId) {
+        await db
+          .update(bookings)
+          .set({
+            confirmationEmailSent: true,
+          })
+          .where(eq(bookings.id, newBooking.id));
+      }
+    }
 
     return newBooking;
   },
