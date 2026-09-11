@@ -89,6 +89,7 @@ export function JoinTeamForm() {
         <PixelButton
           type="submit"
           label="Join Team"
+          interaction="simple"
           className="w-[240px]"
           labelClassName="text-[13px]"
         />

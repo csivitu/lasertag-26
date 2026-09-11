@@ -32,6 +32,7 @@ export function SoloForm() {
         <PixelButton
           type="submit"
           label="Submit"
+          interaction="simple"
           className="w-[240px]"
           labelClassName="text-[13px]"
         />

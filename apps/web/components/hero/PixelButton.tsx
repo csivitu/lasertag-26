@@ -17,6 +17,7 @@ interface PixelButtonProps {
   label: string;
   className?: string;
   labelClassName?: string;
+  interaction?: "hero" | "simple";
   href?: string;
   type?: "button" | "submit" | "reset";
   onClick?: MouseEventHandler<HTMLButtonElement>;
@@ -42,7 +43,11 @@ function Face({ bands, className }: FaceProps) {
   );
 }
 
-function ButtonFace({ label, labelClassName }: Pick<PixelButtonProps, "label" | "labelClassName">) {
+function ButtonFace({
+  label,
+  labelClassName,
+  interaction = "hero",
+}: Pick<PixelButtonProps, "label" | "labelClassName" | "interaction">) {
   return (
     <>
       <svg
@@ -52,21 +57,27 @@ function ButtonFace({ label, labelClassName }: Pick<PixelButtonProps, "label" | 
         className="block h-auto w-full"
       >
         <Face bands={RESTING_BANDS} className="hero-btn__resting" />
-        <Face bands={PRESSED_BANDS} className="hero-btn__pressed" />
+        {interaction === "hero" && (
+          <Face bands={PRESSED_BANDS} className="hero-btn__pressed" />
+        )}
       </svg>
       <span
         className={`hero-btn__label pointer-events-none absolute inset-0 grid place-items-center font-pixel text-[11px] uppercase tracking-wide text-white ${labelClassName ?? ""}`}
       >
         {label}
       </span>
-      <span
-        aria-hidden="true"
-        className="button-shine hero-btn__shine hero-btn__shine--rest pointer-events-none absolute inset-0"
-      />
-      <span
-        aria-hidden="true"
-        className="button-shine hero-btn__shine hero-btn__shine--press pointer-events-none absolute inset-0"
-      />
+      {interaction === "hero" && (
+        <>
+          <span
+            aria-hidden="true"
+            className="button-shine hero-btn__shine hero-btn__shine--rest pointer-events-none absolute inset-0"
+          />
+          <span
+            aria-hidden="true"
+            className="button-shine hero-btn__shine hero-btn__shine--press pointer-events-none absolute inset-0"
+          />
+        </>
+      )}
     </>
   );
 }
@@ -75,13 +86,23 @@ export function PixelButton({
   label,
   className = "",
   labelClassName,
+  interaction = "hero",
   href,
   type = "button",
   onClick,
   disabled = false,
 }: PixelButtonProps) {
-  const rootClassName = `hero-btn group relative block outline-offset-4 transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${className}`;
-  const face = <ButtonFace label={label} labelClassName={labelClassName} />;
+  const rootClassName =
+    interaction === "hero"
+      ? `hero-btn group relative block outline-offset-4 transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${className}`
+      : `relative block outline-offset-4 transition-transform duration-200 ease-out active:scale-95 focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none ${className}`;
+  const face = (
+    <ButtonFace
+      label={label}
+      labelClassName={labelClassName}
+      interaction={interaction}
+    />
+  );
 
   if (href) {
     return (
