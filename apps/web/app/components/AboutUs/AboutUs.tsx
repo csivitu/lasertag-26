@@ -8,7 +8,9 @@ import Pacman from "./pacman";
 export default function AboutUs() {
     return (
         <section id="about" className={styles.section}>
-            <Pacman />
+            <div className="hidden lg:block">
+                <Pacman />
+            </div>
             <div className={styles.container}>
                 <AboutUsHeader />
                 <div className={styles.contentGrid}>
