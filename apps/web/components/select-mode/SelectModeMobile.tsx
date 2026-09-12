@@ -2,8 +2,13 @@
 
 import React from "react";
 import { Starfield } from "../hero/Starfield";
+import type { PopupMode } from "../mode-popup/ModePopup";
 
-export function SelectModeMobile() {
+interface SelectModeMobileProps {
+  onSelect: (mode: PopupMode) => void;
+}
+
+export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
   return (
     <section
       className="relative block min-h-[100svh] overflow-hidden bg-[#08080d] lg:hidden font-pixel"
@@ -86,7 +91,12 @@ export function SelectModeMobile() {
 
               {/* Join Button */}
               <div className="mt-auto pt-4 w-full flex justify-center">
-                <div className="relative w-40 transition-transform duration-200">
+                <button
+                  type="button"
+                  aria-label="Join as solo player"
+                  onClick={() => onSelect("solo")}
+                  className="relative w-40 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src="/select-mode/select-mode-solo/join-solo.svg" 
@@ -99,7 +109,7 @@ export function SelectModeMobile() {
                   >
                     <span className="button-shine block h-full w-1/3" />
                   </span>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -187,6 +197,18 @@ export function SelectModeMobile() {
                   >
                     <span className="button-shine block h-full w-1/3" />
                   </span>
+                  <button
+                    type="button"
+                    aria-label="Create a team"
+                    onClick={() => onSelect("create_team")}
+                    className="absolute left-0 top-0 h-full w-[48%] cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Join a team"
+                    onClick={() => onSelect("join_team")}
+                    className="absolute right-0 top-0 h-full w-[48%] cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+                  />
                 </div>
               </div>
             </div>
