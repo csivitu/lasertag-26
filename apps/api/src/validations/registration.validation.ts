@@ -22,3 +22,31 @@ export const registrationQuerySchema = z.object({
     email: optionalFilter,
   }),
 });
+
+/** POST /registrations/solo */
+export const soloRegistrationSchema = z.object({
+  body: z.object({
+    slot_id: z.uuid("slot_id must be a valid UUID"),
+  }),
+});
+
+/** Common reservation_id path parameter schema */
+export const reservationIdParams = z.object({
+  reservation_id: z.string().trim().min(1, "reservation_id is required"),
+});
+
+export const reservationIdSchema = z.object({
+  params: reservationIdParams,
+});
+
+/** POST /registrations/:reservation_id/confirm */
+export const confirmRegistrationSchema = reservationIdSchema;
+
+/** DELETE /registrations/:reservation_id */
+export const cancelRegistrationSchema = reservationIdSchema;
+
+/** GET /registrations/:reservation_id */
+export const getRegistrationSchema = reservationIdSchema;
+
+/** GET /registrations/:reservation_id/qr */
+export const getRegistrationQrSchema = reservationIdSchema;

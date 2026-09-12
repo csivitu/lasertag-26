@@ -68,17 +68,17 @@ export const slotResponseSchema = createSelectSchema(slots).extend({
 });
 
 /**
- * Participant-facing slot reservation, carried over from `dev`.
- * Shaped as separate part-schemas for `validateRequest`.
+ * Participant-facing slot reservation.
  */
-export const reserveSlotSchema = {
+export const reserveSlotSchema = z.object({
   params: z.object({
-    slot_id: z.string().min(1, "slot_id is required in path."),
+    slot_id: z.string().trim().min(1, "slot_id is required in path."),
   }),
   body: z
     .object({
       user_id: z
         .string()
+        .trim()
         .min(1, "user_id and type (individual/team) are required fields."),
       type: z.enum(["individual", "team"], {
         message: 'type must be either "individual" or "team".',
@@ -97,4 +97,9 @@ export const reserveSlotSchema = {
         path: ["team_code"],
       }
     ),
-};
+});
+
+export type ReserveSlotInput = z.infer<typeof reserveSlotSchema>["params"] &
+  z.infer<typeof reserveSlotSchema>["body"];
+
+

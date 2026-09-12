@@ -7,6 +7,14 @@ const filter = (name: string, description: string) => ({
   description,
 });
 
+const pathParam = (name: string, description: string) => ({
+  in: "path",
+  name,
+  required: true,
+  schema: { type: "string" },
+  description,
+});
+
 export const registrationPaths = {
   "/admin/registrations": {
     get: {
@@ -24,6 +32,97 @@ export const registrationPaths = {
         200: { description: "Matching registrations (empty array if nothing matches)" },
         401: responses.unauthorized,
         403: responses.forbidden,
+      },
+    },
+  },
+  "/registrations/solo": {
+    post: {
+      summary: "Create solo registration",
+      description:
+        "Create a new solo (individual) registration for the authenticated user. The user id comes from the signed-in session; clients only send the slot_id.",
+      tags: ["Registrations"],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["slot_id"],
+              properties: {
+                slot_id: { type: "string", format: "uuid" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        201: { description: "Solo registration created successfully" },
+        400: responses.badRequest,
+        401: responses.unauthorized,
+        404: responses.error("Slot or user not found"),
+        409: responses.error("Slot is full or user already has an active registration"),
+      },
+    },
+  },
+  "/registrations/{reservation_id}/confirm": {
+    post: {
+      summary: "Confirm a registration",
+      description:
+        "Confirm a reservation owned by the authenticated user and generate a QR token.",
+      tags: ["Registrations"],
+      parameters: [pathParam("reservation_id", "Reservation / Booking ID")],
+      responses: {
+        200: { description: "Registration confirmed successfully" },
+        400: responses.badRequest,
+        401: responses.unauthorized,
+        403: responses.forbidden,
+        404: responses.error("Registration not found"),
+        409: responses.error("Cannot confirm a cancelled registration"),
+      },
+    },
+  },
+  "/registrations/{reservation_id}": {
+    get: {
+      summary: "Get registration details",
+      description:
+        "Retrieve registration details by reservation_id for the authenticated owner.",
+      tags: ["Registrations"],
+      parameters: [pathParam("reservation_id", "Reservation / Booking ID")],
+      responses: {
+        200: { description: "Registration details" },
+        401: responses.unauthorized,
+        403: responses.forbidden,
+        404: responses.error("Registration not found"),
+      },
+    },
+    delete: {
+      summary: "Cancel a registration",
+      description: "Cancel a registration for the authenticated owner.",
+      tags: ["Registrations"],
+      parameters: [pathParam("reservation_id", "Reservation / Booking ID")],
+      responses: {
+        200: { description: "Registration cancelled successfully" },
+        401: responses.unauthorized,
+        403: responses.forbidden,
+        404: responses.error("Registration not found"),
+        409: responses.error("Registration is already cancelled or user has checked in"),
+      },
+    },
+  },
+  "/registrations/{reservation_id}/qr": {
+    get: {
+      summary: "Get registration QR token",
+      description:
+        "Retrieve the QR token for a confirmed registration owned by the authenticated user.",
+      tags: ["Registrations"],
+      parameters: [pathParam("reservation_id", "Reservation / Booking ID")],
+      responses: {
+        200: { description: "QR token details" },
+        400: responses.badRequest,
+        401: responses.unauthorized,
+        403: responses.forbidden,
+        404: responses.error("Registration not found"),
+        409: responses.error("Cannot retrieve QR for a cancelled registration"),
       },
     },
   },
