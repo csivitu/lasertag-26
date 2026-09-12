@@ -198,16 +198,19 @@
 
 .photoInner {
     position: absolute;
-    inset: 0.9%;
+    inset: 0;
     z-index: 1;
     overflow: hidden;
-    clip-path: polygon(30px 0%,
-            calc(100% - 30px) 0%,
-            100% 30px 100% calc(100% - 30px),
-            calc(100% - 30px) 100%,
-            30px 100%,
-            0% calc(100% - 30px),
-            0% 30px);
+    clip-path: polygon(
+        20px 7px,
+        calc(100% - 20px) 7px,
+        calc(100% - 8px) 25px,
+        calc(100% - 8px) calc(100% - 33px),
+        calc(100% - 20px) calc(100% - 7px),
+        20px calc(100% - 7px),
+        8px calc(100% - 33px),
+        8px 25px
+    );
 }
 
 .photoImg {
