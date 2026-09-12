@@ -6,7 +6,7 @@ export function Guidelines() {
   return (
     <section
       id="guidelines"
-      className="relative isolate flex min-h-[100svh] h-auto flex-col overflow-x-hidden bg-transparent px-4 py-6 sm:px-8 sm:py-8 lg:h-[100svh] lg:overflow-hidden lg:px-[3.4vw] lg:py-[2svh]"
+      className="relative isolate flex min-h-0 h-auto flex-col overflow-x-hidden bg-transparent px-4 py-8 sm:px-8 sm:py-12 lg:min-h-[100svh] lg:h-[100svh] lg:overflow-hidden lg:px-[3.4vw] lg:py-[2svh]"
     >
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1560px] min-w-0 flex-1 flex-col lg:min-h-0">

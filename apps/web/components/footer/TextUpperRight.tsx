@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 export default function TextUpperRight() {
   return (
-    <div className="flex w-full max-w-[649px] flex-col items-center justify-center gap-6 text-center">
-      <div className="hero-grid-title text-[18px] leading-[30px] tracking-[0.1em] sm:text-[24px] sm:leading-[38px] md:text-[30px] md:leading-[46px] lg:text-[36px] lg:leading-[52px]">
+    <div className="flex w-full max-w-[649px] flex-col items-center justify-center gap-4 text-center sm:gap-6">
+      <div className="hero-grid-title text-[13px] leading-[20px] tracking-[0.08em] sm:text-[18px] sm:leading-[28px] md:text-[24px] md:leading-[36px] lg:text-[32px] lg:leading-[44px]">
         ENTER THE GRID
         <br />
         SECURE YOUR SLOT
@@ -17,7 +17,7 @@ export default function TextUpperRight() {
       <button
         type="button"
         data-testid="cta-placeholder-box"
-        className="btn-book-now group relative block aspect-[305/87] h-auto w-[220px] max-w-full cursor-pointer"
+        className="btn-book-now group relative block aspect-[305/87] h-auto w-[180px] max-w-full cursor-pointer sm:w-[220px]"
         aria-label="Book Now"
       >
         <img
