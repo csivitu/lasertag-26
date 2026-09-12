@@ -1,7 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 
-import { auth } from "../auth";
 import { ForbiddenError, UnauthorizedError } from "../errors";
 
 export interface AuthenticatedUser {
@@ -62,7 +61,10 @@ export function makeRequireAdmin(getSession: GetSession): RequestHandler {
   };
 }
 
-const getSession: GetSession = (args) => auth.api.getSession(args);
+const getSession: GetSession = async (args) => {
+  const { auth } = await import("../auth");
+  return auth.api.getSession(args);
+};
 
 export const requireAuth = makeRequireAuth(getSession);
 export const requireAdmin = makeRequireAdmin(getSession);
