@@ -28,8 +28,8 @@ publicTeamsRouter.post(
 publicTeamsRouter.get(
   "/code/:code",
   validateRequest(getTeamByCodeSchema),
-  asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const teamData = await teamController.getTeamByCode(req.params.code as string);
+  asyncHandler(async (req: Request<{ code: string }>, res: Response): Promise<void> => {
+    const teamData = await teamController.getTeamByCode(req.params.code);
     res.status(200).json({
       success: true,
       data: teamData,
@@ -40,9 +40,9 @@ publicTeamsRouter.get(
 publicTeamsRouter.post(
   "/:team_id/join",
   validateRequest(joinTeamSchema),
-  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  asyncHandler(async (req: Request<{ team_id: string }, unknown, { user_id: string }>, res: Response): Promise<void> => {
     const result = await teamController.joinTeam(
-      req.params.team_id as string,
+      req.params.team_id,
       req.body.user_id
     );
     res.status(200).json({
@@ -56,8 +56,8 @@ publicTeamsRouter.post(
 publicTeamsRouter.get(
   "/:team_id/members",
   validateRequest(getTeamMembersSchema),
-  asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const result = await teamController.getTeamMembers(req.params.team_id as string);
+  asyncHandler(async (req: Request<{ team_id: string }>, res: Response): Promise<void> => {
+    const result = await teamController.getTeamMembers(req.params.team_id);
     res.status(200).json({
       success: true,
       data: result,
@@ -68,8 +68,8 @@ publicTeamsRouter.get(
 publicTeamsRouter.post(
   "/:team_id/invite",
   validateRequest(inviteTeamSchema),
-  asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const result = await teamController.generateInvite(req.params.team_id as string);
+  asyncHandler(async (req: Request<{ team_id: string }>, res: Response): Promise<void> => {
+    const result = await teamController.generateInvite(req.params.team_id);
     res.status(200).json({
       success: true,
       data: result,

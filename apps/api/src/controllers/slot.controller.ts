@@ -10,12 +10,7 @@ import { eq } from "drizzle-orm";
 import { HttpError as AppError } from "../errors";
 import { sendEmail } from "../services/mailer";
 
-export interface ReserveSlotInput {
-  slot_id: string;
-  user_id: string;
-  type: "individual" | "team";
-  team_code?: string;
-}
+import type { ReserveSlotInput } from "../validations/slot.validation";
 
 export interface CreateSlotInput {
   startTime: string;
@@ -77,14 +72,10 @@ export const slotController = {
     }
 
     if (type === "team") {
-      if (!team_code) {
-        throw new AppError(400, "team_code is required for team booking.");
-      }
-
       const [team] = await db
         .select()
         .from(teams)
-        .where(eq(teams.teamCode, team_code));
+        .where(eq(teams.teamCode, team_code!));
 
       if (!team) {
         throw new AppError(404, "Team not found.");
@@ -99,7 +90,7 @@ export const slotController = {
         id: bookingId,
         type,
         userId: user_id,
-        teamCode: type === "team" ? (team_code as string) : null,
+        teamCode: type === "team" ? (team_code ?? null) : null,
         slotId: slot_id,
         confirmationEmailSent: false,
       })

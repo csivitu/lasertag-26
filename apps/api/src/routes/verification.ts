@@ -12,10 +12,11 @@ const router = Router();
 
 router.get(
   "/:registration_id",
+  requireAdmin,
   validateRequest(verifyRegistrationSchema),
-  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  asyncHandler(async (req: Request<{ registration_id: string }>, res: Response): Promise<void> => {
     const result = await verificationController.verifyRegistration(
-      req.params.registration_id as string
+      req.params.registration_id
     );
     res.status(200).json({
       success: true,

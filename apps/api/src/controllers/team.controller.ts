@@ -3,13 +3,7 @@ import { teams, teamMembers, user } from "@lasertag-26/database/schema";
 import { eq, and } from "drizzle-orm";
 
 import { HttpError as AppError } from "../errors";
-
-
-export interface CreateTeamInput {
-  leader_id: string;
-  team_code: string;
-  members?: number;
-}
+import type { CreateTeamInput } from "../validations/team.validation";
 
 export const teamController = {
   async createTeam(input: CreateTeamInput) {

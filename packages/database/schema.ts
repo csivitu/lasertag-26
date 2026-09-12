@@ -13,6 +13,11 @@ import {
 // 1. Enum Definitions
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 export const bookingTypeEnum = pgEnum('booking_type', ['individual', 'team']);
+export const bookingStatusEnum = pgEnum('booking_status', [
+  'reserved',
+  'confirmed',
+  'cancelled',
+]);
 
 // Alias users -> user for backward compatibility
 export const users = user;
@@ -58,6 +63,7 @@ export const teamMembers = pgTable(
 export const bookings = pgTable('bookings', {
   id: text('id').primaryKey(),
   type: bookingTypeEnum('type').notNull(),
+  status: bookingStatusEnum('status').notNull().default('reserved'),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -67,6 +73,9 @@ export const bookings = pgTable('bookings', {
   slotId: uuid('slot_id')
     .notNull()
     .references(() => slots.id, { onDelete: 'cascade' }),
+  qrToken: text('qr_token'),
+  confirmedAt: timestamp('confirmed_at'),
+  cancelledAt: timestamp('cancelled_at'),
   confirmationEmailSent: boolean('confirmation_email_sent')
     .notNull()
     .default(false),

@@ -7,42 +7,41 @@ export const teamIdSchema = z.object({
   }),
 });
 
-/** Participant-facing team schemas, carried over from `dev`. */
-export const createTeamSchema = {
+/** Participant-facing team schemas. */
+export const createTeamSchema = z.object({
   body: z.object({
     leader_id: z
       .string()
+      .trim()
       .min(1, "leader_id and team_code are required fields."),
     team_code: z
       .string()
+      .trim()
       .min(1, "leader_id and team_code are required fields."),
     members: z.number().int().positive().optional(),
   }),
-};
+});
 
-export const getTeamByCodeSchema = {
+export const getTeamByCodeSchema = z.object({
   params: z.object({
-    code: z.string().min(1, "Team code is required."),
+    code: z.string().trim().min(1, "Team code is required."),
   }),
-};
+});
 
-export const joinTeamSchema = {
+export const joinTeamSchema = z.object({
   params: z.object({
-    team_id: z.string().min(1, "team_id is required in path."),
+    team_id: z.string().trim().min(1, "team_id is required in path."),
   }),
   body: z.object({
-    user_id: z.string().min(1, "user_id is required in body."),
+    user_id: z.string().trim().min(1, "user_id is required in body."),
   }),
-};
+});
 
-export const getTeamMembersSchema = {
-  params: z.object({
-    team_id: z.string().min(1, "team_id is required in path."),
-  }),
-};
+export const getTeamMembersSchema = teamIdSchema;
 
-export const inviteTeamSchema = {
-  params: z.object({
-    team_id: z.string().min(1, "team_id is required in path."),
-  }),
-};
+export const inviteTeamSchema = teamIdSchema;
+
+export type CreateTeamInput = z.infer<typeof createTeamSchema>["body"];
+export type JoinTeamInput = z.infer<typeof joinTeamSchema>["body"];
+
+
