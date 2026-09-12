@@ -303,7 +303,7 @@
 
 .hero-wordmark {
   font-family: var(--font-logo);
-  font-size: clamp(3rem, 11vw, 9rem);
+  font-size: clamp(3.85rem, 20vw, 6.8rem);
   line-height: 0.62;
   letter-spacing: -0.027em;
   transform: skewX(-7.3deg);
@@ -314,6 +314,12 @@
   color: transparent;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0.044em 0.044em 0 var(--color-brand-pink));
+}
+
+@media (min-width: 1024px) {
+  .hero-wordmark {
+    font-size: clamp(3rem, 11vw, 9rem);
+  }
 }
 
 .hero-btn__shine {
