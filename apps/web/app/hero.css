@@ -223,11 +223,24 @@
 
 @keyframes button-shine {
   0% {
-    background-position: -60% 0;
+    transform: translateX(-160%) skewX(-20deg);
   }
   100% {
-    background-position: 160% 0;
+    transform: translateX(360%) skewX(-20deg);
   }
+}
+
+.button-shine {
+  background: linear-gradient(
+    75deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 15%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.05) 85%,
+    transparent 100%
+  );
+  transform: translateX(-160%) skewX(-20deg);
+  will-change: transform;
 }
 
 .group:hover .button-shine {
@@ -257,10 +270,7 @@
 }
 
 .hero-btn__shine {
-  background: linear-gradient(75deg, transparent, rgba(255, 255, 255, 0.55) 50%, transparent);
-  background-size: 250% 100%;
-  background-repeat: no-repeat;
-  background-position: -60% 0;
+  pointer-events: none;
 }
 
 .hero-btn__shine--rest {
