@@ -1,0 +1,428 @@
+.slot-pixel-box {
+  position: relative;
+  /* Use a solid background, then clip it to get the stepped corners */
+  clip-path: polygon(
+    0 8px,
+    8px 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    calc(100% - 8px) 8px,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    8px calc(100% - 8px),
+    0 calc(100% - 8px)
+  );
+}
+
+.slot-pixel-inner {
+  position: absolute;
+  /* 2px border thickness -> inset by 2px */
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  /* Clip the inner box similarly but adjusted for the 2px offset */
+  clip-path: polygon(
+    0 6px,
+    6px 6px,
+    6px 0,
+    calc(100% - 6px) 0,
+    calc(100% - 6px) 6px,
+    100% 6px,
+    100% calc(100% - 6px),
+    calc(100% - 6px) calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    6px 100%,
+    6px calc(100% - 6px),
+    0 calc(100% - 6px)
+  );
+}
+
+.slot-title {
+  font-family: var(--font-heading);
+  font-size: clamp(3.25rem, 7.35vw, 6.8rem);
+  line-height: 1;
+  color: #FEDC02;
+  text-shadow: -4px 0 0 #E5349E;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.slot-booking-screen {
+  padding: clamp(20px, 3.2vh, 58px) clamp(14px, 6vw, 100px) clamp(14px, 2.6vh, 34px);
+  gap: clamp(14px, 2.2vh, 30px);
+}
+
+.slot-current-badge {
+  --badge-frame-height: clamp(42px, 4.9vw, 63px);
+  --badge-frame-width: clamp(19px, 2.15vw, 28px);
+  --badge-height: clamp(34px, 4.1vw, 46px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--badge-height);
+  min-width: min(54vw, 370px);
+  padding: 0 clamp(34px, 4.8vw, 58px);
+  position: relative;
+}
+
+.slot-current-badge::before,
+.slot-current-badge::after {
+  background: url("/slot-booking/Group%20495.svg") no-repeat center / 100% 100%;
+  content: "";
+  height: var(--badge-frame-height);
+  position: absolute;
+  top: 50%;
+  width: var(--badge-frame-width);
+}
+
+.slot-current-badge::before {
+  left: 0;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.slot-current-badge::after {
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.slot-current-badge span {
+  color: #ffffff;
+  font-family: var(--font-pixel);
+  font-size: clamp(14px, 1.65vw, 24px);
+  font-weight: 400;
+  letter-spacing: 0.07em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.slot-date-switcher {
+  gap: clamp(12px, 1.65vh, 22px);
+}
+
+.slot-date-heading {
+  display: grid;
+  grid-template-columns: minmax(84px, 1fr) auto minmax(84px, 1fr);
+  align-items: center;
+  gap: clamp(20px, 3.5vw, 48px);
+  width: min(79vw, 810px);
+}
+
+.slot-date-heading div {
+  height: 2px;
+  background: var(--color-brand-cyan);
+}
+
+.slot-date-heading span {
+  color: var(--color-brand-cyan);
+  font-family: var(--font-pixel);
+  font-size: clamp(12px, 1.15vw, 18px);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.slot-date-options {
+  display: flex;
+  justify-content: center;
+  gap: clamp(16px, 2vw, 24px);
+}
+
+.slot-date-link {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: filter 120ms ease-out, transform 120ms ease-out;
+}
+
+.slot-date-link:hover,
+.slot-date-link:focus-visible {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.slot-date-box {
+  align-items: center;
+  aspect-ratio: 80 / 54;
+  background: url("/slot-booking/date-box-pink.svg") no-repeat center / 100% 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.4vh, 4px);
+  height: clamp(52px, 4.6vw, 68px);
+  justify-content: center;
+  padding: 4px 10px 2px;
+  position: relative;
+  transition: background-image 120ms ease-out;
+  width: auto;
+}
+
+.slot-date-link[aria-current="page"] .slot-date-box {
+  background-image: url("/slot-booking/date-box-cyan.svg");
+}
+
+.slot-date-day {
+  color: #ffffff;
+  font-family: var(--font-pixel);
+  font-size: clamp(18px, 1.75vw, 26px);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.slot-date-month {
+  color: var(--color-brand-pink);
+  font-family: var(--font-pixel);
+  font-size: clamp(8px, 0.8vw, 11px);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  transition: color 120ms ease-out;
+}
+
+.slot-date-link[aria-current="page"] .slot-date-month {
+  color: var(--color-brand-cyan);
+}
+
+.slot-grid-shell {
+  max-width: min(86vw, 1240px);
+  margin-top: clamp(4px, 1vh, 14px);
+}
+
+.slot-grid {
+  display: grid;
+  gap: clamp(14px, 2vh, 24px) clamp(18px, 1.7vw, 24px);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.slot-card {
+  align-items: center;
+  aspect-ratio: 191 / 72;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 0.6vh, 7px);
+  justify-content: center;
+  padding: 12px 18px;
+  transition: filter 120ms ease-out, transform 120ms ease-out;
+  width: 100%;
+}
+
+.slot-card:hover,
+.slot-card:focus-visible {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.slot-card:disabled {
+  cursor: not-allowed;
+}
+
+.slot-card:disabled:hover {
+  filter: none;
+  transform: none;
+}
+
+.slot-card-time,
+.slot-card-label {
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.slot-card-time {
+  font-size: clamp(12px, 1.1vw, 16px);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.slot-card-label {
+  font-size: clamp(7px, 0.68vw, 11px);
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+}
+
+.slot-pagination {
+  align-items: center;
+  color: #ffffff;
+  display: flex;
+  font-family: var(--font-pixel);
+  font-size: clamp(14px, 1.35vw, 21px);
+  gap: clamp(12px, 1.3vw, 18px);
+  justify-content: center;
+  line-height: 1;
+  margin-top: clamp(18px, 2.4vh, 32px);
+}
+
+.slot-pagination-button {
+  align-items: center;
+  background: var(--color-brand-pink);
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  height: clamp(24px, 2.2vw, 32px);
+  justify-content: center;
+  transition: filter 120ms ease-out, transform 120ms ease-out;
+  width: clamp(24px, 2.2vw, 32px);
+}
+
+.slot-pagination-button:hover,
+.slot-pagination-button:focus-visible {
+  filter: brightness(1.14);
+  transform: translateY(-1px);
+}
+
+.slot-pagination-label {
+  min-width: clamp(70px, 7vw, 100px);
+  text-align: center;
+}
+
+.slot-pagination-arrow {
+  display: block;
+  height: 0;
+  width: 0;
+}
+
+.slot-pagination-arrow-left {
+  border-bottom: clamp(5px, 0.5vw, 7px) solid transparent;
+  border-right: clamp(7px, 0.65vw, 10px) solid #ffffff;
+  border-top: clamp(5px, 0.5vw, 7px) solid transparent;
+  margin-right: 2px;
+}
+
+.slot-pagination-arrow-right {
+  border-bottom: clamp(5px, 0.5vw, 7px) solid transparent;
+  border-left: clamp(7px, 0.65vw, 10px) solid #ffffff;
+  border-top: clamp(5px, 0.5vw, 7px) solid transparent;
+  margin-left: 2px;
+}
+
+@media (max-width: 767px) {
+  .slot-booking-screen {
+    padding: 30px 28px 22px;
+    gap: 16px;
+  }
+
+  .slot-title {
+    font-size: clamp(3rem, 13.8vw, 3.85rem);
+    text-shadow: -3px 0 0 #E5349E;
+  }
+
+  .slot-current-badge {
+    --badge-frame-height: 50px;
+    --badge-frame-width: 22px;
+    --badge-height: 36px;
+    min-width: min(100%, 352px);
+    padding: 0 34px;
+  }
+
+  .slot-current-badge span {
+    font-size: clamp(14px, 3.55vw, 17px);
+    letter-spacing: 0.05em;
+  }
+
+  .slot-date-switcher {
+    gap: 15px;
+  }
+
+  .slot-date-heading {
+    gap: 20px;
+    grid-template-columns: minmax(74px, 1fr) auto minmax(74px, 1fr);
+    width: 100%;
+  }
+
+  .slot-date-heading span {
+    font-size: clamp(13px, 4vw, 17px);
+    line-height: 1.2;
+  }
+
+  .slot-date-options {
+    gap: clamp(36px, 8.5vw, 48px);
+  }
+
+  .slot-date-box {
+    height: 52px;
+    width: auto;
+  }
+
+  .slot-date-day {
+    font-size: 21px;
+  }
+
+  .slot-date-month {
+    font-size: 9px;
+  }
+
+  .slot-grid-shell {
+    max-width: 100%;
+    margin-top: 0;
+  }
+
+  .slot-grid {
+    gap: 12px 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .slot-card:nth-child(n + 15) {
+    display: none;
+  }
+
+  .slot-card {
+    padding: 10px 14px;
+  }
+
+  .slot-card-time {
+    font-size: clamp(13px, 4vw, 16px);
+    letter-spacing: 0.04em;
+  }
+
+  .slot-card-label {
+    font-size: clamp(7px, 2.3vw, 9px);
+    letter-spacing: 0.05em;
+  }
+
+  .slot-pagination {
+    font-size: 24px;
+    gap: 16px;
+    margin-top: 18px;
+  }
+
+  .slot-pagination-button {
+    height: 28px;
+    width: 28px;
+  }
+}
+
+@media (max-height: 720px) and (min-width: 768px) {
+  .slot-booking-screen {
+    padding-bottom: 12px;
+    padding-top: 18px;
+    gap: 12px;
+  }
+
+  .slot-title {
+    font-size: clamp(3rem, 6vw, 4.8rem);
+  }
+
+  .slot-date-box {
+    height: 56px;
+    width: auto;
+  }
+
+  .slot-grid {
+    gap: 10px 16px;
+  }
+
+  .slot-pagination {
+    margin-top: 12px;
+  }
+}

@@ -29,3 +29,11 @@ export const anton = localFont({
   display: "swap",
   fallback: ["Impact", "sans-serif"],
 });
+
+export const pixelOperatorMono = localFont({
+  src: "./fonts/pixel-operator-mono.ttf",
+  variable: "--ft-digit",
+  display: "swap",
+  adjustFontFallback: false,
+  fallback: ["monospace"],
+});

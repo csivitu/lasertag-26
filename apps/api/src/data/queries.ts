@@ -1,4 +1,4 @@
-import { and, count, eq, ilike } from "drizzle-orm";
+import { and, count, eq, ilike, ne, or } from "drizzle-orm";
 import {
   db,
   bookings,
@@ -169,3 +169,138 @@ export const userQueries: UserDeps = {
     return row?.role ?? null;
   },
 };
+
+// ==========================================
+// Participant & Registration Helper Queries
+// ==========================================
+
+export async function findSlotById(slotId: string) {
+  const [row] = await db.select().from(slots).where(eq(slots.id, slotId));
+  return row;
+}
+
+export async function countActiveBookingsForSlot(slotId: string) {
+  const [row] = await db
+    .select({ value: count() })
+    .from(bookings)
+    .where(and(eq(bookings.slotId, slotId), ne(bookings.status, "cancelled")));
+  return row?.value ?? 0;
+}
+
+export async function findUserById(userId: string) {
+  const [row] = await db.select().from(user).where(eq(user.id, userId));
+  return row;
+}
+
+export async function findActiveRegistrationForUser(userId: string) {
+  const [row] = await db
+    .select()
+    .from(bookings)
+    .where(and(eq(bookings.userId, userId), ne(bookings.status, "cancelled")));
+  return row;
+}
+
+export async function findActiveRegistrationWithSlotForUser(userId: string) {
+  const [row] = await db
+    .select({
+      booking: bookings,
+      slot: slots,
+    })
+    .from(bookings)
+    .innerJoin(slots, eq(bookings.slotId, slots.id))
+    .where(and(eq(bookings.userId, userId), ne(bookings.status, "cancelled")));
+
+  return row;
+}
+
+export async function createSoloRegistration(input: {
+  userId: string;
+  slotId: string;
+  id?: string;
+}) {
+  const bookingId =
+    input.id ?? `REG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const [newBooking] = await db
+    .insert(bookings)
+    .values({
+      id: bookingId,
+      type: "individual",
+      status: "reserved",
+      userId: input.userId,
+      slotId: input.slotId,
+    })
+    .returning();
+
+  return newBooking;
+}
+
+export async function findRegistrationWithUserAndSlot(reservationId: string) {
+  const [row] = await db
+    .select({
+      booking: bookings,
+      user: user,
+      slot: slots,
+    })
+    .from(bookings)
+    .innerJoin(user, eq(bookings.userId, user.id))
+    .innerJoin(slots, eq(bookings.slotId, slots.id))
+    .where(eq(bookings.id, reservationId));
+
+  return row;
+}
+
+export async function confirmRegistration(reservationId: string, qrToken: string) {
+  const [updated] = await db
+    .update(bookings)
+    .set({
+      status: "confirmed",
+      qrToken: qrToken,
+      confirmedAt: new Date(),
+    })
+    .where(eq(bookings.id, reservationId))
+    .returning();
+
+  return updated;
+}
+
+export async function cancelRegistration(reservationId: string) {
+  const [updated] = await db
+    .update(bookings)
+    .set({
+      status: "cancelled",
+      cancelledAt: new Date(),
+    })
+    .where(eq(bookings.id, reservationId))
+    .returning();
+
+  return updated;
+}
+
+export async function findRegistrationForScan(identifier: string) {
+  const [row] = await db
+    .select({
+      booking: bookings,
+      user: user,
+      slot: slots,
+    })
+    .from(bookings)
+    .innerJoin(user, eq(bookings.userId, user.id))
+    .innerJoin(slots, eq(bookings.slotId, slots.id))
+    .where(or(eq(bookings.qrToken, identifier), eq(bookings.id, identifier)));
+
+  return row;
+}
+
+export async function markUserCheckedIn(userId: string) {
+  const [updated] = await db
+    .update(user)
+    .set({
+      isCheckedIn: true,
+      checkedInAt: new Date(),
+    })
+    .where(eq(user.id, userId))
+    .returning();
+
+  return updated;
+}

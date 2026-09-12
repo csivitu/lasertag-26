@@ -79,7 +79,9 @@ export function errorHandler(
  * not need this — it is a no-op safety net rather than a requirement.
  */
 export const asyncHandler =
-  (fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) =>
+  <Req extends Request = Request>(
+    fn: (req: Req, res: Response, next: NextFunction) => Promise<unknown>,
+  ) =>
   (req: Request, res: Response, next: NextFunction): void => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req as unknown as Req, res, next)).catch(next);
   };

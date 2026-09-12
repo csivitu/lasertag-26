@@ -1,9 +1,10 @@
 import type { FaqEntry } from "./faqItems.data";
+import { FaqPixelFrame } from "./FaqPixelFrame";
 
-const COLOR_CLASSES: Record<FaqEntry["color"], { border: string; text: string; bg: string }> = {
-    pink: { border: "border-brand-pink", text: "text-brand-pink", bg: "bg-brand-pink" },
-    yellow: { border: "border-brand-yellow", text: "text-brand-yellow", bg: "bg-brand-yellow" },
-    cyan: { border: "border-brand-cyan", text: "text-brand-cyan", bg: "bg-brand-cyan" },
+const COLOR_CLASSES: Record<FaqEntry["color"], { text: string; bg: string }> = {
+    pink: { text: "text-brand-pink", bg: "bg-brand-pink" },
+    yellow: { text: "text-brand-yellow", bg: "bg-brand-yellow" },
+    cyan: { text: "text-brand-cyan", bg: "bg-brand-cyan" },
 };
 
 type FaqItemProps = {
@@ -17,13 +18,15 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
 
     return (
         <div
-            className={`rounded-lg border-[3px] bg-ink/60 px-4 py-3 shadow-[0_0_14px_-4px_currentColor] transition-colors sm:px-5 sm:py-3 ${colors.border} ${colors.text}`}
+            data-color={entry.color}
+            className={`faq-pixel-corners relative bg-ink/60 px-4 py-2.5 transition-colors sm:px-5 sm:py-2.5 lg:py-3 ${colors.text}${isOpen ? " faq-item--open" : ""}`}
         >
+            <FaqPixelFrame />
             <button
                 type="button"
                 onClick={onToggle}
                 aria-expanded={isOpen}
-                className="flex w-full items-center justify-between gap-4 text-left"
+                className="relative z-[2] flex w-full items-center justify-between gap-4 text-left"
             >
                 <span className="font-pixel text-[10px] leading-relaxed text-white sm:text-sm">
                     {entry.question}
@@ -33,12 +36,12 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
                     data-open={isOpen}
                     aria-hidden
                 >
-                    <span className={`absolute inset-0 m-auto h-[68%] w-[2.5px] rounded-sm sm:w-[3px] ${colors.bg}`} />
-                    <span className={`absolute inset-0 m-auto h-[2.5px] w-[68%] rounded-sm sm:h-[3px] ${colors.bg}`} />
+                    <span className={`absolute inset-0 m-auto h-[68%] w-[2.5px] rounded-sm sm:w-[3px] bg-white`} />
+                    <span className={`absolute inset-0 m-auto h-[2.5px] w-[68%] rounded-sm sm:h-[3px] bg-white`} />
                 </span>
             </button>
 
-            <div className="faq-item__panel" data-open={isOpen}>
+            <div className="faq-item__panel relative z-[2]" data-open={isOpen}>
                 <div className="overflow-hidden">
                     <p className="pt-2 font-body text-xs leading-relaxed text-white/70 sm:pt-3 sm:text-sm">
                         {entry.answer}

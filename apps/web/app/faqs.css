@@ -1,6 +1,7 @@
 .faq-wordmark {
     font-family: var(--ft-heading);
-    font-size: clamp(3rem, 10vw, 7rem);
+    font-size: clamp(2.5rem, 5.5vw, 5.5rem);
+    line-height: 1.1;
     background: linear-gradient(90deg, #fee18a 0%, #fed14b 24%, #fec414 50%, #fecf41 74%, #fed865 100%);
     background-clip: text;
     -webkit-background-clip: text;
@@ -27,11 +28,206 @@
     grid-template-rows: 1fr;
 }
 
+/* ── Pixel-art stepped corners ── */
+.faq-pixel-corners {
+    position: relative;
+    clip-path: polygon(
+        0 12px, 6px 12px, 6px 0,
+        calc(100% - 6px) 0, calc(100% - 6px) 12px, 100% 12px,
+        100% calc(100% - 12px), calc(100% - 6px) calc(100% - 12px), calc(100% - 6px) 100%,
+        6px 100%, 6px calc(100% - 12px), 0 calc(100% - 12px)
+    );
+}
+
+.faq-pixel-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 4 Straight Edges */
+.faq-edge-top {
+    position: absolute;
+    top: 0;
+    left: 6px;
+    right: 6px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-edge-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 6px;
+    right: 6px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-edge-left {
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: currentColor;
+}
+
+.faq-edge-right {
+    position: absolute;
+    right: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: currentColor;
+}
+
+/* Top-Left Stepped Corner */
+.faq-corner-tl-h {
+    position: absolute;
+    top: 12px;
+    left: 0;
+    width: 9px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-corner-tl-v {
+    position: absolute;
+    top: 0;
+    left: 6px;
+    width: 3px;
+    height: 15px;
+    background: currentColor;
+}
+
+/* Top-Right Stepped Corner */
+.faq-corner-tr-h {
+    position: absolute;
+    top: 12px;
+    right: 0;
+    width: 9px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-corner-tr-v {
+    position: absolute;
+    top: 0;
+    right: 6px;
+    width: 3px;
+    height: 15px;
+    background: currentColor;
+}
+
+/* Bottom-Right Stepped Corner */
+.faq-corner-br-h {
+    position: absolute;
+    bottom: 12px;
+    right: 0;
+    width: 9px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-corner-br-v {
+    position: absolute;
+    bottom: 0;
+    right: 6px;
+    width: 3px;
+    height: 15px;
+    background: currentColor;
+}
+
+/* Bottom-Left Stepped Corner */
+.faq-corner-bl-h {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    width: 9px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-corner-bl-v {
+    position: absolute;
+    bottom: 0;
+    left: 6px;
+    width: 3px;
+    height: 15px;
+    background: currentColor;
+}
+
+/* ── Glow pulse on open FAQ items (filter-based for clip-path compat) ── */
+@keyframes glow-filter-pink {
+    0%, 100% { filter: drop-shadow(0 0 6px #e5349e88); }
+    50%      { filter: drop-shadow(0 0 14px #e5349ecc); }
+}
+@keyframes glow-filter-yellow {
+    0%, 100% { filter: drop-shadow(0 0 6px #fec41488); }
+    50%      { filter: drop-shadow(0 0 14px #fec414cc); }
+}
+@keyframes glow-filter-cyan {
+    0%, 100% { filter: drop-shadow(0 0 6px #23eff188); }
+    50%      { filter: drop-shadow(0 0 14px #23eff1cc); }
+}
+
+.faq-item--open[data-color="pink"]   { animation: glow-filter-pink   1.8s ease-in-out infinite; }
+.faq-item--open[data-color="yellow"] { animation: glow-filter-yellow  1.8s ease-in-out infinite; }
+.faq-item--open[data-color="cyan"]   { animation: glow-filter-cyan   1.8s ease-in-out infinite; }
+
+/* ── Dot glow pulse (box-shadow, no clip-path) ── */
+@keyframes glow-pink {
+    0%, 100% { box-shadow: 0 0 8px -2px #e5349e, 0 0 20px -4px #e5349e44; }
+    50%      { box-shadow: 0 0 18px -2px #e5349e, 0 0 36px -4px #e5349e66; }
+}
+@keyframes glow-yellow {
+    0%, 100% { box-shadow: 0 0 8px -2px #fec414, 0 0 20px -4px #fec41444; }
+    50%      { box-shadow: 0 0 18px -2px #fec414, 0 0 36px -4px #fec41466; }
+}
+@keyframes glow-cyan {
+    0%, 100% { box-shadow: 0 0 8px -2px #23eff1, 0 0 20px -4px #23eff144; }
+    50%      { box-shadow: 0 0 18px -2px #23eff1, 0 0 36px -4px #23eff166; }
+}
+
+.faq-dot--open[data-color="pink"]   { animation: glow-pink   1.8s ease-in-out infinite; }
+.faq-dot--open[data-color="yellow"] { animation: glow-yellow  1.8s ease-in-out infinite; }
+.faq-dot--open[data-color="cyan"]   { animation: glow-cyan   1.8s ease-in-out infinite; }
+
+/* ── Ralph bounce ── */
+@keyframes ralph-bounce {
+    0%   { transform: translateY(0); }
+    15%  { transform: translateY(-18px); }
+    30%  { transform: translateY(0); }
+    42%  { transform: translateY(-10px); }
+    54%  { transform: translateY(0); }
+    63%  { transform: translateY(-4px); }
+    72%  { transform: translateY(0); }
+    100% { transform: translateY(0); }
+}
+
+.ralph-jump {
+    animation: ralph-bounce 0.7s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
 
     .faq-item__icon,
     .faq-item__panel {
         transition: none;
+    }
 
+    .faq-item--open[data-color="pink"],
+    .faq-item--open[data-color="yellow"],
+    .faq-item--open[data-color="cyan"],
+    .faq-dot--open[data-color="pink"],
+    .faq-dot--open[data-color="yellow"],
+    .faq-dot--open[data-color="cyan"] {
+        animation: none;
+    }
+
+    .ralph-jump {
+        animation: none;
     }
 }
