@@ -29,12 +29,133 @@
 
 /* ── Pixel-art stepped corners ── */
 .faq-pixel-corners {
+    position: relative;
     clip-path: polygon(
-        0 6px, 6px 6px, 6px 0,
-        calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px,
-        100% calc(100% - 6px), calc(100% - 6px) calc(100% - 6px), calc(100% - 6px) 100%,
-        6px 100%, 6px calc(100% - 6px), 0 calc(100% - 6px)
+        0 12px, 6px 12px, 6px 0,
+        calc(100% - 6px) 0, calc(100% - 6px) 12px, 100% 12px,
+        100% calc(100% - 12px), calc(100% - 6px) calc(100% - 12px), calc(100% - 6px) 100%,
+        6px 100%, 6px calc(100% - 12px), 0 calc(100% - 12px)
     );
+}
+
+.faq-pixel-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 4 Straight Edges */
+.faq-edge-top {
+    position: absolute;
+    top: 0;
+    left: 6px;
+    right: 6px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-edge-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 6px;
+    right: 6px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-edge-left {
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: currentColor;
+}
+
+.faq-edge-right {
+    position: absolute;
+    right: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: currentColor;
+}
+
+/* Top-Left Stepped Corner */
+.faq-corner-tl-h {
+    position: absolute;
+    top: 12px;
+    left: 0;
+    width: 9px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-corner-tl-v {
+    position: absolute;
+    top: 0;
+    left: 6px;
+    width: 3px;
+    height: 15px;
+    background: currentColor;
+}
+
+/* Top-Right Stepped Corner */
+.faq-corner-tr-h {
+    position: absolute;
+    top: 12px;
+    right: 0;
+    width: 9px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-corner-tr-v {
+    position: absolute;
+    top: 0;
+    right: 6px;
+    width: 3px;
+    height: 15px;
+    background: currentColor;
+}
+
+/* Bottom-Right Stepped Corner */
+.faq-corner-br-h {
+    position: absolute;
+    bottom: 12px;
+    right: 0;
+    width: 9px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-corner-br-v {
+    position: absolute;
+    bottom: 0;
+    right: 6px;
+    width: 3px;
+    height: 15px;
+    background: currentColor;
+}
+
+/* Bottom-Left Stepped Corner */
+.faq-corner-bl-h {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    width: 9px;
+    height: 3px;
+    background: currentColor;
+}
+
+.faq-corner-bl-v {
+    position: absolute;
+    bottom: 0;
+    left: 6px;
+    width: 3px;
+    height: 15px;
+    background: currentColor;
 }
 
 /* ── Glow pulse on open FAQ items (filter-based for clip-path compat) ── */

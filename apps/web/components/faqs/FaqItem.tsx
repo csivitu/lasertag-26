@@ -1,9 +1,10 @@
 import type { FaqEntry } from "./faqItems.data";
+import { FaqPixelFrame } from "./FaqPixelFrame";
 
-const COLOR_CLASSES: Record<FaqEntry["color"], { border: string; text: string; bg: string }> = {
-    pink: { border: "border-brand-pink", text: "text-brand-pink", bg: "bg-brand-pink" },
-    yellow: { border: "border-brand-yellow", text: "text-brand-yellow", bg: "bg-brand-yellow" },
-    cyan: { border: "border-brand-cyan", text: "text-brand-cyan", bg: "bg-brand-cyan" },
+const COLOR_CLASSES: Record<FaqEntry["color"], { text: string; bg: string }> = {
+    pink: { text: "text-brand-pink", bg: "bg-brand-pink" },
+    yellow: { text: "text-brand-yellow", bg: "bg-brand-yellow" },
+    cyan: { text: "text-brand-cyan", bg: "bg-brand-cyan" },
 };
 
 type FaqItemProps = {
@@ -18,13 +19,14 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
     return (
         <div
             data-color={entry.color}
-            className={`faq-pixel-corners border-[3px] bg-ink/60 px-4 py-3 transition-colors sm:px-5 sm:py-3 ${colors.border} ${colors.text}${isOpen ? " faq-item--open" : ""}`}
+            className={`faq-pixel-corners relative bg-ink/60 px-5 py-3.5 transition-colors sm:px-6 sm:py-4 ${colors.text}${isOpen ? " faq-item--open" : ""}`}
         >
+            <FaqPixelFrame />
             <button
                 type="button"
                 onClick={onToggle}
                 aria-expanded={isOpen}
-                className="flex w-full items-center justify-between gap-4 text-left"
+                className="relative z-[2] flex w-full items-center justify-between gap-4 text-left"
             >
                 <span className="font-pixel text-[10px] leading-relaxed text-white sm:text-sm">
                     {entry.question}
@@ -39,7 +41,7 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
                 </span>
             </button>
 
-            <div className="faq-item__panel" data-open={isOpen}>
+            <div className="faq-item__panel relative z-[2]" data-open={isOpen}>
                 <div className="overflow-hidden">
                     <p className="pt-2 font-body text-xs leading-relaxed text-white/70 sm:pt-3 sm:text-sm">
                         {entry.answer}
