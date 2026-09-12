@@ -18,9 +18,9 @@ export default function AboutUsLeftDisc() {
             />
             <p className={styles.infoIntro}>
                 Laser Tag offers you a chance to step on to
-                <br />
+                <br className="hidden sm:inline" />{" "}
                 the arena for a thrilling multi-player
-                <br />
+                <br className="hidden sm:inline" />{" "}
                 experience.
             </p>
             <ul className={styles.infoList}>
@@ -41,8 +41,8 @@ export default function AboutUsLeftDisc() {
                         <Image src={ICON_TARGET_SRC} alt="" fill className={styles.fitImg} aria-hidden="true" unoptimized />
                     </span>
                     <div>
-                        <span>Maximise hits to climb up the</span>
-                        <br />
+                        <span>Maximise hits to climb up the</span>{" "}
+                        <br className="hidden sm:inline" />
                         <a href="#leaderboard" className={styles.link}>leaderboard</a>
                     </div>
                 </li>
