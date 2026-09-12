@@ -22,6 +22,6 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "build": "bun build ./src/index.ts --outdir ./dist --target bun",
-    "test": "bun test"
+    "test": "bun test --preload ./src/test-setup.ts"
   }
 }
