@@ -7,7 +7,6 @@ import AboutUsLeftDisc from "./AboutUsLeftDisc";
 import AboutUsVid from "./AboutUsVid";
 import ArcadeAccessories from "./Arcadeaccessories";
 import Pacman from "./pacman";
-import { Starfield } from "@/components/hero/Starfield";
 
 const DESIGN_WIDTH = 1440;
 const DESIGN_HEIGHT = 900;
@@ -41,26 +40,40 @@ export default function AboutUs() {
     }, []);
 
     return (
-        <section className={styles.section} ref={stageRef}>
-            <Starfield />
-            <Pacman />
-            <div
-                className={styles.stageFrame}
-                style={{
-                    width: DESIGN_WIDTH * scale,
-                    height: DESIGN_HEIGHT * scale,
-                }}
-            >
+        <section id="about" className={styles.section} ref={stageRef}>
+            {/* Desktop View (>= 1024px): 1440x900 proportional canvas fitting 100vh with Pacman perimeter */}
+            <div className="hidden lg:contents">
+                <Pacman />
                 <div
-                    className={styles.canvas}
+                    className={styles.stageFrame}
                     style={{
-                        transform: `scale(${scale})`,
+                        width: DESIGN_WIDTH * scale,
+                        height: DESIGN_HEIGHT * scale,
                     }}
                 >
-                    <AboutUsHeader />
+                    <div
+                        className={styles.canvas}
+                        style={{
+                            transform: `scale(${scale})`,
+                        }}
+                    >
+                        <AboutUsHeader />
+                        <AboutUsLeftDisc />
+                        <AboutUsVid />
+                        <ArcadeAccessories />
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile View (< 1024px): Fluid responsive column without Pacman */}
+            <div className={styles.mobileContainer}>
+                <AboutUsHeader />
+                <div className={styles.contentGrid}>
                     <AboutUsLeftDisc />
-                    <AboutUsVid />
-                    <ArcadeAccessories />
+                    <div className={styles.mediaWrap}>
+                        <AboutUsVid />
+                        <ArcadeAccessories />
+                    </div>
                 </div>
             </div>
         </section>

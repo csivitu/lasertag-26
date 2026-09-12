@@ -26,11 +26,17 @@ const envSchema = z.object({
     .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
   BETTER_AUTH_URL: z.url().default("http://localhost:3001"),
   WEB_ORIGIN: z.url().default("http://localhost:3000"),
-  SMTP_HOST: z.string().min(1, "SMTP_HOST is required"),
-  SMTP_PORT: z.coerce.number().int().positive(),
-  SMTP_USER: z.string().min(1, "SMTP_USER is required"),
-  SMTP_PASS: z.string().min(1, "SMTP_PASS is required"),
-  MAIL_FROM: z.string().min(1, "MAIL_FROM is required"),
+  SMTP_HOST: z.string().min(1).default("smtp.resend.com"),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().min(1).default("resend"),
+  SMTP_PASS:
+    process.env.NODE_ENV === "production"
+      ? z.string().min(1, "SMTP_PASS is required in production")
+      : z.string().default("dummy_pass"),
+  MAIL_FROM:
+    process.env.NODE_ENV === "production"
+      ? z.string().min(1, "MAIL_FROM is required in production")
+      : z.string().default("noreply@lasertag.com"),
 });
 
 export type Env = z.infer<typeof envSchema>;

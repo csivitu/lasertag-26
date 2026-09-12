@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 export default function SvgUpperLeft() {
   return (
     <div className="flex w-full items-center justify-center">

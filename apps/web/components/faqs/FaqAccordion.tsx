@@ -21,7 +21,7 @@ export function FaqAccordion({ onToggle: onToggleCallback, onActiveChange }: { o
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     return (
-        <div className="relative w-full py-2 sm:py-0">
+        <div className="relative w-full py-0">
             <div
                 className="absolute left-[10px] top-3 bottom-3 w-px bg-white/15 sm:left-3 sm:top-0 sm:bottom-0"
                 aria-hidden
