@@ -42,6 +42,53 @@
   opacity: 1;
 }
 
+.btn-book-now-shine--rest {
+  -webkit-mask-image: url('/footer/group-598.png');
+  mask-image: url('/footer/group-598.png');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  transition: opacity 0.1s ease;
+}
+
+.btn-book-now-shine--press {
+  opacity: 0;
+  -webkit-mask-image: url('/footer/group-597.svg');
+  mask-image: url('/footer/group-597.svg');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  transition: opacity 0.1s ease;
+}
+
+.btn-book-now:active .btn-book-now-shine--rest {
+  opacity: 0;
+}
+
+.btn-book-now:active .btn-book-now-shine--press {
+  opacity: 1;
+}
+
+.btn-select-solo-shine {
+  -webkit-mask-image: url('/select-mode/select-mode-solo/join-solo.svg');
+  mask-image: url('/select-mode/select-mode-solo/join-solo.svg');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.btn-select-team-shine {
+  -webkit-mask-image: url('/select-mode/select-mode-team/create-join-team.svg');
+  mask-image: url('/select-mode/select-mode-team/create-join-team.svg');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .btn-book-now,
   .btn-book-now-normal,

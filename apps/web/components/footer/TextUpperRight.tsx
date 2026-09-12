@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 export default function TextUpperRight() {
   return (
     <div className="flex w-full max-w-[649px] flex-col items-center justify-center gap-6 text-center">
@@ -16,7 +17,7 @@ export default function TextUpperRight() {
       <button
         type="button"
         data-testid="cta-placeholder-box"
-        className="btn-book-now relative block aspect-[305/87] h-auto w-[220px] max-w-full cursor-pointer"
+        className="btn-book-now group relative block aspect-[305/87] h-auto w-[220px] max-w-full cursor-pointer"
         aria-label="Book Now"
       >
         <img
@@ -29,6 +30,18 @@ export default function TextUpperRight() {
           alt=""
           className="btn-book-now-pressed absolute inset-0 h-full w-full"
         />
+        <span
+          aria-hidden
+          className="btn-book-now-shine--rest pointer-events-none absolute inset-0 overflow-hidden"
+        >
+          <span className="button-shine block h-full w-1/3" />
+        </span>
+        <span
+          aria-hidden
+          className="btn-book-now-shine--press pointer-events-none absolute inset-0 overflow-hidden"
+        >
+          <span className="button-shine block h-full w-1/3" />
+        </span>
       </button>
     </div>
   );

@@ -85,13 +85,21 @@ export function SelectModeMobile() {
               </div>
 
               {/* Join Button */}
-              <div className="mt-auto pt-4 transition-transform duration-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src="/select-mode/select-mode-solo/join-solo.svg" 
-                  alt="Join Solo" 
-                  className="w-40 h-auto mx-auto"
-                />
+              <div className="mt-auto pt-4 w-full flex justify-center">
+                <div className="relative w-40 transition-transform duration-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src="/select-mode/select-mode-solo/join-solo.svg" 
+                    alt="Join Solo" 
+                    className="w-full h-auto mx-auto"
+                  />
+                  <span
+                    aria-hidden
+                    className="btn-select-solo-shine pointer-events-none absolute inset-0 overflow-hidden"
+                  >
+                    <span className="button-shine block h-full w-1/3" />
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -165,13 +173,21 @@ export function SelectModeMobile() {
               </div>
 
               {/* Create/Join Team Buttons */}
-              <div className="mt-auto pt-4 transition-transform duration-200 w-full flex justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src="/select-mode/select-mode-team/create-join-team.svg" 
-                  alt="Create or Join Team" 
-                  className="w-[90%] max-w-[280px] h-auto"
-                />
+              <div className="mt-auto pt-4 w-full flex justify-center">
+                <div className="relative w-[90%] max-w-[280px] transition-transform duration-200">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src="/select-mode/select-mode-team/create-join-team.svg" 
+                    alt="Create or Join Team" 
+                    className="w-full h-auto"
+                  />
+                  <span
+                    aria-hidden
+                    className="btn-select-team-shine pointer-events-none absolute inset-0 overflow-hidden"
+                  >
+                    <span className="button-shine block h-full w-1/3" />
+                  </span>
+                </div>
               </div>
             </div>
           </div>

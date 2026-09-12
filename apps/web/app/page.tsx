@@ -1,5 +1,6 @@
 import { Starfield } from "@/components/hero/Starfield";
 import { Hero } from "@/components/hero/Hero";
+import { Guidelines } from "@/components/guidelines/Guidelines";
 import { Faq } from "@/components/faqs/Faq";
 import Footer from "@/components/footer/Footer";
 import AboutUs from "./components/AboutUs/AboutUs";
@@ -10,6 +11,7 @@ export default function Home() {
       <Starfield fixed />
       <Hero />
       <AboutUs />
+      <Guidelines />
       <Faq />
       <Footer />
     </div>
