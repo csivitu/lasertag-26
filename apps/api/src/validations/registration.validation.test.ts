@@ -1,8 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import { registrationQuerySchema } from "./registration.validation";
+import {
+  getRegistrationSchema,
+  registrationQuerySchema,
+  soloRegistrationSchema,
+} from "./registration.validation";
 
 const parseQuery = (query: unknown) => registrationQuerySchema.parse({ query }).query;
+const parseSoloBody = (body: unknown) => soloRegistrationSchema.parse({ body }).body;
+const parseReservationParams = (params: unknown) =>
+  getRegistrationSchema.parse({ params }).params;
 
 describe("registrationQuerySchema", () => {
   test("treats a blank value as absent", () => {
@@ -27,5 +34,42 @@ describe("registrationQuerySchema", () => {
 
   test("ignores unknown query params", () => {
     expect(parseQuery({ name: "a", bogus: "x" })).toEqual({ name: "a" });
+  });
+});
+
+describe("soloRegistrationSchema", () => {
+  test("accepts a slot_id UUID in the body", () => {
+    expect(parseSoloBody({ slot_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6" })).toEqual({
+      slot_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    });
+  });
+
+  test("rejects a missing slot_id", () => {
+    expect(() => parseSoloBody({})).toThrow();
+  });
+
+  test("rejects a non-UUID slot_id", () => {
+    expect(() => parseSoloBody({ slot_id: "slot-123" })).toThrow();
+  });
+
+  test("does not accept user_id from the public registration body", () => {
+    expect(
+      parseSoloBody({
+        slot_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        user_id: "user-123",
+      }),
+    ).toEqual({ slot_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6" });
+  });
+});
+
+describe("reservation id schemas", () => {
+  test("trims reservation_id path params", () => {
+    expect(parseReservationParams({ reservation_id: " REG-1001 " })).toEqual({
+      reservation_id: "REG-1001",
+    });
+  });
+
+  test("rejects blank reservation_id path params", () => {
+    expect(() => parseReservationParams({ reservation_id: "   " })).toThrow();
   });
 });

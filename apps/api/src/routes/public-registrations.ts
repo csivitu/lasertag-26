@@ -37,13 +37,14 @@ publicRegistrationsRouter.post(
  */
 publicRegistrationsRouter.post(
   "/:reservation_id/confirm",
+  requireAuth,
   validate(confirmRegistrationSchema),
   asyncHandler(confirmRegistration),
 );
 
 /**
  * GET /registrations/:reservation_id
- * Get registration details by reservation ID (owner or admin).
+ * Get registration details for the authenticated owner.
  */
 publicRegistrationsRouter.get(
   "/:reservation_id",
@@ -54,7 +55,7 @@ publicRegistrationsRouter.get(
 
 /**
  * GET /registrations/:reservation_id/qr
- * Get QR token details for a confirmed registration (owner or admin).
+ * Get QR token details for the authenticated owner.
  */
 publicRegistrationsRouter.get(
   "/:reservation_id/qr",
@@ -65,7 +66,7 @@ publicRegistrationsRouter.get(
 
 /**
  * DELETE /registrations/:reservation_id
- * Cancel a registration (owner or admin).
+ * Cancel a registration for the authenticated owner.
  */
 publicRegistrationsRouter.delete(
   "/:reservation_id",

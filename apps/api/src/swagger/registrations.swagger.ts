@@ -38,7 +38,8 @@ export const registrationPaths = {
   "/registrations/solo": {
     post: {
       summary: "Create solo registration",
-      description: "Create a new solo (individual) registration for a slot for the authenticated user.",
+      description:
+        "Create a new solo (individual) registration for the authenticated user. The user id comes from the signed-in session; clients only send the slot_id.",
       tags: ["Registrations"],
       requestBody: {
         required: true,
@@ -66,12 +67,15 @@ export const registrationPaths = {
   "/registrations/{reservation_id}/confirm": {
     post: {
       summary: "Confirm a registration",
-      description: "Confirm a reservation and generate a QR token.",
+      description:
+        "Confirm a reservation owned by the authenticated user and generate a QR token.",
       tags: ["Registrations"],
       parameters: [pathParam("reservation_id", "Reservation / Booking ID")],
       responses: {
         200: { description: "Registration confirmed successfully" },
         400: responses.badRequest,
+        401: responses.unauthorized,
+        403: responses.forbidden,
         404: responses.error("Registration not found"),
         409: responses.error("Cannot confirm a cancelled registration"),
       },
@@ -80,7 +84,8 @@ export const registrationPaths = {
   "/registrations/{reservation_id}": {
     get: {
       summary: "Get registration details",
-      description: "Retrieve registration details by reservation_id for owner or admin.",
+      description:
+        "Retrieve registration details by reservation_id for the authenticated owner.",
       tags: ["Registrations"],
       parameters: [pathParam("reservation_id", "Reservation / Booking ID")],
       responses: {
@@ -92,7 +97,7 @@ export const registrationPaths = {
     },
     delete: {
       summary: "Cancel a registration",
-      description: "Cancel a registration for owner or admin.",
+      description: "Cancel a registration for the authenticated owner.",
       tags: ["Registrations"],
       parameters: [pathParam("reservation_id", "Reservation / Booking ID")],
       responses: {
@@ -107,7 +112,8 @@ export const registrationPaths = {
   "/registrations/{reservation_id}/qr": {
     get: {
       summary: "Get registration QR token",
-      description: "Retrieve QR token for a confirmed registration for owner or admin.",
+      description:
+        "Retrieve the QR token for a confirmed registration owned by the authenticated user.",
       tags: ["Registrations"],
       parameters: [pathParam("reservation_id", "Reservation / Booking ID")],
       responses: {

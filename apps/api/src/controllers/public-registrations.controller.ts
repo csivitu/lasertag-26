@@ -4,7 +4,7 @@ import { UnauthorizedError } from "../errors";
 import { registrationService } from "../services/registrations";
 
 export const createSoloRegistration = async (
-  req: Request,
+  req: Request<Record<string, never>, unknown, { slot_id: string }>,
   res: Response,
 ): Promise<void> => {
   if (!req.user) {
@@ -14,7 +14,7 @@ export const createSoloRegistration = async (
   const { slot_id } = req.body;
   const booking = await registrationService.createSoloRegistration(
     req.user.id,
-    slot_id as string,
+    slot_id,
   );
 
   res.status(201).json({
@@ -25,11 +25,18 @@ export const createSoloRegistration = async (
 };
 
 export const confirmRegistration = async (
-  req: Request,
+  req: Request<{ reservation_id: string }>,
   res: Response,
 ): Promise<void> => {
-  const reservation_id = req.params.reservation_id as string;
-  const result = await registrationService.confirmRegistration(reservation_id);
+  if (!req.user) {
+    throw new UnauthorizedError("Authentication required");
+  }
+
+  const { reservation_id } = req.params;
+  const result = await registrationService.confirmRegistration(
+    reservation_id,
+    req.user.id,
+  );
 
   res.status(200).json({
     success: true,
@@ -41,22 +48,17 @@ export const confirmRegistration = async (
 };
 
 export const getRegistration = async (
-  req: Request,
+  req: Request<{ reservation_id: string }>,
   res: Response,
 ): Promise<void> => {
   if (!req.user) {
     throw new UnauthorizedError("Authentication required");
   }
 
-  const reservation_id = req.params.reservation_id as string;
-  const requester = {
-    id: req.user.id,
-    role: req.user.role ?? "user",
-  };
-
+  const { reservation_id } = req.params;
   const registration = await registrationService.getRegistration(
     reservation_id,
-    requester,
+    req.user.id,
   );
 
   res.status(200).json({
@@ -66,22 +68,17 @@ export const getRegistration = async (
 };
 
 export const getRegistrationQr = async (
-  req: Request,
+  req: Request<{ reservation_id: string }>,
   res: Response,
 ): Promise<void> => {
   if (!req.user) {
     throw new UnauthorizedError("Authentication required");
   }
 
-  const reservation_id = req.params.reservation_id as string;
-  const requester = {
-    id: req.user.id,
-    role: req.user.role ?? "user",
-  };
-
+  const { reservation_id } = req.params;
   const qrData = await registrationService.getRegistrationQr(
     reservation_id,
-    requester,
+    req.user.id,
   );
 
   res.status(200).json({
@@ -91,22 +88,17 @@ export const getRegistrationQr = async (
 };
 
 export const cancelRegistration = async (
-  req: Request,
+  req: Request<{ reservation_id: string }>,
   res: Response,
 ): Promise<void> => {
   if (!req.user) {
     throw new UnauthorizedError("Authentication required");
   }
 
-  const reservation_id = req.params.reservation_id as string;
-  const requester = {
-    id: req.user.id,
-    role: req.user.role ?? "user",
-  };
-
+  const { reservation_id } = req.params;
   const result = await registrationService.cancelRegistration(
     reservation_id,
-    requester,
+    req.user.id,
   );
 
   res.status(200).json({

@@ -2,7 +2,7 @@ import { responses } from "./shared";
 
 /**
  * Participant-facing endpoints carried over from `dev`: slot reservation, team
- * formation, verification, profile, and admin checkin scan.
+ * formation, profile, and admin verification/check-in scan.
  */
 const ok = (description: string) => ({ description });
 
@@ -90,11 +90,13 @@ export const participantPaths = {
   "/verification/{registration_id}": {
     get: {
       summary: "Verify a registration",
+      description: "Admin only - requires a signed-in admin session cookie.",
       tags: ["Verification"],
-      security: [],
       parameters: [pathParam("registration_id", "bookings.id")],
       responses: {
         200: ok("Registration detail"),
+        401: responses.unauthorized,
+        403: responses.forbidden,
         404: responses.error("Registration not found"),
       },
     },

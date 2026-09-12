@@ -77,4 +77,44 @@ describe("Swagger / Express Parity", () => {
       }
     }
   });
+
+  it("documents registration and user endpoints as session-authenticated", () => {
+    const paths = openapiDocument.paths as Record<string, Record<string, unknown>>;
+    const securedOperations = [
+      ["/registrations/solo", "post"],
+      ["/registrations/{reservation_id}/confirm", "post"],
+      ["/registrations/{reservation_id}", "get"],
+      ["/registrations/{reservation_id}", "delete"],
+      ["/registrations/{reservation_id}/qr", "get"],
+      ["/users/me/profile", "get"],
+    ] as const;
+
+    for (const [path, method] of securedOperations) {
+      const operation = paths[path]?.[method] as { security?: unknown };
+      expect(operation).toBeDefined();
+      expect(operation.security).not.toEqual([]);
+    }
+  });
+
+  it("documents public solo registration as slot-only input", () => {
+    const paths = openapiDocument.paths as Record<string, Record<string, unknown>>;
+    const operation = paths["/registrations/solo"]?.post as {
+      parameters?: unknown[];
+      requestBody?: {
+        content?: {
+          "application/json"?: {
+            schema?: {
+              required?: string[];
+              properties?: Record<string, unknown>;
+            };
+          };
+        };
+      };
+    };
+
+    const schema = operation.requestBody?.content?.["application/json"]?.schema;
+    expect(operation.parameters ?? []).toEqual([]);
+    expect(schema?.required).toEqual(["slot_id"]);
+    expect(Object.keys(schema?.properties ?? {})).toEqual(["slot_id"]);
+  });
 });

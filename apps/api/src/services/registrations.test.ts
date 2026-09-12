@@ -63,6 +63,8 @@ const markUserCheckedInMock = queries.markUserCheckedIn as QueryMock<
   typeof queries.markUserCheckedIn
 >;
 
+const m = { findSlotById: findSlotByIdMock, countActiveBookingsForSlot: countActiveBookingsForSlotMock, findUserById: findUserByIdMock, findActiveRegistrationForUser: findActiveRegistrationForUserMock, createSoloRegistration: createSoloRegistrationMock, findRegistrationWithUserAndSlot: findRegistrationWithUserAndSlotMock, confirmRegistration: confirmRegistrationMock, cancelRegistration: cancelRegistrationMock, findRegistrationForScan: findRegistrationForScanMock, markUserCheckedIn: markUserCheckedInMock };
+
 const queryMocks = [
   findSlotByIdMock,
   countActiveBookingsForSlotMock,
@@ -94,9 +96,8 @@ const mockUser = {
   role: "user",
 };
 
-const mockOwnerRequester = { id: "user-123", role: "user" };
-const mockAdminRequester = { id: "admin-999", role: "admin" };
-const mockStrangerRequester = { id: "user-456", role: "user" };
+
+
 
 const mockReservedBooking = {
   id: "REG-1001",
@@ -305,219 +306,232 @@ describe("registrationService.createSoloRegistration", () => {
 
 describe("registrationService.confirmRegistration", () => {
   test("confirmRegistration: booking not found", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce(undefined);
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce(undefined);
 
     await expect(
-      registrationService.confirmRegistration("missing-id"),
+      registrationService.confirmRegistration("missing-id", mockUser.id),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   test("confirmRegistration: cancelled booking cannot be confirmed", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockCancelledBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.confirmRegistration("REG-1001"),
+      registrationService.confirmRegistration("REG-1001", mockUser.id),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
   test("confirmRegistration: reserved booking can be confirmed", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    confirmRegistrationMock.mockResolvedValueOnce(mockConfirmedBooking);
+    m.confirmRegistration.mockResolvedValueOnce(mockConfirmedBooking);
 
-    const result = await registrationService.confirmRegistration("REG-1001");
+    const result = await registrationService.confirmRegistration("REG-1001", mockUser.id);
     expect(result.alreadyConfirmed).toBe(false);
     expect(result.booking.status).toBe("confirmed");
   });
 
   test("confirmRegistration: already confirmed registration is idempotent", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockConfirmedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
-    const result = await registrationService.confirmRegistration("REG-1001");
+    const result = await registrationService.confirmRegistration("REG-1001", mockUser.id);
     expect(result.alreadyConfirmed).toBe(true);
     expect(result.booking).toEqual(mockConfirmedBooking);
   });
 
   test("confirmRegistration: generates QR token on first confirmation", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    confirmRegistrationMock.mockImplementationOnce(async (_id: string, token: string) => ({
+    m.confirmRegistration.mockImplementationOnce(async (_id: string, token: string) => ({
       ...mockConfirmedBooking,
       qrToken: token,
     }));
 
-    const result = await registrationService.confirmRegistration("REG-1001");
+    const result = await registrationService.confirmRegistration("REG-1001", mockUser.id);
     expect(result.booking.qrToken).toBeDefined();
     expect(typeof result.booking.qrToken).toBe("string");
     expect(result.booking.qrToken!.length).toBeGreaterThan(10);
   });
 
   test("confirmRegistration: does not replace existing QR token when already confirmed", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockConfirmedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
-    const result = await registrationService.confirmRegistration("REG-1001");
+    const result = await registrationService.confirmRegistration("REG-1001", mockUser.id);
     expect(queries.confirmRegistration).not.toHaveBeenCalled();
     expect(result.booking.qrToken).toBe("abc123qrtokenhex");
   });
 
   test("confirmRegistration: sets confirmedAt", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    confirmRegistrationMock.mockResolvedValueOnce(mockConfirmedBooking);
+    m.confirmRegistration.mockResolvedValueOnce(mockConfirmedBooking);
 
-    const result = await registrationService.confirmRegistration("REG-1001");
+    const result = await registrationService.confirmRegistration("REG-1001", mockUser.id);
     expect(result.booking.confirmedAt).toBeDefined();
     expect(result.booking.confirmedAt).not.toBeNull();
   });
 
-  test("confirmRegistration: clears cancelledAt", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+  test("confirmRegistration: only the owner can confirm - any other userId is rejected", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    confirmRegistrationMock.mockResolvedValueOnce(mockConfirmedBooking);
+    await expect(
+      registrationService.confirmRegistration("REG-1001", "user-456"),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
 
-    const result = await registrationService.confirmRegistration("REG-1001");
+  test("confirmRegistration: clears cancelledAt", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
+      booking: mockReservedBooking,
+      user: mockUser,
+      slot: mockSlot,
+    });
+    m.confirmRegistration.mockResolvedValueOnce(mockConfirmedBooking);
+
+    const result = await registrationService.confirmRegistration("REG-1001", mockUser.id);
     expect(result.booking.cancelledAt).toBeNull();
   });
 });
 
 describe("registrationService.cancelRegistration", () => {
   test("cancelRegistration: booking not found", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce(undefined);
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce(undefined);
 
     await expect(
-      registrationService.cancelRegistration("missing-id", mockOwnerRequester),
+      registrationService.cancelRegistration("missing-id", mockUser.id),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
-  test("cancelRegistration: owner can cancel their own registration", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+  test("cancelRegistration: only the owner can cancel", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    cancelRegistrationMock.mockResolvedValueOnce(mockCancelledBooking);
+    m.cancelRegistration.mockResolvedValueOnce(mockCancelledBooking);
 
-    const result = await registrationService.cancelRegistration("REG-1001", mockOwnerRequester);
+    const result = await registrationService.cancelRegistration("REG-1001", mockUser.id);
     expect(result.booking.status).toBe("cancelled");
   });
 
-  test("cancelRegistration: admin can cancel any registration", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+  test("cancelRegistration: any other userId is rejected - including an admin", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    cancelRegistrationMock.mockResolvedValueOnce(mockCancelledBooking);
 
-    const result = await registrationService.cancelRegistration("REG-1001", mockAdminRequester);
-    expect(result.booking.status).toBe("cancelled");
+
+    await expect(
+      registrationService.cancelRegistration("REG-1001", "admin-999"),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
   });
 
-  test("cancelRegistration: non-owner non-admin cannot cancel", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+  test("cancelRegistration: any unrelated userId is also rejected", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.cancelRegistration("REG-1001", mockStrangerRequester),
+      registrationService.cancelRegistration("REG-1001", "user-456"),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   test("cancelRegistration: already checked-in user cannot cancel", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockConfirmedBooking,
       user: { ...mockUser, isCheckedIn: true },
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.cancelRegistration("REG-1001", mockOwnerRequester),
+      registrationService.cancelRegistration("REG-1001", mockUser.id),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
   test("cancelRegistration: reserved booking can be cancelled", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    cancelRegistrationMock.mockResolvedValueOnce(mockCancelledBooking);
+    m.cancelRegistration.mockResolvedValueOnce(mockCancelledBooking);
 
-    const result = await registrationService.cancelRegistration("REG-1001", mockOwnerRequester);
+    const result = await registrationService.cancelRegistration("REG-1001", mockUser.id);
     expect(result.booking.status).toBe("cancelled");
   });
 
   test("cancelRegistration: confirmed booking can be cancelled only if not checked in", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockConfirmedBooking,
       user: { ...mockUser, isCheckedIn: false },
       slot: mockSlot,
     });
-    cancelRegistrationMock.mockResolvedValueOnce(mockCancelledBooking);
+    m.cancelRegistration.mockResolvedValueOnce(mockCancelledBooking);
 
-    const result = await registrationService.cancelRegistration("REG-1001", mockOwnerRequester);
+    const result = await registrationService.cancelRegistration("REG-1001", mockUser.id);
     expect(result.booking.status).toBe("cancelled");
   });
 
   test("cancelRegistration: already cancelled booking is handled consistently", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockCancelledBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.cancelRegistration("REG-1001", mockOwnerRequester),
+      registrationService.cancelRegistration("REG-1001", mockUser.id),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
   test("cancelRegistration: sets status = \"cancelled\"", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    cancelRegistrationMock.mockResolvedValueOnce(mockCancelledBooking);
+    m.cancelRegistration.mockResolvedValueOnce(mockCancelledBooking);
 
-    const result = await registrationService.cancelRegistration("REG-1001", mockOwnerRequester);
+    const result = await registrationService.cancelRegistration("REG-1001", mockUser.id);
     expect(result.booking.status).toBe("cancelled");
   });
 
   test("cancelRegistration: sets cancelledAt", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
-    cancelRegistrationMock.mockResolvedValueOnce(mockCancelledBooking);
+    m.cancelRegistration.mockResolvedValueOnce(mockCancelledBooking);
 
-    const result = await registrationService.cancelRegistration("REG-1001", mockOwnerRequester);
+    const result = await registrationService.cancelRegistration("REG-1001", mockUser.id);
     expect(result.booking.cancelledAt).toBeDefined();
     expect(result.booking.cancelledAt).not.toBeNull();
   });
@@ -525,55 +539,57 @@ describe("registrationService.cancelRegistration", () => {
 
 describe("registrationService.getRegistration", () => {
   test("getRegistration: booking not found", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce(undefined);
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce(undefined);
 
     await expect(
-      registrationService.getRegistration("missing-id", mockOwnerRequester),
+      registrationService.getRegistration("missing-id", mockUser.id),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
-  test("getRegistration: owner can view", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+  test("getRegistration: only the owner can view their registration", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
-    const result = await registrationService.getRegistration("REG-1001", mockOwnerRequester);
+    const result = await registrationService.getRegistration("REG-1001", mockUser.id);
     expect(result.booking.id).toBe("REG-1001");
   });
 
-  test("getRegistration: admin can view", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
-      booking: mockReservedBooking,
-      user: mockUser,
-      slot: mockSlot,
-    });
-
-    const result = await registrationService.getRegistration("REG-1001", mockAdminRequester);
-    expect(result.booking.id).toBe("REG-1001");
-  });
-
-  test("getRegistration: non-owner non-admin cannot view", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+  test("getRegistration: any other userId is rejected - including an admin", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.getRegistration("REG-1001", mockStrangerRequester),
+      registrationService.getRegistration("REG-1001", "admin-999"),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
+  });
+
+  test("getRegistration: any unrelated userId is also rejected", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
+      booking: mockReservedBooking,
+      user: mockUser,
+      slot: mockSlot,
+    });
+
+    await expect(
+      registrationService.getRegistration("REG-1001", "user-456"),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   test("getRegistration: returns booking, user, and slot details", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
-    const result = await registrationService.getRegistration("REG-1001", mockOwnerRequester);
+    const result = await registrationService.getRegistration("REG-1001", mockUser.id);
     expect(result.booking).toBeDefined();
     expect(result.user).toBeDefined();
     expect(result.slot).toBeDefined();
@@ -583,91 +599,93 @@ describe("registrationService.getRegistration", () => {
 
 describe("registrationService.getRegistrationQr", () => {
   test("getRegistrationQr: booking not found", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce(undefined);
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce(undefined);
 
     await expect(
-      registrationService.getRegistrationQr("missing-id", mockOwnerRequester),
+      registrationService.getRegistrationQr("missing-id", mockUser.id),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
-  test("getRegistrationQr: owner can get QR", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+  test("getRegistrationQr: only the owner can retrieve their QR", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockConfirmedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
-    const result = await registrationService.getRegistrationQr("REG-1001", mockOwnerRequester);
+    const result = await registrationService.getRegistrationQr("REG-1001", mockUser.id);
     expect(result.qrToken).toBe("abc123qrtokenhex");
   });
 
-  test("getRegistrationQr: admin can get QR", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
-      booking: mockConfirmedBooking,
-      user: mockUser,
-      slot: mockSlot,
-    });
-
-    const result = await registrationService.getRegistrationQr("REG-1001", mockAdminRequester);
-    expect(result.qrToken).toBe("abc123qrtokenhex");
-  });
-
-  test("getRegistrationQr: non-owner non-admin cannot get QR", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+  test("getRegistrationQr: any other userId is rejected - including an admin", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockConfirmedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.getRegistrationQr("REG-1001", mockStrangerRequester),
+      registrationService.getRegistrationQr("REG-1001", "admin-999"),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+
+  });
+
+  test("getRegistrationQr: any unrelated userId is also rejected", async () => {
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
+      booking: mockConfirmedBooking,
+      user: mockUser,
+      slot: mockSlot,
+    });
+
+    await expect(
+      registrationService.getRegistrationQr("REG-1001", "user-456"),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   test("getRegistrationQr: reserved booking cannot return QR", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockReservedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.getRegistrationQr("REG-1001", mockOwnerRequester),
+      registrationService.getRegistrationQr("REG-1001", mockUser.id),
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
   test("getRegistrationQr: cancelled booking cannot return QR", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockCancelledBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.getRegistrationQr("REG-1001", mockOwnerRequester),
+      registrationService.getRegistrationQr("REG-1001", mockUser.id),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
   test("getRegistrationQr: confirmed booking returns qrToken", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: mockConfirmedBooking,
       user: mockUser,
       slot: mockSlot,
     });
 
-    const result = await registrationService.getRegistrationQr("REG-1001", mockOwnerRequester);
+    const result = await registrationService.getRegistrationQr("REG-1001", mockUser.id);
     expect(result.qrToken).toBe("abc123qrtokenhex");
   });
 
   test("getRegistrationQr: confirmed booking with missing qrToken is handled", async () => {
-    findRegistrationWithUserAndSlotMock.mockResolvedValueOnce({
+    m.findRegistrationWithUserAndSlot.mockResolvedValueOnce({
       booking: { ...mockConfirmedBooking, qrToken: null },
       user: mockUser,
       slot: mockSlot,
     });
 
     await expect(
-      registrationService.getRegistrationQr("REG-1001", mockOwnerRequester),
+      registrationService.getRegistrationQr("REG-1001", mockUser.id),
     ).rejects.toBeInstanceOf(ValidationError);
   });
 });
