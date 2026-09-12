@@ -27,7 +27,7 @@ export function FaqAccordion({ onToggle: onToggleCallback, onActiveChange }: { o
                 aria-hidden
             />
 
-            <ol className="flex flex-col gap-3.5 sm:gap-3">
+            <ol className="flex flex-col gap-2.5 sm:gap-2.5 lg:gap-3">
                 {faqItems.map((entry, index) => (
                     <li key={entry.question} className="relative flex items-center gap-4 sm:gap-5">
                         <div className="flex w-5 shrink-0 items-center justify-center sm:w-6">
