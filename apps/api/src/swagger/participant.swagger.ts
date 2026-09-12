@@ -2,12 +2,7 @@ import { responses } from "./shared";
 
 /**
  * Participant-facing endpoints carried over from `dev`: slot reservation, team
- * formation, and verification. Documented here as typed objects like the rest
- * of the document — `dev` expressed these as @swagger JSDoc blocks, which only
- * worked while swagger-jsdoc scanned the sources at runtime.
- *
- * These return `{ success, data }` rather than the bare resource the /admin
- * routes return; that difference is `dev`'s convention and is preserved.
+ * formation, verification, profile, and admin checkin scan.
  */
 const ok = (description: string) => ({ description });
 
@@ -114,6 +109,46 @@ export const participantPaths = {
         401: responses.unauthorized,
         403: responses.forbidden,
         404: responses.error("User not found"),
+      },
+    },
+  },
+  "/users/me/profile": {
+    get: {
+      summary: "Get current user profile and active registration",
+      tags: ["Users"],
+      responses: {
+        200: ok("User profile with active registration"),
+        401: responses.unauthorized,
+        404: responses.error("User not found"),
+      },
+    },
+  },
+  "/admin/checkin/scan": {
+    post: {
+      summary: "Scan QR token or registration ID to check in",
+      description: "Admin only — scans QR token or booking ID to mark participant checked in.",
+      tags: ["Admin Checkin"],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["identifier"],
+              properties: {
+                identifier: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: ok("Check-in successful or already checked in"),
+        400: responses.badRequest,
+        401: responses.unauthorized,
+        403: responses.forbidden,
+        404: responses.error("Registration not found"),
+        409: responses.error("Cancelled registration"),
       },
     },
   },
