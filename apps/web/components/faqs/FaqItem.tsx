@@ -19,7 +19,7 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
     return (
         <div
             data-color={entry.color}
-            className={`faq-pixel-corners relative bg-ink/60 px-5 py-3.5 transition-colors sm:px-6 sm:py-4 ${colors.text}${isOpen ? " faq-item--open" : ""}`}
+            className={`faq-pixel-corners relative bg-ink/60 px-4 py-2.5 transition-colors sm:px-5 sm:py-2.5 lg:py-3 ${colors.text}${isOpen ? " faq-item--open" : ""}`}
         >
             <FaqPixelFrame />
             <button

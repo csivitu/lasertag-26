@@ -1,6 +1,7 @@
 .faq-wordmark {
     font-family: var(--ft-heading);
-    font-size: clamp(3rem, 10vw, 7rem);
+    font-size: clamp(2.5rem, 5.5vw, 5.5rem);
+    line-height: 1.1;
     background: linear-gradient(90deg, #fee18a 0%, #fed14b 24%, #fec414 50%, #fecf41 74%, #fed865 100%);
     background-clip: text;
     -webkit-background-clip: text;
