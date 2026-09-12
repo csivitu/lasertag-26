@@ -1,13 +1,19 @@
 import { dots, sparkles, VIEWBOX_H, VIEWBOX_W } from "./starfield.data";
 
-export function Starfield() {
+export interface StarfieldProps {
+  fixed?: boolean;
+}
+
+export function Starfield({ fixed = false }: StarfieldProps) {
   return (
     <svg
       aria-hidden
       viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}
       preserveAspectRatio="xMidYMid slice"
       shapeRendering="crispEdges"
-      className="pointer-events-none absolute inset-0 z-0 size-full"
+      className={`pointer-events-none z-0 size-full ${
+        fixed ? "fixed inset-0" : "absolute inset-0"
+      }`}
     >
       <defs>
         {/* sparkle-a: authentic Figma pixel-art tall diamond star */}

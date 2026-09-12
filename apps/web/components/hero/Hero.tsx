@@ -5,15 +5,13 @@ import { HeroHeader } from "./HeroHeader";
 import { HeroTagline } from "./HeroTagline";
 import { HeroTitle } from "./HeroTitle";
 import { RegisterButton } from "./RegisterButton";
-import { Starfield } from "./Starfield";
 
 export function Hero() {
   return (
     <section
-      className="relative isolate grid min-h-[100svh] grid-rows-[auto_auto_1fr] overflow-hidden bg-ink lg:grid-cols-2 lg:grid-rows-[auto_1fr]"
+      className="relative isolate grid min-h-[100svh] grid-rows-[auto_auto_1fr] overflow-hidden bg-transparent lg:grid-cols-2 lg:grid-rows-[auto_1fr]"
       style={{ "--hero-gutter": "clamp(24px, 3.4vw, 72px)" } as CSSProperties}
     >
-      <Starfield />
 
       <div className="lg:col-span-2">
         <HeroHeader />

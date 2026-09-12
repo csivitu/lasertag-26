@@ -7,7 +7,6 @@ import AboutUsLeftDisc from "./AboutUsLeftDisc";
 import AboutUsVid from "./AboutUsVid";
 import ArcadeAccessories from "./Arcadeaccessories";
 import Pacman from "./pacman";
-import { Starfield } from "@/components/hero/Starfield";
 
 const DESIGN_WIDTH = 1440;
 const DESIGN_HEIGHT = 900;
@@ -42,7 +41,6 @@ export default function AboutUs() {
 
     return (
         <section className={styles.section} ref={stageRef}>
-            <Starfield />
             <Pacman />
             <div
                 className={styles.stageFrame}

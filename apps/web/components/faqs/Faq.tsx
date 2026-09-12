@@ -7,7 +7,6 @@ import { FaqAccordion } from "./FaqAccordion";
 import { FaqFooterBar } from "./FaqFooterBar";
 import { FaqHeader } from "./FaqHeader";
 import { FaqSideArt } from "./FaqSideArt";
-import { Starfield } from "../hero/Starfield";
 
 export function Faq() {
     const [isJumping, setIsJumping] = useState(false);
@@ -25,8 +24,7 @@ export function Faq() {
     }, []);
 
     return (
-        <section className="relative isolate flex h-[100svh] flex-col overflow-hidden bg-ink">
-            <Starfield />
+        <section className="relative isolate flex h-[100svh] flex-col overflow-hidden bg-transparent">
 
             {/* Side art — absolutely positioned, tablet+ */}
             <div className="pointer-events-none absolute inset-0 bottom-5 z-[5] hidden md:block sm:bottom-6">
