@@ -121,9 +121,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    gap: 1.5rem;
-    padding: 3% 4% 3% 4%;
+    justify-content: space-between;
+    padding: 30px 36px 30px 36px;
     color: #ffffff;
     box-sizing: border-box;
 }
@@ -137,9 +136,9 @@
     text-align: center;
     font-family: var(--ft-body), system-ui, sans-serif;
     font-weight: 500;
-    font-size: 24px;
-    line-height: 1.4;
-    letter-spacing: 0.05em;
+    font-size: 22px;
+    line-height: 1.35;
+    letter-spacing: 0.04em;
     color: #ffffff;
 }
 
@@ -147,13 +146,13 @@
     position: relative;
     z-index: 3;
     list-style: none;
-    margin: -20px 0 0 0;
-    padding: 0 0 0 4%;
+    margin: 0;
+    padding: 0 0 0 32px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 1.2rem;
+    gap: 0.9rem;
 }
 
 .infoList li {
@@ -162,13 +161,18 @@
     gap: 1.2rem;
     font-family: var(--ft-body), system-ui, sans-serif;
     font-weight: 400;
-    font-size: 23px;
+    font-size: 21px;
     line-height: 1.3;
     color: #ffffff;
 }
 
 .infoIcon {
     position: relative;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 

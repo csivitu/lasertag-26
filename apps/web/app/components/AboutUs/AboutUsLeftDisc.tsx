@@ -25,19 +25,19 @@ export default function AboutUsLeftDisc() {
             </p>
             <ul className={styles.infoList}>
                 <li>
-                    <span className={styles.infoIcon} style={{ width: 55, height: 55 }}>
+                    <span className={styles.infoIcon}>
                         <Image src={ICON_VEST_SRC} alt="" fill className={styles.fitImg} aria-hidden="true" unoptimized />
                     </span>
                     <span>Don your vests</span>
                 </li>
                 <li>
-                    <span className={styles.infoIcon} style={{ width: 60, height: 55 }}>
+                    <span className={styles.infoIcon}>
                         <Image src={ICON_GUN_SRC} alt="" fill className={styles.fitImg} aria-hidden="true" unoptimized />
                     </span>
                     <span>Have your guns at the ready</span>
                 </li>
                 <li>
-                    <span className={styles.infoIcon} style={{ width: 65, height: 65 }}>
+                    <span className={styles.infoIcon}>
                         <Image src={ICON_TARGET_SRC} alt="" fill className={styles.fitImg} aria-hidden="true" unoptimized />
                     </span>
                     <div>
