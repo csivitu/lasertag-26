@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 
+import { playSound } from "@/lib/sound";
 import { HeroMenu } from "./HeroMenu";
 import { NavArrow } from "./NavArrow";
 
@@ -37,6 +40,8 @@ export function HeroHeader() {
           <a
             key={link.label}
             href={link.href}
+            onMouseEnter={() => playSound("navHover", 0.4)}
+            onClick={() => playSound("navSelect", 0.5)}
             className="group relative inline-flex items-center whitespace-nowrap font-pixel leading-[1.338] tracking-[0.1em] text-white outline-offset-4 transition-colors duration-150 hover:text-accent focus-visible:text-accent focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none"
           >
             <span

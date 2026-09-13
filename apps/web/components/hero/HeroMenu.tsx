@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { playSound } from "@/lib/sound";
+
 type NavLink = { label: string; href: string };
 
 export function HeroMenu({ links }: { links: NavLink[] }) {
@@ -13,7 +15,10 @@ export function HeroMenu({ links }: { links: NavLink[] }) {
         type="button"
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          playSound("buttonClick", 0.4);
+          setOpen((o) => !o);
+        }}
         className="relative flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-[6px] rounded-sm outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent"
       >
         <span
@@ -40,7 +45,10 @@ export function HeroMenu({ links }: { links: NavLink[] }) {
             <a
               key={link.label}
               href={link.href}
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                playSound("navSelect", 0.5);
+                setOpen(false);
+              }}
               className="border-b border-white/10 px-5 py-4 font-pixel text-sm tracking-[1px] text-white outline-offset-[-2px] transition-colors last:border-b-0 focus-visible:outline-2 focus-visible:outline-accent active:text-accent"
             >
               {link.label}

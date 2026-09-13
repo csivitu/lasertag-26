@@ -1,5 +1,8 @@
+"use client";
+
 import type { MouseEventHandler } from "react";
 
+import { playSound, type SoundKey } from "@/lib/sound";
 import {
   BUTTON_H,
   BUTTON_W,
@@ -20,8 +23,9 @@ interface PixelButtonProps {
   interaction?: "hero" | "simple";
   href?: string;
   type?: "button" | "submit" | "reset";
-  onClick?: MouseEventHandler<HTMLButtonElement>;
+  onClick?: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>;
   disabled?: boolean;
+  sound?: SoundKey | false;
 }
 
 function Face({ bands, className }: FaceProps) {
@@ -91,6 +95,7 @@ export function PixelButton({
   type = "button",
   onClick,
   disabled = false,
+  sound = "buttonClick",
 }: PixelButtonProps) {
   const rootClassName =
     interaction === "hero"
@@ -104,9 +109,18 @@ export function PixelButton({
     />
   );
 
+  const handleClick = (
+    e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>,
+  ) => {
+    if (sound) {
+      playSound(sound, 0.5);
+    }
+    onClick?.(e as any);
+  };
+
   if (href) {
     return (
-      <a href={href} className={rootClassName}>
+      <a href={href} onClick={handleClick} className={rootClassName}>
         {face}
       </a>
     );
@@ -115,7 +129,7 @@ export function PixelButton({
   return (
     <button
       type={type}
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       className={`${rootClassName} cursor-pointer border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-50`}
     >
