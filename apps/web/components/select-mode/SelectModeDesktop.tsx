@@ -1,9 +1,15 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"; 
  
 import React from "react";
 import { Starfield } from "../hero/Starfield"; 
- 
-export function SelectModeDesktop() { 
+import type { PopupMode } from "../mode-popup/ModePopup";
+
+interface SelectModeDesktopProps {
+  onSelect: (mode: PopupMode) => void;
+}
+
+export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) { 
   return ( 
     <section 
       className="relative hidden h-[100svh] min-h-[640px] overflow-hidden bg-[#08080d] lg:block font-pixel" 
@@ -74,13 +80,24 @@ export function SelectModeDesktop() {
               </div> 
  
               {/* Join Button */} 
-              <div className="mt-2 transition-transform duration-200 active:scale-95"> 
+              <button
+                type="button"
+                aria-label="Join as solo player"
+                onClick={() => onSelect("solo")}
+                className="relative w-48 mt-2 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-200 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+              > 
                 <img  
                   src="/select-mode/select-mode-solo/join-solo.svg"  
                   alt="Join Solo"  
-                  className="w-48 h-auto" 
+                  className="w-full h-auto" 
                 /> 
-              </div> 
+                <span
+                  aria-hidden
+                  className="btn-select-solo-shine pointer-events-none absolute inset-0 overflow-hidden"
+                >
+                  <span className="button-shine block h-full w-1/3" />
+                </span>
+              </button> 
             </div> 
           </div> 
  
@@ -139,12 +156,30 @@ export function SelectModeDesktop() {
               </div> 
  
               {/* Create/Join Team Buttons */} 
-              <div className="mt-4 transition-transform duration-200 active:scale-95"> 
+              <div className="relative w-[400px] max-w-full mt-4 transition-transform duration-200 active:scale-95"> 
                 <img  
                   src="/select-mode/select-mode-team/create-join-team.svg"  
                   alt="Create or Join Team"  
-                  className="w-[400px] h-auto" 
+                  className="w-full h-auto" 
                 /> 
+                <span
+                  aria-hidden
+                  className="btn-select-team-shine pointer-events-none absolute inset-0 overflow-hidden"
+                >
+                  <span className="button-shine block h-full w-1/3" />
+                </span>
+                <button
+                  type="button"
+                  aria-label="Create a team"
+                  onClick={() => onSelect("create_team")}
+                  className="absolute left-0 top-0 h-full w-[48%] cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+                />
+                <button
+                  type="button"
+                  aria-label="Join a team"
+                  onClick={() => onSelect("join_team")}
+                  className="absolute right-0 top-0 h-full w-[48%] cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+                />
               </div> 
             </div> 
           </div> 

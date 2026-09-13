@@ -10,6 +10,8 @@ import { adminRouter } from "./routes/admin";
 import { authRouter } from "./routes/auth";
 import { publicSlotsRouter } from "./routes/slots";
 import { publicTeamsRouter } from "./routes/teams";
+import { publicRegistrationsRouter } from "./routes/public-registrations";
+import { usersRouter } from "./routes/users";
 import verificationRouter from "./routes/verification";
 import { openapiDocument } from "./swagger";
 import type { Env } from "./env";
@@ -62,6 +64,8 @@ export function createApp(env: Env): Express {
     // Participant-facing.
     app.use("/slots", publicSlotsRouter);
     app.use("/teams", publicTeamsRouter);
+    app.use("/registrations", publicRegistrationsRouter);
+    app.use("/users", usersRouter);
     app.use("/verification", verificationRouter);
 
     app.use("/admin", adminRouter);

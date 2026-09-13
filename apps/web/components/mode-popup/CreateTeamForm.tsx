@@ -1,0 +1,166 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import type { CSSProperties } from "react";
+import { BaseFields } from "./BaseFields";
+import { PixelButton } from "../hero/PixelButton";
+import { INPUT_BORDER_SVG, PINK_INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
+
+const labelStyle: CSSProperties = {
+  fontFamily: "var(--ft-pixel), monospace",
+  fontSize: "12px",
+  color: "#ffffff",
+  letterSpacing: "0.1em",
+  marginBottom: "8px",
+  display: "block",
+  lineHeight: 1,
+};
+
+const inputWrapStyle: CSSProperties = {
+  position: "relative",
+  background: borderBg(INPUT_BORDER_SVG),
+};
+
+const inputStyle: CSSProperties = {
+  display: "block",
+  width: "100%",
+  background: "transparent",
+  color: "#ffffff",
+  fontFamily: "var(--ft-body), sans-serif",
+  fontWeight: 400,
+  fontSize: "16px",
+  padding: "10px 14px",
+  outline: "none",
+  border: "none",
+  lineHeight: 1.4,
+};
+
+/** Generates a random 6 char uppercase team code, seeded once on mount. */
+function generateCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  return Array.from({ length: 6 }, () =>
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join("");
+}
+
+export function CreateTeamForm() {
+  const [fullName, setFullName] = useState("");
+  const [registrationNumber, setRegistrationNumber] = useState("");
+  const [emailId, setEmailId] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [error, setError] = useState("");
+
+  // Generated once when the component mounts; frozen for the session.
+  // TODO: swap with API-returned code once backend is ready.
+  const teamCode = useMemo(() => generateCode(), []);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+
+    if (
+      !fullName.trim() ||
+      !registrationNumber.trim() ||
+      !emailId.trim() ||
+      !phoneNumber.trim() ||
+      !teamName.trim()
+    ) {
+      setError("Please fill in all fields before creating your team.");
+      return;
+    }
+
+    if (!emailId.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setStatus("submitting");
+    window.setTimeout(() => setStatus("success"), 700);
+  }
+
+  return (
+    <form className="mode-popup-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      <BaseFields
+        fullName={fullName}
+        registrationNumber={registrationNumber}
+        emailId={emailId}
+        phoneNumber={phoneNumber}
+        onFullNameChange={setFullName}
+        onRegistrationNumberChange={setRegistrationNumber}
+        onEmailIdChange={setEmailId}
+        onPhoneNumberChange={setPhoneNumber}
+      />
+
+      {/* Team Name */}
+      <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <label className="mode-popup-label" htmlFor="popup-team-name" style={labelStyle}>
+          TEAM NAME
+        </label>
+        <div className="mode-popup-input-wrap" style={inputWrapStyle}>
+          <input
+            id="popup-team-name"
+            type="text"
+            value={teamName}
+            onChange={(e) => setTeamName(e.target.value)}
+            placeholder="Code Red"
+            className="mode-popup-input"
+            style={inputStyle}
+            autoComplete="off"
+          />
+        </div>
+        {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
+        {status === "success" && (
+          <p className="mode-popup-form-success" role="status">
+            Team created! Share code <strong>{teamCode}</strong> with your teammates.
+          </p>
+        )}
+      </div>
+
+      {/* Team Code row: pink code badge + Create Team button */}
+      <div className="create-team-submit-row" style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}>
+        <div className="mode-popup-field create-team-code-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
+          <label className="mode-popup-label" style={labelStyle}>TEAM CODE</label>
+          {/* Keep the SVG as the element background so its fill stays inside the stepped border. */}
+          <div
+            className="mode-popup-code"
+            style={{
+              position: "relative",
+              background: borderBg(PINK_INPUT_BORDER_SVG),
+              width: "140px",
+              height: "40px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div
+              className="mode-popup-input"
+              style={{
+                ...inputStyle,
+                color: "#ffffff",
+                textAlign: "center",
+                letterSpacing: "0.12em",
+                userSelect: "all",
+                padding: "0 12px",
+              }}
+            >
+              {teamCode}
+            </div>
+          </div>
+        </div>
+
+        <div className="create-team-button-wrap" style={{ flex: "1 1 0", minWidth: 0, display: "flex", justifyContent: "center" }}>
+          <PixelButton
+            type="submit"
+            label={status === "submitting" ? "Creating..." : status === "success" ? "Created" : "Create Team"}
+            interaction="simple"
+            className="w-full max-w-[240px]"
+            labelClassName="text-[clamp(10px,2.4vw,13px)]"
+            disabled={status === "submitting" || status === "success"}
+          />
+        </div>
+      </div>
+    </form>
+  );
+}

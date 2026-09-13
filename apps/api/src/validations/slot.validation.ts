@@ -17,16 +17,14 @@ const isoDate = z.iso.datetime({ offset: true }).transform((value) => new Date(v
  * omit, drizzle-zod would expose it as optional and let a client choose its own
  * primary key.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- drizzle-zod Table type mismatch in monorepo
-const slotFields = createInsertSchema(slots as any, {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  capacity: (schema: any) => schema.min(0, "capacity must be a non-negative integer"),
+const slotFields = createInsertSchema(slots, {
+  capacity: (schema) => schema.min(0, "capacity must be a non-negative integer"),
 })
   .omit({ id: true })
   .extend({ startTime: isoDate, endTime: isoDate });
 
 export const slotInputSchema = slotFields.refine(
-  (value) => value.startTime! < value.endTime!,
+  (value) => value.startTime < value.endTime,
   { message: "startTime must be before endTime", path: ["startTime"] },
 );
 
@@ -64,24 +62,23 @@ export const slotIdSchema = z.object({ params: slotIdParams });
  * serialisation produces, whereas `createSelectSchema` types them as `Date`,
  * which has no JSON Schema representation.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- drizzle-zod Table type mismatch in monorepo
-export const slotResponseSchema = createSelectSchema(slots as any).extend({
+export const slotResponseSchema = createSelectSchema(slots).extend({
   startTime: z.iso.datetime(),
   endTime: z.iso.datetime(),
 });
 
 /**
- * Participant-facing slot reservation, carried over from `dev`.
- * Shaped as separate part-schemas for `validateRequest`.
+ * Participant-facing slot reservation.
  */
-export const reserveSlotSchema = {
+export const reserveSlotSchema = z.object({
   params: z.object({
-    slot_id: z.string().min(1, "slot_id is required in path."),
+    slot_id: z.string().trim().min(1, "slot_id is required in path."),
   }),
   body: z
     .object({
       user_id: z
         .string()
+        .trim()
         .min(1, "user_id and type (individual/team) are required fields."),
       type: z.enum(["individual", "team"], {
         message: 'type must be either "individual" or "team".',
@@ -100,4 +97,9 @@ export const reserveSlotSchema = {
         path: ["team_code"],
       }
     ),
-};
+});
+
+export type ReserveSlotInput = z.infer<typeof reserveSlotSchema>["params"] &
+  z.infer<typeof reserveSlotSchema>["body"];
+
+

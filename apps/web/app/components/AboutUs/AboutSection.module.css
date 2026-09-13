@@ -1,27 +1,32 @@
+/* ── Outer Section Container ── */
 .section {
-    background: #08080d;
+    background: transparent;
     position: relative;
-    width: 100vw;
-    height: 100vh;
-    max-width: 100vw;
-    max-height: 100vh;
+    width: 100%;
+    min-height: 0;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
     box-sizing: border-box;
+    overflow-x: hidden;
+    padding: 3rem 1rem 4.5rem;
 }
 
-.starfield {
-    pointer-events: none;
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
+@media (min-width: 1024px) {
+    .section {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+    }
 }
 
+/* ── Desktop Scaled Stage & Canvas (>= 1024px) ── */
 .stageFrame {
     position: relative;
     z-index: 2;
@@ -39,35 +44,67 @@
     transform-origin: top left;
 }
 
+/* ── Mobile Container (< 1024px) ── */
+.mobileContainer {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .mobileContainer {
+        display: none !important;
+    }
+}
+
+.contentGrid {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+}
+
+/* ── Section Header ── */
 .headingWrap {
-    position: absolute;
-    top: 6%;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     z-index: 5;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 22px 52px;
-    width: max-content;
-    max-width: 88%;
+    padding: clamp(8px, 2vw, 14px) clamp(22px, 5.5vw, 38px);
+    width: fit-content;
+    max-width: 94%;
+    box-sizing: border-box;
 }
 
 .heading {
     margin: 0;
     text-align: center;
     font-family: var(--ft-pixel), monospace, sans-serif;
-    font-size: 44px;
-    line-height: 1.35;
-    letter-spacing: 0.05em;
+    font-size: clamp(0.65rem, 2.7vw, 1.15rem);
+    line-height: 1.45;
+    letter-spacing: 0.02em;
     color: #ffffff;
     text-shadow: 2px 2px 0px #000;
-    white-space: nowrap;
 }
 
 .heading span {
-    white-space: nowrap;
+    white-space: normal;
+}
+
+@media (min-width: 360px) {
+    .heading span {
+        white-space: nowrap;
+    }
 }
 
 .headingAccent {
@@ -77,10 +114,11 @@
 
 .bracket {
     position: absolute;
-    width: 32px;
-    height: 44px;
-    border: 5px solid var(--color-brand-yellow, #ffd35f);
+    width: clamp(13px, 3.2vw, 20px);
+    height: clamp(16px, 4.2vw, 26px);
+    border: 3px solid var(--color-brand-yellow, #ffd35f);
     z-index: 2;
+    pointer-events: none;
 }
 
 .bracketTL {
@@ -111,19 +149,48 @@
     border-top: none;
 }
 
-.infoBox {
+/* Desktop Canvas Heading override */
+.canvas .headingWrap {
     position: absolute;
-    left: 5.2%;
-    top: 31.5%;
-    width: 45.5%;
-    height: 41%;
+    top: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    padding: 22px 52px;
+    width: max-content;
+    max-width: 88%;
+}
+
+.canvas .heading {
+    font-size: 44px;
+    line-height: 1.35;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.canvas .heading span {
+    white-space: nowrap;
+}
+
+.canvas .bracket {
+    width: 32px;
+    height: 44px;
+    border-width: 5px;
+}
+
+/* ── Left Disc / Info Box ── */
+.infoBox {
+    position: relative;
+    width: 100%;
+    max-width: 580px;
+    aspect-ratio: 668 / 380;
     z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    gap: 1.5rem;
-    padding: 3% 4% 3% 4%;
+    justify-content: center;
+    gap: clamp(0.75rem, 2.2vw, 1.6rem);
+    padding: clamp(14px, 3.5vw, 24px) clamp(16px, 4vw, 30px);
     color: #ffffff;
     box-sizing: border-box;
 }
@@ -133,13 +200,12 @@
     z-index: 3;
     margin: 0 auto;
     width: 100%;
-    max-width: 100%;
     text-align: center;
     font-family: var(--ft-body), system-ui, sans-serif;
     font-weight: 500;
-    font-size: 24px;
-    line-height: 1.4;
-    letter-spacing: 0.05em;
+    font-size: clamp(13px, 2.5vw, 21px);
+    line-height: 1.35;
+    letter-spacing: 0.04em;
     color: #ffffff;
 }
 
@@ -147,28 +213,33 @@
     position: relative;
     z-index: 3;
     list-style: none;
-    margin: -20px 0 0 0;
-    padding: 0 0 0 4%;
+    margin: 0;
+    padding: 0 0 0 clamp(10px, 2.8vw, 32px);
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 1.2rem;
+    gap: clamp(0.35rem, 1vw, 0.8rem);
 }
 
 .infoList li {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: clamp(0.6rem, 1.8vw, 1.2rem);
     font-family: var(--ft-body), system-ui, sans-serif;
     font-weight: 400;
-    font-size: 23px;
+    font-size: clamp(12px, 2.4vw, 20px);
     line-height: 1.3;
     color: #ffffff;
 }
 
 .infoIcon {
     position: relative;
+    width: clamp(28px, 5.5vw, 46px);
+    height: clamp(28px, 5.5vw, 46px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 
@@ -182,28 +253,69 @@
     text-decoration: underline;
 }
 
-.photoBox {
+/* Desktop Canvas Info Box override */
+.canvas .infoBox {
     position: absolute;
-    left: 54.2%;
+    left: 5.2%;
     top: 31.5%;
-    width: 40.5%;
+    width: 45.5%;
     height: 41%;
+    max-width: none;
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    padding: 30px 36px 30px 36px;
+}
+
+.canvas .infoIntro {
+    font-size: 22px;
+    line-height: 1.35;
+    letter-spacing: 0.04em;
+}
+
+.canvas .infoList {
+    padding: 0 0 0 32px;
+    gap: 0.9rem;
+}
+
+.canvas .infoList li {
+    gap: 1.2rem;
+    font-size: 21px;
+    line-height: 1.3;
+}
+
+.canvas .infoIcon {
+    width: 48px;
+    height: 48px;
+}
+
+/* ── Video / Photo Box ── */
+.photoBox {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 668 / 361;
     z-index: 3;
     box-sizing: border-box;
 }
 
 .photoInner {
     position: absolute;
-    inset: 0.9%;
+    inset: 0;
     z-index: 1;
     overflow: hidden;
-    clip-path: polygon(30px 0%,
-            calc(100% - 30px) 0%,
-            100% 30px 100% calc(100% - 30px),
-            calc(100% - 30px) 100%,
-            30px 100%,
-            0% calc(100% - 30px),
-            0% 30px);
+    clip-path: polygon(
+        clamp(12px, 2.8vw, 20px) clamp(4px, 1vw, 7px),
+        calc(100% - clamp(12px, 2.8vw, 20px)) clamp(4px, 1vw, 7px),
+        calc(100% - clamp(5px, 1.2vw, 8px)) clamp(16px, 3.5vw, 25px),
+        calc(100% - clamp(5px, 1.2vw, 8px)) calc(100% - clamp(20px, 4.5vw, 33px)),
+        calc(100% - clamp(12px, 2.8vw, 20px)) calc(100% - clamp(4px, 1vw, 7px)),
+        clamp(12px, 2.8vw, 20px) calc(100% - clamp(4px, 1vw, 7px)),
+        clamp(5px, 1.2vw, 8px) calc(100% - clamp(20px, 4.5vw, 33px)),
+        clamp(5px, 1.2vw, 8px) clamp(16px, 3.5vw, 25px)
+    );
 }
 
 .photoImg {
@@ -223,41 +335,99 @@
     image-rendering: pixelated;
 }
 
+/* Desktop Canvas Photo Box override */
+.canvas .photoBox {
+    position: absolute;
+    left: 54.2%;
+    top: 31.5%;
+    width: 40.5%;
+    height: 41%;
+    aspect-ratio: auto;
+}
+
+.canvas .photoInner {
+    clip-path: polygon(
+        20px 7px,
+        calc(100% - 20px) 7px,
+        calc(100% - 8px) 25px,
+        calc(100% - 8px) calc(100% - 33px),
+        calc(100% - 20px) calc(100% - 7px),
+        20px calc(100% - 7px),
+        8px calc(100% - 33px),
+        8px 25px
+    );
+}
+
+/* ── Mobile Media Wrap (< 1024px) ── */
+.mediaWrap {
+    position: relative;
+    width: 100%;
+    max-width: 580px;
+    margin-bottom: clamp(85px, 22vw, 140px);
+}
+
+/* ── Accessories (Cassette, Wire, Joystick) ── */
 .cassetteWrap {
     position: absolute;
-    left: 63.5%;
-    top: 72.2%;
-    width: 22%;
-    height: 6.8%;
-    z-index: 4;
+    left: 23%;
+    top: 98.5%;
+    width: 54%;
+    aspect-ratio: 307 / 64;
+    z-index: 5;
 }
 
 .wireWrap {
     position: absolute;
-    left: 77.2%;
-    top: 71%;
-    width: 17.5%;
-    height: 15.5%;
+    left: 57%;
+    top: 96%;
+    width: 43%;
+    aspect-ratio: 185 / 167;
     z-index: 2;
     pointer-events: none;
 }
 
 .joystickWrap {
     position: absolute;
+    left: 55.5%;
+    top: 114%;
+    width: 22%;
+    aspect-ratio: 120 / 138;
+    z-index: 4;
+}
+
+/* Desktop Canvas Accessories override */
+.canvas .cassetteWrap {
+    position: absolute;
+    left: 63.5%;
+    top: 72.2%;
+    width: 22%;
+    height: 6.8%;
+    aspect-ratio: auto;
+    z-index: 5;
+}
+
+.canvas .wireWrap {
+    position: absolute;
+    left: 77.2%;
+    top: 71%;
+    width: 17.5%;
+    height: 15.5%;
+    aspect-ratio: auto;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.canvas .joystickWrap {
+    position: absolute;
     left: 76.7%;
     top: 78%;
     width: 9%;
     height: 15%;
+    aspect-ratio: auto;
     z-index: 4;
 }
 
-.joystickTiltInner {
-    position: absolute;
-    inset: 0;
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-    transform-origin: 50% 88%;
-}
-
+/* ── Pacman Overlay ── */
 .pacmanOverlay {
     position: absolute;
     inset: 0;
@@ -266,6 +436,12 @@
     pointer-events: none;
     z-index: 3;
     overflow: hidden;
+}
+
+@media (max-width: 1023px) {
+    .pacmanOverlay {
+        display: none !important;
+    }
 }
 
 .arcadePathSvg {
@@ -328,15 +504,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
     .pacmanItem,
     .ghostItem,
     .arcadeDot {
         animation: none !important;
-        transition: none !important;
-    }
-
-    .joystickTiltInner {
         transition: none !important;
     }
 }

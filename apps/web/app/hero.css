@@ -1,3 +1,107 @@
+.hero-grid-title {
+  font-family: var(--ft-pixel), monospace;
+  color: #08d5ea;
+  font-weight: 400;
+  text-align: center;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+}
+
+.btn-book-now {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  user-select: none;
+}
+
+.btn-book-now-normal,
+.btn-book-now-pressed {
+  transition: opacity 0.1s ease;
+}
+
+.btn-book-now-pressed {
+  opacity: 0;
+}
+
+.btn-book-now:hover {
+  transform: scale(1.04);
+  filter: brightness(1.08) drop-shadow(0 0 12px rgba(229, 52, 158, 0.9));
+}
+
+.btn-book-now:active {
+  transform: scale(0.98);
+  filter: brightness(1) drop-shadow(0 0 6px rgba(229, 52, 158, 0.5));
+}
+
+.btn-book-now:active .btn-book-now-normal {
+  opacity: 0;
+}
+
+.btn-book-now:active .btn-book-now-pressed {
+  opacity: 1;
+}
+
+.btn-book-now-shine--rest {
+  -webkit-mask-image: url('/footer/group-598.png');
+  mask-image: url('/footer/group-598.png');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  transition: opacity 0.1s ease;
+}
+
+.btn-book-now-shine--press {
+  opacity: 0;
+  -webkit-mask-image: url('/footer/group-597.svg');
+  mask-image: url('/footer/group-597.svg');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  transition: opacity 0.1s ease;
+}
+
+.btn-book-now:active .btn-book-now-shine--rest {
+  opacity: 0;
+}
+
+.btn-book-now:active .btn-book-now-shine--press {
+  opacity: 1;
+}
+
+.btn-select-solo-shine {
+  -webkit-mask-image: url('/select-mode/select-mode-solo/join-solo.svg');
+  mask-image: url('/select-mode/select-mode-solo/join-solo.svg');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.btn-select-team-shine {
+  -webkit-mask-image: url('/select-mode/select-mode-team/create-join-team.svg');
+  mask-image: url('/select-mode/select-mode-team/create-join-team.svg');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-book-now,
+  .btn-book-now-normal,
+  .btn-book-now-pressed {
+    transition: none !important;
+  }
+  .btn-book-now:hover,
+  .btn-book-now:active {
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
 @keyframes nav-arrow-nudge {
   0%,
   20% {
@@ -166,11 +270,24 @@
 
 @keyframes button-shine {
   0% {
-    background-position: -60% 0;
+    transform: translateX(-160%) skewX(-20deg);
   }
   100% {
-    background-position: 160% 0;
+    transform: translateX(360%) skewX(-20deg);
   }
+}
+
+.button-shine {
+  background: linear-gradient(
+    75deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 15%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.05) 85%,
+    transparent 100%
+  );
+  transform: translateX(-160%) skewX(-20deg);
+  will-change: transform;
 }
 
 .group:hover .button-shine {
@@ -200,10 +317,7 @@
 }
 
 .hero-btn__shine {
-  background: linear-gradient(75deg, transparent, rgba(255, 255, 255, 0.55) 50%, transparent);
-  background-size: 250% 100%;
-  background-repeat: no-repeat;
-  background-position: -60% 0;
+  pointer-events: none;
 }
 
 .hero-btn__shine--rest {

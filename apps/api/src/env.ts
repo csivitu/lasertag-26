@@ -25,6 +25,17 @@ const envSchema = z.object({
     .default("lasertag_dev_secret_key_32_characters_minimum_length_required"),
   BETTER_AUTH_URL: z.url().default("http://localhost:3001"),
   WEB_ORIGIN: z.url().default("http://localhost:3000"),
+  SMTP_HOST: z.string().min(1).default("smtp.resend.com"),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().min(1).default("resend"),
+  SMTP_PASS:
+    process.env.NODE_ENV === "production"
+      ? z.string().min(1, "SMTP_PASS is required in production")
+      : z.string().default("dummy_pass"),
+  MAIL_FROM:
+    process.env.NODE_ENV === "production"
+      ? z.string().min(1, "MAIL_FROM is required in production")
+      : z.string().default("noreply@lasertag.com"),
 });
 
 export type Env = z.infer<typeof envSchema>;
