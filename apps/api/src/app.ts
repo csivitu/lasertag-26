@@ -13,6 +13,7 @@ import { publicTeamsRouter } from "./routes/teams";
 import { publicRegistrationsRouter } from "./routes/public-registrations";
 import { usersRouter } from "./routes/users";
 import verificationRouter from "./routes/verification";
+import { profileRouter } from "./routes/profile";
 import { openapiDocument } from "./swagger";
 import type { Env } from "./env";
 
@@ -53,6 +54,7 @@ export function createApp(env: Env): Express {
     app.use("/slots", publicSlotsRouter);
     app.use("/teams", publicTeamsRouter);
     app.use("/registrations", publicRegistrationsRouter);
+    app.use("/profile", profileRouter);
     app.use("/users", usersRouter);
     app.use("/verification", verificationRouter);
 

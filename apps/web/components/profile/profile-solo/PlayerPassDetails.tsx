@@ -1,20 +1,25 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 interface DetailTileProps {
   icon: string;
   label: string;
-  value: string;
+  value?: string; 
+  valueText?: string;
   labelW: string;
   labelAspect: string;
   valueW: string;
   valueAspect: string;
-  alt: string;
+  alt?: string;
 }
 
 function DetailTile({
   icon,
   label,
   value,
+  valueText,
   labelW,
   labelAspect,
   valueW,
@@ -30,15 +35,63 @@ function DetailTile({
         <div className={`relative h-4 sm:h-4.5 ${labelW} ${labelAspect}`}>
           <Image src={label} alt="" fill className="object-contain object-left" />
         </div>
-        <div className={`relative h-3.5 sm:h-4 ${valueW} ${valueAspect}`}>
-          <Image src={value} alt={alt} fill className="object-contain object-left" />
-        </div>
+        {valueText ? (
+          <div className={`h-3.5 sm:h-4 flex items-center ${valueW} ${valueAspect}`}>
+            <span className="text-white text-xs sm:text-sm leading-tight truncate">
+              {valueText}
+            </span>
+          </div>
+        ) : (
+          <div className={`relative h-3.5 sm:h-4 ${valueW} ${valueAspect}`}>
+            {value && <Image src={value} alt={alt || ""} fill className="object-contain object-left" />}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+type Profile = {
+  player: string;
+  date: string;
+  email: string;
+  timeslot: string;
+  regNo: string;
+  phone?: string;
+};
+
 export function PlayerPassDetails() {
+  const [profile, setProfile] = useState<Profile>({
+    player: "Ananya Chaudhary",
+    date: "19 SEPTEMBER 2026",
+    email: "abc@gmail.com",
+    timeslot: "10:00 - 10:15 AM",
+    regNo: "25BCE0111",
+    phone: "9863547243",
+  });
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/api/profile/solo");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (mounted) {
+          setProfile((p) => ({ ...p, ...data }));
+        }
+      } catch (e) {
+        // silent fallback to defaults
+      }
+    }
+
+    fetchProfile();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <div className="flex flex-col justify-between h-full py-4 px-2 sm:px-6">
       {/* Header wordmark: PLAYER PASS */}
@@ -69,12 +122,12 @@ export function PlayerPassDetails() {
         <DetailTile
           icon="/profile/profile-solo/playericon.svg"
           label="/profile/profile-solo/PLAYER.svg"
-          value="/profile/profile-solo/Ananya Chaudhary.svg"
+          valueText={profile.player}
           labelW="w-20 sm:w-24"
           labelAspect="aspect-[141/21]"
           valueW="w-32 sm:w-40"
           valueAspect="aspect-[176/19]"
-          alt="Ananya Chaudhary"
+          alt={profile.player}
         />
 
         {/* Row 1 Col 2: DATE */}
@@ -82,12 +135,12 @@ export function PlayerPassDetails() {
           <DetailTile
             icon="/profile/profile-solo/Group 742.svg"
             label="/profile/profile-solo/DATE.svg"
-            value="/profile/profile-solo/19 SEPTEMBER 2026.svg"
+            valueText={profile.date}
             labelW="w-14 sm:w-16"
             labelAspect="aspect-[93/21]"
             valueW="w-36 sm:w-40"
             valueAspect="aspect-[194/14]"
-            alt="19 SEPTEMBER 2026"
+            alt={profile.date}
           />
         </div>
 
@@ -105,12 +158,12 @@ export function PlayerPassDetails() {
         <DetailTile
           icon="/profile/profile-solo/email.svg"
           label="/profile/profile-solo/EMAIL ID.svg"
-          value="/profile/profile-solo/abc@gmail.com.svg"
+          valueText={profile.email}
           labelW="w-24 sm:w-28"
           labelAspect="aspect-[189/21]"
           valueW="w-28 sm:w-32"
           valueAspect="aspect-[146/19]"
-          alt="abc@gmail.com"
+          alt={profile.email}
         />
 
         {/* Row 2 Col 2: TIME SLOT */}
@@ -118,12 +171,12 @@ export function PlayerPassDetails() {
           <DetailTile
             icon="/profile/profile-solo/timeslot.svg"
             label="/profile/profile-solo/TIME SLOT.svg"
-            value="/profile/profile-solo/10_00 - 10_15 AM.svg"
+            valueText={profile.timeslot}
             labelW="w-26 sm:w-30"
             labelAspect="aspect-[210/21]"
             valueW="w-28 sm:w-32"
             valueAspect="aspect-[154/14]"
-            alt="10:00 - 10:15 AM"
+            alt={profile.timeslot}
           />
         </div>
 
@@ -141,12 +194,12 @@ export function PlayerPassDetails() {
         <DetailTile
           icon="/profile/profile-solo/regno.svg"
           label="/profile/profile-solo/REG. No..svg"
-          value="/profile/profile-solo/25BCE0111.svg"
+          valueText={profile.regNo}
           labelW="w-24 sm:w-28"
           labelAspect="aspect-[180/21]"
           valueW="w-20 sm:w-24"
           valueAspect="aspect-[105/14]"
-          alt="25BCE0111"
+          alt={profile.regNo}
         />
 
         {/* Row 3 Col 2: PHONE NO */}
@@ -154,12 +207,12 @@ export function PlayerPassDetails() {
           <DetailTile
             icon="/profile/profile-solo/Group 741.svg"
             label="/profile/profile-solo/PHONE NO..svg"
-            value="/profile/profile-solo/9863547243.svg"
+            valueText={profile.phone}
             labelW="w-26 sm:w-30"
             labelAspect="aspect-[204/21]"
             valueW="w-20 sm:w-24"
             valueAspect="aspect-[114/14]"
-            alt="9863547243"
+            alt={profile.phone}
           />
         </div>
       </div>

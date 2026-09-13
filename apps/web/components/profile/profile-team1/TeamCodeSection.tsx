@@ -1,6 +1,27 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export function TeamCodeSection() {
+  const [teamCode, setTeamCode] = useState<string | null>("CUDHEF");
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchTeam() {
+      try {
+        const res = await fetch('/api/profile/team');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (mounted && json?.data?.team_code) setTeamCode(json.data.team_code);
+      } catch (e) {
+        // ignore
+      }
+    }
+    fetchTeam();
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-between h-full py-4 sm:py-6 px-2 sm:px-4 select-none translate-x-6">
       {/* Header: TEAM CODE */}
@@ -13,13 +34,8 @@ export function TeamCodeSection() {
             className="object-contain"
           />
         </div>
-        <div className="relative w-20 sm:w-24 aspect-[94/14]">
-          <Image
-            src="/profile/profile-team1/CUDHEF.svg"
-            alt="CUDHEF"
-            fill
-            className="object-contain"
-          />
+        <div className="relative w-20 sm:w-24 aspect-[94/14] flex items-center justify-center">
+          <span className="text-white text-lg sm:text-2xl tracking-widest">{teamCode}</span>
         </div>
       </div>
 
