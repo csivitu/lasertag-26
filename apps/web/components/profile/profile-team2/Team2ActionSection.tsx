@@ -1,45 +1,52 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export function Team2ActionSection() {
+  const [teamCode, setTeamCode] = useState<string | null>(null);
+  const [date, setDate] = useState<string | null>(null);
+  const [timeslot, setTimeslot] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchTeam() {
+      try {
+        const res = await fetch('/api/profile/team');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!mounted) return;
+        setTeamCode(json?.data?.team_code ?? null);
+        setDate(json?.data?.date ?? null);
+        setTimeslot(json?.data?.timeslot ?? null);
+      } catch (e) {
+        // ignore
+      }
+    }
+    fetchTeam();
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-between h-full py-2.5 sm:py-3.5 px-2 select-none">
       {/* 1. SLOT & DATE/TIME */}
       <div className="flex flex-col items-center gap-0.5 sm:gap-1">
         <div className="relative w-16 sm:w-25 aspect-[93/21] translate-y-2 translate-x-5">
-          <Image
-            src="/profile/profile-team2/SLOT.svg"
-            alt="SLOT"
-            fill
-            className="object-contain"
-          />
+          <Image src="/profile/profile-team2/SLOT.svg" alt="SLOT" fill className="object-contain" />
         </div>
-        <div className="relative w-32 sm:w-55 aspect-[256/45] translate-y-7 translate-x-5">
-          <Image
-            src="/profile/profile-team2/Group 782.svg"
-            alt="19 SEPT 2026 - 10:00 - 10:15 AM"
-            fill
-            className="object-contain"
-          />
+        <div className="translate-y-7 translate-x-5 text-center">
+          <div className="text-white text-sm sm:text-base">{date ?? "19 SEPT 2026"}</div>
+          <div className="text-gray-300 text-xs sm:text-sm">{timeslot ?? "10:00 - 10:15 AM"}</div>
         </div>
       </div>
 
       {/* 2. TEAM CODE */}
       <div className="flex flex-col items-center gap-0.5 sm:gap-1 my-1 ">
         <div className="relative w-24 sm:w-50 aspect-[210/21] translate-x-5">
-          <Image
-            src="/profile/profile-team2/TEAM CODE (1).svg"
-            alt="TEAM CODE"
-            fill
-            className="object-contain"
-          />
+          <Image src="/profile/profile-team2/TEAM CODE (1).svg" alt="TEAM CODE" fill className="object-contain" />
         </div>
-        <div className="relative w-16 sm:w-30 aspect-[94/14] translate-y-5 translate-x-5">
-          <Image
-            src="/profile/profile-team2/CUDHEF (1).svg"
-            alt="CUDHEF"
-            fill
-            className="object-contain"
-          />
+        <div className="relative w-16 sm:w-30 aspect-[94/14] translate-y-5 translate-x-5 flex items-center justify-center">
+          <span className="text-white text-lg sm:text-xl tracking-widest">{teamCode ?? "CUDHEF"}</span>
         </div>
       </div>
 

@@ -14,6 +14,8 @@ export const profileController = {
         // Temporary mock. Replace with DB lookup when available.
         return {
             team_code: "CUDHEF",
+            date: "19 SEPTEMBER 2026",
+            timeslot: "10:00 - 10:15 AM",
             members: [
                 { name: "Rishan Sharma", regNo: "25BAI0763" },
                 { name: "Ananya Chaudhary", regNo: "25BCE0111" },
