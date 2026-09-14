@@ -27,8 +27,10 @@ export function createApp(env: Env): Express {
     const allowedOrigins = [
         env.WEB_ORIGIN,
         "http://localhost:3000",
+        "http://localhost:3001",
         "http://localhost:3002",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
         "http://127.0.0.1:3002",
     ];
 
@@ -48,6 +50,7 @@ export function createApp(env: Env): Express {
     // Must run before express.json(). toNodeHandler reads the raw request
     // stream to build a Fetch Request; a body already consumed by the JSON
     // parser breaks every auth POST.
+    // Express 5 named splat parameter: preserves the full /api/auth/* url for Better Auth
     app.all("/api/auth/*splat", toNodeHandler(auth));
 
     app.use(express.json());

@@ -1,5 +1,11 @@
 import { db } from "@lasertag-26/database";
-import { teams, teamMembers, user, bookings, slots } from "@lasertag-26/database/schema";
+import {
+  teams,
+  teamMembers,
+  user,
+  bookings,
+  slots,
+} from "@lasertag-26/database/schema";
 import { eq, and, or, inArray, asc } from "drizzle-orm";
 
 import { HttpError as AppError } from "../errors";
@@ -58,7 +64,8 @@ export const teamController = {
           name: t.teamCode,
           leaderId: t.leaderId,
           leader: leader || null,
-          memberCount: t.members,
+          memberCount: membersList.length,
+          maxMembers: 5,
           members: membersList,
           bookings: teamBookings,
         };
@@ -80,6 +87,38 @@ export const teamController = {
       throw new AppError(404, "Leader user not found.");
     }
 
+    // 1. User can only create 1 team at a time and only be in 1 team at a time
+    const userInAnyTeam = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, leader_id));
+
+    if (userInAnyTeam.length > 0) {
+      throw new AppError(
+        400,
+        "You are already in a team. You can only create or be in 1 team at a time."
+      );
+    }
+
+    // 2. Cannot create a team if user already has an active individual/solo booking
+    const activeSoloBooking = await db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.userId, leader_id),
+          eq(bookings.type, "individual"),
+          inArray(bookings.status, ["reserved", "confirmed"])
+        )
+      );
+
+    if (activeSoloBooking.length > 0) {
+      throw new AppError(
+        400,
+        "You have an active solo pass. You cannot create a team while playing solo."
+      );
+    }
+
     const existingTeam = await db
       .select()
       .from(teams)
@@ -94,7 +133,7 @@ export const teamController = {
       .values({
         teamCode: team_code,
         leaderId: leader_id,
-        members: members || 1,
+        members: members ? Math.min(5, members) : 1,
       })
       .returning();
 
@@ -163,6 +202,8 @@ export const teamController = {
 
     return {
       ...team,
+      maxMembers: 5,
+      memberCount: membersList.length,
       leader: leader || null,
       members: membersList,
       bookings: teamBookings,
@@ -188,18 +229,46 @@ export const teamController = {
       throw new AppError(404, "User not found.");
     }
 
-    const existingMembership = await db
+    // 1. Team limit is strictly MAX 5 members
+    const currentTeamMembers = await db
       .select()
       .from(teamMembers)
+      .where(eq(teamMembers.teamCode, teamId));
+
+    if (currentTeamMembers.length >= 5 || team.members >= 5) {
+      throw new AppError(400, "Team is full. The maximum limit is 5 members.");
+    }
+
+    // 2. User can only be in 1 team at a time
+    const userInAnyTeam = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, userId));
+
+    if (userInAnyTeam.length > 0) {
+      throw new AppError(
+        400,
+        "You are already a member of a team. You can only be in 1 team at a time."
+      );
+    }
+
+    // 3. User cannot join a team if already holding an active solo pass
+    const activeSoloBooking = await db
+      .select()
+      .from(bookings)
       .where(
         and(
-          eq(teamMembers.teamCode, teamId),
-          eq(teamMembers.userId, userId)
+          eq(bookings.userId, userId),
+          eq(bookings.type, "individual"),
+          inArray(bookings.status, ["reserved", "confirmed"])
         )
       );
 
-    if (existingMembership.length > 0) {
-      throw new AppError(400, "User is already a member of this team.");
+    if (activeSoloBooking.length > 0) {
+      throw new AppError(
+        400,
+        "You have an active solo pass. You cannot join a team while playing solo."
+      );
     }
 
     await db.insert(teamMembers).values({
@@ -209,7 +278,7 @@ export const teamController = {
 
     const [updatedTeam] = await db
       .update(teams)
-      .set({ members: team.members + 1 })
+      .set({ members: currentTeamMembers.length + 1 })
       .where(eq(teams.teamCode, teamId))
       .returning();
 
@@ -251,6 +320,7 @@ export const teamController = {
     return {
       team_code: team.teamCode,
       total_members: membersList.length,
+      max_members: 5,
       members: membersList,
     };
   },
@@ -272,6 +342,57 @@ export const teamController = {
       team_code: team.teamCode,
       invite_code: team.teamCode,
       invite_url: inviteUrl,
+    };
+  },
+
+  async convertTeamToSolo(teamCode: string, userId: string) {
+    const [team] = await db
+      .select()
+      .from(teams)
+      .where(eq(teams.teamCode, teamCode));
+
+    if (!team) {
+      throw new AppError(404, "Team not found.");
+    }
+
+    if (team.leaderId !== userId) {
+      throw new AppError(
+        403,
+        "Only the team leader can convert the team to solo mode."
+      );
+    }
+
+    // Check members list
+    const membersList = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.teamCode, teamCode));
+
+    const otherMembers = membersList.filter((m) => m.userId !== userId);
+    if (otherMembers.length > 0) {
+      throw new AppError(
+        400,
+        "Cannot convert team with active members to solo mode. Remove other members first."
+      );
+    }
+
+    // Convert any existing team bookings to individual bookings for the leader
+    await db
+      .update(bookings)
+      .set({
+        type: "individual",
+        teamCode: null,
+      })
+      .where(eq(bookings.teamCode, teamCode));
+
+    // Delete team membership and the team record
+    await db.delete(teamMembers).where(eq(teamMembers.teamCode, teamCode));
+    await db.delete(teams).where(eq(teams.teamCode, teamCode));
+
+    return {
+      converted: true,
+      teamCode,
+      message: "Team converted to solo mode successfully.",
     };
   },
 };

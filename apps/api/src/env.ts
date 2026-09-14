@@ -14,28 +14,64 @@ const apiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 config({ path: path.join(apiDir, ".env"), quiet: true });
 config({ path: path.resolve(apiDir, "../../.env"), quiet: true });
 
+const emptyToUndefined = (val: unknown) => {
+  if (typeof val === "string" && val.trim() === "") {
+    return undefined;
+  }
+  return val;
+};
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  PORT: z.coerce.number().int().positive().default(3001),
+  PORT: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().positive().default(3001),
+  ),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   // better-auth signs session cookies with this.
-  BETTER_AUTH_SECRET: z
-    .string()
-    .min(32, "BETTER_AUTH_SECRET must be at least 32 characters")
-    .default("lasertag_dev_secret_key_32_characters_minimum_length_required"),
-  BETTER_AUTH_URL: z.url().default("http://localhost:3001"),
-  WEB_ORIGIN: z.url().default("http://localhost:3000"),
-  SMTP_HOST: z.string().min(1).default("smtp.resend.com"),
-  SMTP_PORT: z.coerce.number().int().positive().default(465),
-  SMTP_USER: z.string().min(1).default("resend"),
-  SMTP_PASS:
+  BETTER_AUTH_SECRET: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .min(32, "BETTER_AUTH_SECRET must be at least 32 characters")
+      .default("lasertag_dev_secret_key_32_characters_minimum_length_required"),
+  ),
+  BETTER_AUTH_URL: z.preprocess(
+    emptyToUndefined,
+    z.url().default("http://localhost:3001"),
+  ),
+  WEB_ORIGIN: z.preprocess(
+    emptyToUndefined,
+    z.url().default("http://localhost:3000"),
+  ),
+  GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().optional()),
+  GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
+  SMTP_HOST: z.preprocess(
+    emptyToUndefined,
+    z.string().min(1).default("smtp.gmail.com"),
+  ),
+  SMTP_PORT: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().positive().default(587),
+  ),
+  SMTP_USER: z.preprocess(
+    emptyToUndefined,
+    process.env.NODE_ENV === "production"
+      ? z.string().min(1, "SMTP_USER is required in production")
+      : z.string().default("dev_user"),
+  ),
+  SMTP_PASS: z.preprocess(
+    emptyToUndefined,
     process.env.NODE_ENV === "production"
       ? z.string().min(1, "SMTP_PASS is required in production")
       : z.string().default("dummy_pass"),
-  MAIL_FROM:
+  ),
+  MAIL_FROM: z.preprocess(
+    emptyToUndefined,
     process.env.NODE_ENV === "production"
       ? z.string().min(1, "MAIL_FROM is required in production")
-      : z.string().default("noreply@lasertag.com"),
+      : z.string().default("LaserTag 2026 <noreply@lasertag.com>"),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -52,11 +88,13 @@ export function loadEnv(): Env {
     const lines = parsed.error.issues.map(
       (issue) => `  - ${issue.path.join(".")}: ${issue.message}`,
     );
-    console.error(`Invalid environment configuration:\n${lines.join("\n")}`);
+    console.error(
+      `Invalid environment configuration:\n${lines.join("\n")}`,
+    );
     process.exit(1);
   }
 
-  return Object.freeze(parsed.data);
+  return parsed.data;
 }
 
 export const env = loadEnv();

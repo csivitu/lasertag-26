@@ -33,6 +33,8 @@ export const teams = pgTable('teams', {
 });
 
 // 4. Slots Table
+// PostgreSQL Exclusion Constraint enforced at DB level:
+// CONSTRAINT no_overlapping_slots EXCLUDE USING gist (tsrange(start_time, end_time) WITH &&)
 export const slots = pgTable('slots', {
   id: uuid('id').defaultRandom().primaryKey(),
   startTime: timestamp('start_time').notNull(),

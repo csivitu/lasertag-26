@@ -88,6 +88,42 @@ describe("assertCapacityFitsBookings", () => {
 });
 
 describe("makeSlotsService", () => {
+  test("create: propagates ConflictError if slot window overlaps an existing slot", async () => {
+    const deps = makeDeps({
+      insertSlots: mock(async () => {
+        throw new ConflictError("Slot time overlaps with an existing slot.");
+      }),
+    });
+    const service = makeSlotsService(deps);
+
+    await expect(
+      service.create({
+        startTime: new Date("2026-03-14T09:30:00.000Z"),
+        endTime: new Date("2026-03-14T10:30:00.000Z"),
+        capacity: 10,
+      }),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  test("createMany: propagates ConflictError if any slot overlaps", async () => {
+    const deps = makeDeps({
+      insertSlots: mock(async () => {
+        throw new ConflictError("Slot time overlaps with an existing slot.");
+      }),
+    });
+    const service = makeSlotsService(deps);
+
+    await expect(
+      service.createMany([
+        {
+          startTime: new Date("2026-03-14T09:30:00.000Z"),
+          endTime: new Date("2026-03-14T10:30:00.000Z"),
+          capacity: 10,
+        },
+      ]),
+    ).rejects.toBeInstanceOf(ConflictError);
+  });
+
   test("update: 409s with bookingCount/requestedCapacity when capacity drops below bookings", async () => {
     const deps = makeDeps({ countBookings: mock(async () => 8) });
     const service = makeSlotsService(deps);
