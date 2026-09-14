@@ -5,7 +5,7 @@ import { SponsHealth } from "./SponsHealth";
 
 export function Spons() {
   return (
-    <section className="relative flex min-h-[100svh] flex-col bg-ink">
+    <section id="spons" className="relative flex min-h-[100svh] flex-col bg-ink">
       <SponsHeader />
 
       {/* Health + Energy */}

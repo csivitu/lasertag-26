@@ -32,10 +32,6 @@
   --color-guideline-cyan: #02cfe9;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 html,
 body {
   overflow-x: clip;

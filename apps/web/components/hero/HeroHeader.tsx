@@ -7,17 +7,42 @@ import { HeroMenu } from "./HeroMenu";
 import { NavArrow } from "./NavArrow";
 
 export const navLinks = [
-  { label: "HOME", href: "#" },
+  { label: "HOME", href: "#home" },
   { label: "ABOUT", href: "#about" },
   { label: "FAQs", href: "#faqs" },
   { label: "SIGN IN", href: "#sign-in" },
 ];
 
 export function HeroHeader() {
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    playSound("navSelect", 0.5);
+    if (href.startsWith("#")) {
+      const targetId = href.slice(1);
+      const targetElement =
+        targetId === "home" || !targetId
+          ? document.getElementById("home") || document.documentElement
+          : document.getElementById(targetId);
+
+      if (targetElement) {
+        e.preventDefault();
+        targetElement.scrollIntoView({ behavior: "instant" });
+        if (targetId) {
+          history.pushState(null, "", `#${targetId}`);
+        } else {
+          history.pushState(null, "", window.location.pathname);
+        }
+      }
+    }
+  };
+
   return (
     <div className="relative z-20 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7 lg:px-[var(--hero-gutter)] lg:pt-[1.5vh]">
       <a
-        href="#"
+        href="#home"
+        onClick={(e) => handleNavClick(e, "#home")}
         aria-label="LaserTag home"
         className="block h-12 w-12 shrink-0 rounded-sm outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent lg:h-14 lg:w-14"
       >
@@ -41,7 +66,7 @@ export function HeroHeader() {
             key={link.label}
             href={link.href}
             onMouseEnter={() => playSound("navHover", 0.4)}
-            onClick={() => playSound("navSelect", 0.5)}
+            onClick={(e) => handleNavClick(e, link.href)}
             className="group relative inline-flex items-center whitespace-nowrap font-pixel leading-[1.338] tracking-[0.1em] text-white outline-offset-4 transition-colors duration-150 hover:text-accent focus-visible:text-accent focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none"
           >
             <span

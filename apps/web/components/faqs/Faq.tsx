@@ -24,7 +24,7 @@ export function Faq() {
     }, []);
 
     return (
-        <section className="relative isolate flex min-h-0 flex-col justify-between overflow-hidden bg-transparent py-8 sm:py-12 lg:min-h-[100svh] lg:py-0">
+        <section id="faqs" className="relative isolate flex min-h-0 flex-col justify-between overflow-hidden bg-transparent py-8 sm:py-12 lg:min-h-[100svh] lg:py-0">
 
             {/* Side art — absolutely positioned, tablet+ */}
             <div className="pointer-events-none absolute inset-0 bottom-5 z-[5] hidden md:block sm:bottom-6">

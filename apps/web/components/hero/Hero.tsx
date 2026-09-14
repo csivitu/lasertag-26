@@ -9,6 +9,7 @@ import { RegisterButton } from "./RegisterButton";
 export function Hero() {
   return (
     <section
+      id="home"
       className="relative isolate grid min-h-[100svh] grid-rows-[auto_auto_1fr] overflow-hidden bg-transparent lg:grid-cols-2 lg:grid-rows-[auto_1fr]"
       style={{ "--hero-gutter": "clamp(24px, 3.4vw, 72px)" } as CSSProperties}
     >

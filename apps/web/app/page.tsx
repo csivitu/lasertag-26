@@ -5,12 +5,12 @@ import { Faq } from "@/components/faqs/Faq";
 import { Spons } from "@/components/spons/Spons";
 import Footer from "@/components/footer/Footer";
 import AboutUs from "./components/AboutUs/AboutUs";
-import { SectionSnapScroller } from "@/components/hero/SectionSnapScroller";
+import { GsapSectionScroller } from "@/components/hero/GsapSectionScroller";
 
 export default function Home() {
   return (
     <div className="relative flex flex-1 flex-col bg-ink">
-      <SectionSnapScroller />
+      <GsapSectionScroller />
       <Starfield fixed />
       <div data-snap-section>
         <Hero />

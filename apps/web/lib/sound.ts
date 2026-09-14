@@ -45,3 +45,25 @@ export function preloadSounds() {
     }
   });
 }
+
+// Auto-unlock and prime the audio system on the very first interaction anywhere on the page
+if (typeof window !== "undefined") {
+  const unlock = () => {
+    preloadSounds();
+    try {
+      Object.values(audioPool).forEach((pool) => {
+        pool?.forEach((audio) => {
+          audio.load();
+        });
+      });
+    } catch {}
+    window.removeEventListener("pointerdown", unlock, true);
+    window.removeEventListener("keydown", unlock, true);
+    window.removeEventListener("touchstart", unlock, true);
+  };
+
+  window.addEventListener("pointerdown", unlock, { once: true, capture: true });
+  window.addEventListener("keydown", unlock, { once: true, capture: true });
+  window.addEventListener("touchstart", unlock, { once: true, capture: true });
+}
+

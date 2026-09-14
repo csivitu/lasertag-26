@@ -45,9 +45,24 @@ export function HeroMenu({ links }: { links: NavLink[] }) {
             <a
               key={link.label}
               href={link.href}
-              onClick={() => {
+              onClick={(e) => {
                 playSound("navSelect", 0.5);
                 setOpen(false);
+                if (link.href.startsWith("#")) {
+                  const targetId = link.href.slice(1);
+                  const targetElement =
+                    targetId === "home" || !targetId
+                      ? document.getElementById("home") || document.documentElement
+                      : document.getElementById(targetId);
+
+                  if (targetElement) {
+                    e.preventDefault();
+                    targetElement.scrollIntoView({ behavior: "instant" });
+                    if (targetId) {
+                      history.pushState(null, "", `#${targetId}`);
+                    }
+                  }
+                }
               }}
               className="border-b border-white/10 px-5 py-4 font-pixel text-sm tracking-[1px] text-white outline-offset-[-2px] transition-colors last:border-b-0 focus-visible:outline-2 focus-visible:outline-accent active:text-accent"
             >
