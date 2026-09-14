@@ -110,7 +110,7 @@ export function ActiveModeDetails({
             background: borderBg(MODAL_BORDER_SVG),
             padding: "32px 28px",
             width: "100%",
-            maxWidth: "640px",
+            maxWidth: "680px",
             boxSizing: "border-box",
           }}
           className="text-white shadow-[0_0_50px_rgba(0,240,255,0.15)]"
@@ -227,42 +227,49 @@ export function ActiveModeDetails({
             )}
           </div>
 
-          {/* Action Row - Buttons styled in matching pink PixelButton theme */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-            <button
-              type="button"
-              onClick={() => setConfirmOpen(true)}
-              className="w-full sm:w-auto px-4 py-2.5 rounded bg-transparent border border-red-500/60 hover:border-red-500 hover:bg-red-500/10 text-red-400 font-pixel text-xs tracking-wider transition-all cursor-pointer"
-            >
-              CHANGE COMBAT MODE
-            </button>
-
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto justify-end">
-              {slotInfo?.dateStr ? (
-                <>
-                  <PixelButton
-                    label="CHANGE SLOT"
-                    onClick={() => router.push("/slot-booking")}
-                    className="w-full sm:w-auto"
-                    interaction="hero"
-                  />
-                  <PixelButton
-                    label="YOUR DIGITAL PASS →"
-                    onClick={() => router.push("/profile")}
-                    className="w-full sm:w-auto"
-                    interaction="hero"
-                  />
-                </>
-              ) : (
-                <PixelButton
-                  label="PROCEED TO SLOT BOOKING →"
-                  onClick={() => router.push("/slot-booking")}
-                  className="w-full sm:w-auto"
-                  interaction="hero"
-                />
-              )}
+          {/* Action Row - All buttons styled in matching pink PixelButton theme */}
+          {slotInfo?.dateStr ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 w-full">
+              <PixelButton
+                label="CHANGE COMBAT MODE"
+                onClick={() => setConfirmOpen(true)}
+                className="w-full"
+                labelClassName="text-[10px] sm:text-[9px] md:text-[10px] whitespace-nowrap"
+                interaction="hero"
+              />
+              <PixelButton
+                label="CHANGE SLOT"
+                onClick={() => router.push("/slot-booking")}
+                className="w-full"
+                labelClassName="text-[10px] sm:text-[9px] md:text-[10px] whitespace-nowrap"
+                interaction="hero"
+              />
+              <PixelButton
+                label="YOUR DIGITAL PASS →"
+                onClick={() => router.push("/profile")}
+                className="w-full"
+                labelClassName="text-[10px] sm:text-[9px] md:text-[10px] whitespace-nowrap"
+                interaction="hero"
+              />
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 w-full">
+              <PixelButton
+                label="CHANGE COMBAT MODE"
+                onClick={() => setConfirmOpen(true)}
+                className="w-full"
+                labelClassName="text-[10px] sm:text-[9px] md:text-[10px] whitespace-nowrap"
+                interaction="hero"
+              />
+              <PixelButton
+                label="PROCEED TO SLOT BOOKING →"
+                onClick={() => router.push("/slot-booking")}
+                className="w-full"
+                labelClassName="text-[10px] sm:text-[9px] md:text-[10px] whitespace-nowrap"
+                interaction="hero"
+              />
+            </div>
+          )}
         </div>
       </div>
 
