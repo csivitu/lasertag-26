@@ -8,7 +8,12 @@ export const verificationController = {
     const [booking] = await db
       .select()
       .from(bookings)
-      .where(eq(bookings.id, registrationId));
+      .where(
+        or(
+          eq(bookings.id, registrationId),
+          eq(bookings.qrToken, registrationId),
+        ),
+      );
 
     if (booking) {
       const [foundUser] = await db
@@ -27,6 +32,7 @@ export const verificationController = {
         data: {
           booking_id: booking.id,
           booking_type: booking.type,
+          qr_token: booking.qrToken,
           user: foundUser
             ? {
                 id: foundUser.id,
@@ -85,10 +91,30 @@ export const verificationController = {
   },
 
   async checkInUser(identifier: string) {
-    const [targetUser] = await db
+    let [targetUser] = await db
       .select()
       .from(user)
       .where(or(eq(user.id, identifier), eq(user.qrToken, identifier)));
+
+    if (!targetUser) {
+      const [booking] = await db
+        .select()
+        .from(bookings)
+        .where(
+          or(
+            eq(bookings.id, identifier),
+            eq(bookings.qrToken, identifier),
+          ),
+        );
+
+      if (booking) {
+        const [foundUser] = await db
+          .select()
+          .from(user)
+          .where(eq(user.id, booking.userId));
+        targetUser = foundUser;
+      }
+    }
 
     if (!targetUser) {
       throw new AppError(404, "User not found.");
