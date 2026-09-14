@@ -2,7 +2,8 @@ import { Pagination } from "./Pagination";
 import { SlotCard, type SlotState } from "./SlotCard";
 import type { Slot } from "../../hooks/useSlots";
 
-const TOTAL_PAGES = 3;
+const SLOTS_PER_PAGE = 24;
+
 interface SlotGridProps {
   activeDay: string;
   currentPage: number;
@@ -24,12 +25,14 @@ export function SlotGrid({
   onPageChange,
   onSelectSlot,
 }: SlotGridProps) {
-  const visibleSlots = slots.filter(
-    (slot) => slot.day === activeDay && slot.page === currentPage,
-  );
+  const daySlots = slots.filter((slot) => slot.day === activeDay);
+  const totalPages = Math.max(1, Math.ceil(daySlots.length / SLOTS_PER_PAGE));
+  const visibleSlots = daySlots.filter((slot) => slot.page === currentPage);
 
-  const goToPreviousPage = () => onPageChange(currentPage === 1 ? TOTAL_PAGES : currentPage - 1);
-  const goToNextPage = () => onPageChange(currentPage === TOTAL_PAGES ? 1 : currentPage + 1);
+  const goToPreviousPage = () =>
+    onPageChange(currentPage <= 1 ? totalPages : currentPage - 1);
+  const goToNextPage = () =>
+    onPageChange(currentPage >= totalPages ? 1 : currentPage + 1);
 
   return (
     <>
@@ -48,12 +51,22 @@ export function SlotGrid({
             <SlotCard
               key={slot.id}
               time={slot.time}
-              seatsLabel={isSelected ? "Your Booking" : isFull ? "Fully Booked" : `${slot.capacity} Seats`}
+              seatsLabel={
+                isSelected
+                  ? "Your Booking"
+                  : isFull
+                  ? "Fully Booked"
+                  : `${slot.capacity} Seats`
+              }
               state={isSelected ? "booked" : state}
-              onClick={isFull || isLoading ? undefined : () => {
-                onSelectSlot({ day: activeDay, index: slot.index });
-                void reserveSlot(slot.id);
-              }}
+              onClick={
+                isFull || isLoading
+                  ? undefined
+                  : () => {
+                      onSelectSlot({ day: activeDay, index: slot.index });
+                      void reserveSlot(slot.id);
+                    }
+              }
               isSelected={isSelected}
               isDisabled={isFull || isLoading}
             />
@@ -61,12 +74,14 @@ export function SlotGrid({
         })}
       </div>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={TOTAL_PAGES}
-        onPrevious={goToPreviousPage}
-        onNext={goToNextPage}
-      />
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPrevious={goToPreviousPage}
+          onNext={goToNextPage}
+        />
+      )}
     </>
   );
 }

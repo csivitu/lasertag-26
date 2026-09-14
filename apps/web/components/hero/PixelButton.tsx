@@ -70,12 +70,16 @@ function ButtonFace({
         <>
           <span
             aria-hidden="true"
-            className="button-shine hero-btn__shine hero-btn__shine--rest pointer-events-none absolute inset-0"
-          />
+            className="hero-btn__shine hero-btn__shine--rest pointer-events-none absolute inset-0 overflow-hidden"
+          >
+            <span className="button-shine block h-full w-1/3" />
+          </span>
           <span
             aria-hidden="true"
-            className="button-shine hero-btn__shine hero-btn__shine--press pointer-events-none absolute inset-0"
-          />
+            className="hero-btn__shine hero-btn__shine--press pointer-events-none absolute inset-0 overflow-hidden"
+          >
+            <span className="button-shine block h-full w-1/3" />
+          </span>
         </>
       )}
     </>

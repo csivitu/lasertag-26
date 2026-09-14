@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Starfield } from "../hero/Starfield";
+import { HeroHeader } from "../hero/HeroHeader";
 import type { PopupMode } from "../mode-popup/ModePopup";
 
 interface SelectModeMobileProps {
@@ -11,16 +12,19 @@ interface SelectModeMobileProps {
 export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
   return (
     <section
-      className="relative block min-h-[100svh] overflow-hidden bg-[#08080d] lg:hidden font-pixel"
+      className="relative block min-h-[100svh] overflow-hidden bg-[#08080d] lg:hidden font-pixel pb-10"
     >
       {/* Background Decor */}
       <Starfield />
 
+      {/* Top Retro Navigation Header */}
+      <HeroHeader />
+
       {/* Main Content Layout */}
-      <div className="relative z-10 flex flex-col items-center justify-start p-6 pt-20 pb-12 gap-10">
+      <div className="relative z-10 flex flex-col items-center justify-start p-6 pt-4 pb-12 gap-8">
         
         {/* Title */}
-        <div className="w-[300px] max-w-full">
+        <div className="w-[300px] max-w-full mt-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src="/select-mode/SELECT YOUR MODE.svg" 
@@ -90,37 +94,35 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
               </div>
 
               {/* Join Button */}
-              <div className="mt-auto pt-4 w-full flex justify-center">
-                <button
-                  type="button"
-                  aria-label="Join as solo player"
-                  onClick={() => onSelect("solo")}
-                  className="relative w-40 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+              <button
+                type="button"
+                aria-label="Join as solo player"
+                onClick={() => onSelect("solo")}
+                className="relative w-36 mt-2 cursor-pointer border-0 bg-transparent p-0 transition-transform duration-200 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/select-mode/select-mode-solo/join-solo.svg" 
+                  alt="Join Solo" 
+                  className="w-full h-auto"
+                />
+                <span
+                  aria-hidden
+                  className="btn-select-solo-shine pointer-events-none absolute inset-0 overflow-hidden"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src="/select-mode/select-mode-solo/join-solo.svg" 
-                    alt="Join Solo" 
-                    className="w-full h-auto mx-auto"
-                  />
-                  <span
-                    aria-hidden
-                    className="btn-select-solo-shine pointer-events-none absolute inset-0 overflow-hidden"
-                  >
-                    <span className="button-shine block h-full w-1/3" />
-                  </span>
-                </button>
-              </div>
+                  <span className="button-shine block h-full w-1/3" />
+                </span>
+              </button>
             </div>
           </div>
 
           {/* OR Divider */}
-          <div className="w-16 shrink-0 my-2">
+          <div className="w-16">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/select-mode/OR.svg" 
               alt="OR" 
-              className="w-full h-auto mx-auto"
+              className="w-full h-auto"
             />
           </div>
 
@@ -139,27 +141,27 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
             <img 
               src="/select-mode/select-mode-team/team-topdash.svg" 
               alt="" 
-              className="absolute top-8 right-3 w-[40px] h-auto z-20"
+              className="absolute top-6 right-4 w-[40px] h-auto z-20"
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/select-mode/select-mode-team/team-bottomdash.svg" 
               alt="" 
-              className="absolute bottom-8 left-3 w-[40px] h-auto z-20"
+              className="absolute bottom-6 left-4 w-[40px] h-auto z-20"
             />
 
             {/* Content Container */}
             <div className="relative z-10 flex flex-col items-center flex-1 w-full">
               {/* Team Avatars */}
-              <div className="h-28 flex items-end justify-center gap-0 mb-3 transition-transform duration-300 group-hover:-translate-y-1">
+              <div className="flex flex-row items-end justify-center gap-0 h-24 mb-3 transition-transform duration-300 group-hover:-translate-y-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/select-mode/select-mode-team/blue-guy.svg" alt="" className="h-[75%] w-auto -mr-2" />
+                <img src="/select-mode/select-mode-team/blue-guy.svg" alt="" className="h-[90%] w-auto -mr-2" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/select-mode/select-mode-team/purple-guy.svg" alt="" className="h-[85%] w-auto z-10" />
+                <img src="/select-mode/select-mode-team/purple-guy.svg" alt="" className="h-[90%] w-auto z-10" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/select-mode/select-mode-team/yellow-guy.svg" alt="" className="h-[85%] w-auto z-10" />
+                <img src="/select-mode/select-mode-team/yellow-guy.svg" alt="" className="h-[90%] w-auto z-10" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/select-mode/select-mode-team/pink-guy.svg" alt="" className="h-[75%] w-auto -ml-2" />
+                <img src="/select-mode/select-mode-team/pink-guy.svg" alt="" className="h-[90%] w-auto -ml-1" />
               </div>
 
               {/* TEAM text */}
@@ -176,40 +178,38 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
 
               {/* 5 Players */}
               <div className="h-8 flex items-center justify-center">
-                <div className="w-28">
+                <div className="w-32">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/select-mode/select-mode-team/no-of-players.svg" alt="5 Players" className="w-full h-auto" />
                 </div>
               </div>
 
               {/* Create/Join Team Buttons */}
-              <div className="mt-auto pt-4 w-full flex justify-center">
-                <div className="relative w-[90%] max-w-[280px] transition-transform duration-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src="/select-mode/select-mode-team/create-join-team.svg" 
-                    alt="Create or Join Team" 
-                    className="w-full h-auto"
-                  />
-                  <span
-                    aria-hidden
-                    className="btn-select-team-shine pointer-events-none absolute inset-0 overflow-hidden"
-                  >
-                    <span className="button-shine block h-full w-1/3" />
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Create a team"
-                    onClick={() => onSelect("create_team")}
-                    className="absolute left-0 top-0 h-full w-[48%] cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
-                  />
-                  <button
-                    type="button"
-                    aria-label="Join a team"
-                    onClick={() => onSelect("join_team")}
-                    className="absolute right-0 top-0 h-full w-[48%] cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
-                  />
-                </div>
+              <div className="relative w-[300px] max-w-full mt-2 transition-transform duration-200 active:scale-95">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/select-mode/select-mode-team/create-join-team.svg" 
+                  alt="Create or Join Team" 
+                  className="w-full h-auto"
+                />
+                <span
+                  aria-hidden
+                  className="btn-select-team-shine pointer-events-none absolute inset-0 overflow-hidden"
+                >
+                  <span className="button-shine block h-full w-1/3" />
+                </span>
+                <button
+                  type="button"
+                  aria-label="Create a team"
+                  onClick={() => onSelect("create_team")}
+                  className="absolute left-0 top-0 h-full w-[48%] cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+                />
+                <button
+                  type="button"
+                  aria-label="Join a team"
+                  onClick={() => onSelect("join_team")}
+                  className="absolute right-0 top-0 h-full w-[48%] cursor-pointer border-0 bg-transparent p-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23eff1]"
+                />
               </div>
             </div>
           </div>

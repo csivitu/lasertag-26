@@ -1,64 +1,173 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { apiBaseUrl } from "@/lib/auth-client";
 
 export interface Slot {
   id: string;
   day: string;
   month: string;
+  dateKey: string;
   page: number;
   index: number;
   time: string;
   capacity: number;
   maxCapacity: number;
+  startTime: string;
+  endTime: string;
 }
 
-const TIMES = ["9:30 AM", "10:30 AM", "11:30 AM", "12:30 PM"];
-const DAYS = ["18", "19", "20"];
-const TOTAL_PAGES = 3;
+export interface RawApiSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+}
+
 const SLOTS_PER_PAGE = 24;
 
-function createMockSlots(): Slot[] {
-  return DAYS.flatMap((day, dayIndex) =>
-    Array.from({ length: TOTAL_PAGES * SLOTS_PER_PAGE }, (_, slotIndex) => {
-      const page = Math.floor(slotIndex / SLOTS_PER_PAGE) + 1;
-      const index = slotIndex % SLOTS_PER_PAGE;
-      const capacity = (dayIndex + page + index) % 9 === 0
-        ? 0
-        : (dayIndex + page + index) % 5 === 0
-          ? 1 + (index % 2)
-          : 6;
+export function formatSlotTime(isoString: string): string {
+  try {
+    const d = new Date(isoString);
+    return d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return isoString;
+  }
+}
 
-      return {
-        id: `${day}-${page}-${index}`,
+export function transformApiSlots(apiSlots: RawApiSlot[]): Slot[] {
+  // Sort slots chronologically
+  const sorted = [...apiSlots].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  );
+
+  // Group by date (e.g. "2026-12-18")
+  const dateGroups = new Map<string, RawApiSlot[]>();
+  for (const slot of sorted) {
+    const d = new Date(slot.startTime);
+    const dateKey = d.toISOString().slice(0, 10);
+    if (!dateGroups.has(dateKey)) {
+      dateGroups.set(dateKey, []);
+    }
+    dateGroups.get(dateKey)!.push(slot);
+  }
+
+  const result: Slot[] = [];
+
+  for (const [dateKey, group] of dateGroups.entries()) {
+    group.forEach((slot, indexInDay) => {
+      const d = new Date(slot.startTime);
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+      const page = Math.floor(indexInDay / SLOTS_PER_PAGE) + 1;
+      const index = indexInDay % SLOTS_PER_PAGE;
+
+      result.push({
+        id: slot.id,
         day,
-        month: "SEPT",
+        month,
+        dateKey,
         page,
         index,
-        time: TIMES[Math.floor(index / 6)],
-        capacity,
-        maxCapacity: 6,
-      };
-    }),
-  );
+        time: formatSlotTime(slot.startTime),
+        capacity: slot.capacity,
+        maxCapacity: 10,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      });
+    });
+  }
+
+  return result;
 }
 
 export function useSlots() {
-  const [slots, setSlots] = useState<Slot[]>(createMockSlots);
-  const [isLoading, setIsLoading] = useState(false);
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const reserveSlot = async (slotId: string) => {
+  const fetchSlots = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${apiBaseUrl}/slots`, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      if (!res.ok) {
+        throw new Error(`Failed to load slots (status ${res.status})`);
+      }
 
-    setSlots((currentSlots) =>
-      currentSlots.map((slot) =>
-        slot.id === slotId && slot.capacity > 0
-          ? { ...slot, capacity: slot.capacity - 1 }
-          : slot,
-      ),
-    );
-    setIsLoading(false);
+      const json = await res.json();
+      const rawSlots: RawApiSlot[] = Array.isArray(json.data)
+        ? json.data
+        : Array.isArray(json)
+        ? json
+        : [];
+
+      setSlots(transformApiSlots(rawSlots));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load slots from server";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchSlots();
+  }, [fetchSlots]);
+
+  const reserveSlot = async (
+    slotId: string,
+    options?: {
+      userId?: string;
+      type?: "individual" | "team";
+      teamCode?: string;
+    }
+  ) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (options?.userId && options?.type) {
+        const res = await fetch(`${apiBaseUrl}/slots/${slotId}/reserve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: options.userId,
+            type: options.type,
+            team_code: options.teamCode,
+          }),
+        });
+
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.message || "Failed to reserve slot in database");
+        }
+      }
+
+      // Optimistically decrement capacity locally
+      setSlots((currentSlots) =>
+        currentSlots.map((slot) =>
+          slot.id === slotId && slot.capacity > 0
+            ? { ...slot, capacity: slot.capacity - 1 }
+            : slot
+        )
+      );
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to reserve slot";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  return { slots, isLoading, reserveSlot };
+  return { slots, isLoading, error, reserveSlot, refetch: fetchSlots };
 }
