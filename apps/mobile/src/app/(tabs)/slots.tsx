@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   RefreshControl,
   Modal,
@@ -16,9 +15,9 @@ import { THEME } from "@/constants/theme";
 import { apiFetch } from "@/lib/api";
 
 const EVENT_DATES = [
-  { label: "18th Dec", value: "2026-12-18" },
-  { label: "19th Dec", value: "2026-12-19" },
-  { label: "20th Dec", value: "2026-12-20" },
+  { label: "18th Sep", value: "2026-09-18" },
+  { label: "19th Sep", value: "2026-09-19" },
+  { label: "20th Sep", value: "2026-09-20" },
 ];
 
 export default function SlotsScreen() {
@@ -26,7 +25,7 @@ export default function SlotsScreen() {
   const [loading, setLoading] = useState(true);
   const [filterDate, setFilterDate] = useState("");
 
-  const defaultDate = "2026-12-18";
+  const defaultDate = "2026-09-18";
 
   // Single Slot Form State
   const [singleDate, setSingleDate] = useState(defaultDate);
@@ -296,7 +295,7 @@ export default function SlotsScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date (18, 19, 20 Dec)</Text>
+            <Text style={styles.label}>Event Date (18, 19, 20 Sep)</Text>
             <View style={styles.datePillsRow}>
               {EVENT_DATES.map((d) => (
                 <TouchableOpacity
@@ -318,13 +317,6 @@ export default function SlotsScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <TextInput
-              style={[styles.input, { marginTop: 6 }]}
-              value={singleDate}
-              onChangeText={setSingleDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={THEME.colors.textMuted}
-            />
           </View>
 
           <View style={styles.row}>
@@ -374,7 +366,7 @@ export default function SlotsScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Date (18, 19, 20 Dec)</Text>
+            <Text style={styles.label}>Event Date (18, 19, 20 Sep)</Text>
             <View style={styles.datePillsRow}>
               {EVENT_DATES.map((d) => (
                 <TouchableOpacity
@@ -396,13 +388,6 @@ export default function SlotsScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <TextInput
-              style={[styles.input, { marginTop: 6 }]}
-              value={bulkDate}
-              onChangeText={setBulkDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={THEME.colors.textMuted}
-            />
           </View>
 
           <View style={styles.row}>
