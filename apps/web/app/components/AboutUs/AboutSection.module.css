@@ -10,7 +10,7 @@
     align-items: center;
     box-sizing: border-box;
     overflow-x: hidden;
-    padding: 3rem 1rem 4.5rem;
+    padding: 2.5rem 1rem 1.5rem;
 }
 
 @media (min-width: 1024px) {
@@ -55,7 +55,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
+    gap: 1.25rem;
 }
 
 @media (min-width: 1024px) {
@@ -69,7 +69,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3rem;
+    gap: 1.75rem;
 }
 
 /* ── Section Header ── */
@@ -427,87 +427,141 @@
     z-index: 4;
 }
 
-/* ── Pacman Overlay ── */
-.pacmanOverlay {
+/* ── Playable 80s Arcade Runway (Dots -> Power Pellet -> Pacman -> Ghosts) ── */
+.arcadeTrackDesktop {
     position: absolute;
-    inset: 0;
+    left: 50%;
+    bottom: 36px;
+    transform: translateX(-50%);
+    width: 1140px;
+    height: 74px;
+    z-index: 10;
+    pointer-events: auto;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.arcadeTrackMobile {
+    position: relative;
     width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 3;
-    overflow: hidden;
+    max-width: 560px;
+    height: 56px;
+    margin: 0 auto;
+    z-index: 10;
+    pointer-events: auto;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
 }
 
-@media (max-width: 1023px) {
-    .pacmanOverlay {
-        display: none !important;
-    }
-}
-
-.arcadePathSvg {
+.dotRegular {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
-
-.dotsContainer {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
-
-.arcadeDot {
-    position: absolute;
-    width: 9px;
-    height: 9px;
-    margin-left: -4.5px;
-    margin-top: -4.5px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background-color: var(--color-brand-yellow, #ffd35f);
-    box-shadow: 0 0 5px var(--color-brand-yellow, #ffd35f);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
     transition: opacity 0.15s ease, transform 0.15s ease;
-    z-index: 2;
+}
+
+.dotPower {
+    position: absolute;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: var(--color-brand-yellow, #ffd35f);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .dotEaten {
     opacity: 0 !important;
-    transform: scale(0.1) !important;
+    transform: translate(-50%, -50%) scale(0) !important;
 }
 
-.pacmanItem {
+.pacmanPlayable {
     position: absolute;
-    width: 44px;
-    height: 44px;
-    z-index: 3;
-    pointer-events: none;
-    will-change: left, top, transform;
+    top: 50%;
+    width: 66px;
+    height: 66px;
+    z-index: 6;
+    cursor: pointer;
+    will-change: left, transform;
+    transition: left 0.2s cubic-bezier(0.25, 1, 0.5, 1), transform 0.15s ease;
 }
 
-.ghostItem {
+.pacmanPlayable:hover {
+    filter: drop-shadow(0 0 14px rgba(254, 220, 2, 0.95));
+}
+
+.pacmanSprite {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.pacmanChomp {
+    animation: chompWobble 0.16s ease-in-out;
+}
+
+@keyframes chompWobble {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.85, 1.15); }
+    100% { transform: scale(1); }
+}
+
+.ghostPlayable {
     position: absolute;
-    width: 52px;
-    height: 52px;
-    z-index: 3;
+    top: 50%;
+    width: 66px;
+    height: 66px;
+    z-index: 5;
     pointer-events: none;
-    will-change: left, top, transform;
+    will-change: left, filter, transform;
+    transition: left 0.24s cubic-bezier(0.25, 1, 0.5, 1), filter 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ghostFrightened {
+    filter: hue-rotate(185deg) saturate(5) brightness(1.05) drop-shadow(0 0 10px #0066ff);
+    animation: ghostFrightenedPulse 0.35s infinite alternate;
+}
+
+@keyframes ghostFrightenedPulse {
+    0% { filter: hue-rotate(185deg) saturate(5) brightness(0.95) drop-shadow(0 0 8px #0055ff); }
+    100% { filter: hue-rotate(205deg) saturate(6.5) brightness(1.25) drop-shadow(0 0 14px #3399ff); }
+}
+
+.ghostEaten {
+    opacity: 0 !important;
+    transform: translate(-50%, -50%) scale(0) !important;
+    pointer-events: none !important;
+    transition: opacity 0.15s ease, transform 0.15s ease !important;
+}
+
+@media (max-width: 1023px) {
+    .dotRegular {
+        width: 8px;
+        height: 8px;
+    }
+    .dotPower {
+        width: 14px;
+        height: 14px;
+    }
+    .pacmanPlayable,
+    .ghostPlayable {
+        width: 38px;
+        height: 38px;
+    }
 }
 
 .fitImg {
     object-fit: contain;
     image-rendering: pixelated;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .pacmanItem,
-    .ghostItem,
-    .arcadeDot {
-        animation: none !important;
-        transition: none !important;
-    }
 }

@@ -41,9 +41,8 @@ export default function AboutUs() {
 
     return (
         <section id="about" className={styles.section} ref={stageRef}>
-            {/* Desktop View (>= 1024px): 1440x900 proportional canvas fitting 100vh with Pacman perimeter */}
+            {/* Desktop View (>= 1024px): 1440x900 proportional canvas fitting 100vh with static arcade row at bottom */}
             <div className="hidden lg:contents">
-                <Pacman />
                 <div
                     className={styles.stageFrame}
                     style={{
@@ -61,11 +60,12 @@ export default function AboutUs() {
                         <AboutUsLeftDisc />
                         <AboutUsVid />
                         <ArcadeAccessories />
+                        <Pacman />
                     </div>
                 </div>
             </div>
 
-            {/* Mobile View (< 1024px): Fluid responsive column without Pacman */}
+            {/* Mobile View (< 1024px): Fluid responsive column with playable arcade runway */}
             <div className={styles.mobileContainer}>
                 <AboutUsHeader />
                 <div className={styles.contentGrid}>
@@ -75,6 +75,7 @@ export default function AboutUs() {
                         <ArcadeAccessories />
                     </div>
                 </div>
+                <Pacman isMobile />
             </div>
         </section>
     );
