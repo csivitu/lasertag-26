@@ -48,7 +48,7 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
             <div className="faq-item__panel relative z-[2]" data-open={isOpen}>
                 <div className="overflow-hidden">
                     <div className="-mx-4 mt-2 h-[3px] w-auto bg-current sm:-mx-5 sm:mt-3" aria-hidden />
-                    <p className="pt-2 font-body text-sm leading-relaxed text-white/70 sm:pt-3 sm:text-base">
+                    <p className="pt-2 font-body text-sm leading-relaxed text-white sm:pt-3 sm:text-base">
                         {entry.answer}
                     </p>
                 </div>

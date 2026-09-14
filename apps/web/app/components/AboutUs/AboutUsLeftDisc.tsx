@@ -19,8 +19,9 @@ export default function AboutUsLeftDisc() {
             <p
                 className={`${styles.infoIntro} text-[clamp(12px,2.4vw,20px)] leading-[1.35] tracking-[0.04em] lg:text-[24px]`}
             >
-                Laser Tag offers you a chance to step on to the arena for a
-                thrilling multi-player experience.
+                Insert coin, suit up, and drop right into the action. Aim for
+                maximum hits, outplay the squad, and claim the ultimate
+                high-score glory.
             </p>
             <ul className={styles.infoList}>
                 <li>

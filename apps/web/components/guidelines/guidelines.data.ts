@@ -11,26 +11,29 @@ export const ruleCards: RuleCardData[] = [
     id: 1,
     accent: "pink",
     items: [
-      "Participants are requested to report to the venue 15 minutes prior to their respective slots.",
-      "Personal bubbles: Maintain a safe distance while playing to ensure the game is an enjoyable experience for all.",
+      "Reserve your time on the CSI LaserTag website — sign in solo or create a team.",
+      "For Team, share the team code with up to 5 friends (must be registered on the graVITas website). Only the team leader can book a slot for the entire team.",
     ],
   },
   {
     id: 2,
     accent: "cyan",
     items: [
-      "Running, jumping or climbing is strictly prohibited in the arena.",
-      "The gun must be held with both hands at all times to avoid damage.",
-      "Ensure that the vest sensors are not blocked for the duration of the game.",
-      "All personal vengeances stand nullified in the arena. Violence, threats or abuse of any form will not be tolerated.",
+      "Bring your VIT Student ID to get in. No ID = No entry!",
+      "Show up 30 minutes before your game time! Latecomers won't be allowed to play.",
+      "If you miss your slot, it's gone for good! No rescheduling will be allowed.",
+      "Only those on the official list can play. Make sure your name's on there!",
     ],
   },
   {
     id: 3,
     accent: "yellow",
     items: [
-      "Vandalizing the equipment or set-up of the arena is strictly prohibited. Players doing so will be removed from the arena and charged appropriately.",
-      "Decisions taken by the CSI manager present at the venue will be final in case of any game-time disputes.",
+      "If you break any equipment, you'll be on the hook for repairs or replacements.",
+      "Stick to the VIT Code of Conduct. Good vibes only!",
+      "Your game time is locked in. No extensions, so make every second count!",
+      "Work with the organizers and keep things smooth.",
+      "Play safe and follow the rules to keep it fun for everyone!",
     ],
   },
 ];

@@ -4,9 +4,9 @@ export default function AboutUsHeader() {
     return (
         <div className={styles.headingWrap}>
             <h2 className={styles.heading}>
-                <span>A Thrilling <span className={styles.headingAccent}>Multiplayer</span></span>
+                <span>The Ultimate Neon <span className={styles.headingAccent}>Multiplayer</span></span>
                 <br />
-                <span>Shooting Experience</span>
+                <span>Battle Experience</span>
             </h2>
             <span className={`${styles.bracket} ${styles.bracketTL}`} />
             <span className={`${styles.bracket} ${styles.bracketTR}`} />

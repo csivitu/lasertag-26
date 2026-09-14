@@ -81,7 +81,7 @@ export default function AboutUs() {
                     <AboutUsLeftDisc />
                     <div className={styles.pacmanHint}>
                         <p>
-                            tap pacman to start
+                            tap pacman to play
                         </p>
                     </div>
                     <div className={styles.mediaWrap}>
