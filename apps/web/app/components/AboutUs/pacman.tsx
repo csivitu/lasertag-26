@@ -391,7 +391,8 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
                         src={PACMAN_SRC}
                         alt="Pac-Man"
                         fill
-                        className={styles.fitImg}
+                        draggable={false}
+                        className={`${styles.fitImg} select-none`}
                         priority
                     />
                 </div>
@@ -417,7 +418,8 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
                         src={ghost.src}
                         alt={ghost.alt}
                         fill
-                        className={styles.fitImg}
+                        draggable={false}
+                        className={`${styles.fitImg} select-none`}
                         priority
                     />
                 </div>

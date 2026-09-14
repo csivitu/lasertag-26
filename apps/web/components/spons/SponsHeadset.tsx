@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function SponsHeadset() {
   return (
-    <div className="relative w-[min(74vw,1060px)] max-sm:w-[94vw] max-sm:scale-y-[1.35]">
+    <div className="relative w-[min(74vw,1060px)] select-none max-sm:w-[94vw] max-sm:scale-y-[1.35]">
 
       {/* BOTTOM — middle section */}
       <Image
@@ -10,7 +10,8 @@ export function SponsHeadset() {
         alt=""
         width={777}
         height={320}
-        className="absolute left-[16.6%] top-[32.9%] z-0 h-auto w-[66.8%]"
+        draggable={false}
+        className="absolute left-[16.6%] top-[32.9%] z-0 h-auto w-[66.8%] select-none"
       />
 
       {/* MIDDLE — main headset */}
@@ -19,7 +20,8 @@ export function SponsHeadset() {
         alt=""
         width={1163}
         height={691}
-        className="relative z-10 h-auto w-full"
+        draggable={false}
+        className="relative z-10 h-auto w-full select-none"
         priority
       />
 
@@ -35,7 +37,8 @@ export function SponsHeadset() {
           alt="XGT"
           width={400}
           height={120}
-          className="h-auto w-full"
+          draggable={false}
+          className="h-auto w-full select-none"
         />
       </div>
 

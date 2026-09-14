@@ -110,7 +110,8 @@ export function HeroGun() {
         loading="eager"
         fetchPriority="high"
         quality={90}
-        className="object-contain"
+        draggable={false}
+        className="object-contain select-none"
       />
       <Image
         src="/hero/gun-beam.png"
@@ -121,7 +122,8 @@ export function HeroGun() {
         loading="eager"
         fetchPriority="high"
         quality={90}
-        className={`hero-beam pointer-events-none object-contain ${firing ? "is-firing" : ""}`}
+        draggable={false}
+        className={`hero-beam pointer-events-none object-contain select-none ${firing ? "is-firing" : ""}`}
         style={{ "--laser-duration": `${LASER_MS}ms` } as CSSProperties}
       />
       <button

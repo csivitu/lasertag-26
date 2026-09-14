@@ -10,14 +10,15 @@ const GHOSTS = [
 
 export default function Ghosts() {
     return (
-        <div className={styles.ghostsRow}>
+        <div className={`${styles.ghostsRow} select-none`}>
             {GHOSTS.map((ghost, index) => (
                 <div key={index} className={styles.ghostItem}>
                     <Image
                         src={ghost.src}
                         alt={ghost.alt}
                         fill
-                        className={styles.fitImg}
+                        draggable={false}
+                        className={`${styles.fitImg} select-none`}
                         priority
                     />
                 </div>

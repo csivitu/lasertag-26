@@ -30,14 +30,15 @@ export function SponsEnergy() {
   }, []);
 
   return (
-    <div className="flex items-center">
+    <div className="flex select-none items-center">
       <div className="relative size-[clamp(28px,4.1vw,59px)] shrink-0">
         <Image
           src="/spons/energy.svg"
           alt=""
           fill
           sizes="(min-width: 1024px) 4.1vw, 4.1vw"
-          className="object-contain"
+          draggable={false}
+          className="object-contain select-none"
         />
       </div>
 
@@ -53,7 +54,8 @@ export function SponsEnergy() {
             alt=""
             width={44}
             height={32}
-            className={`h-auto w-[clamp(20px,3.02vw,44px)] shrink-0 ${
+            draggable={false}
+            className={`h-auto w-[clamp(20px,3.02vw,44px)] shrink-0 select-none ${
               index > 0 ? "-ml-[0.42vw]" : ""
             }`}
           />

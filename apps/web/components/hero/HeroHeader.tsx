@@ -53,7 +53,8 @@ export function HeroHeader() {
           height={240}
           loading="lazy"
           unoptimized
-          className="size-full object-contain"
+          draggable={false}
+          className="size-full object-contain select-none"
         />
       </a>
 

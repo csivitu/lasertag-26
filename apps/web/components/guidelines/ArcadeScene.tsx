@@ -83,6 +83,8 @@ export function ArcadeScene() {
             fill
             loading="lazy"
             sizes="150px"
+            draggable={false}
+            className="select-none"
           />
         </button>
 
@@ -99,6 +101,8 @@ export function ArcadeScene() {
             fill
             loading="lazy"
             sizes="130px"
+            draggable={false}
+            className="select-none"
           />
         </button>
       </div>
