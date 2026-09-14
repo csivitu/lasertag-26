@@ -1,18 +1,20 @@
 import Image from "next/image";
 import styles from "./AboutSection.module.css";
 
-const PHOTO_SRC = "/about/photo.jpg";
+const VIDEO_SRC = "/videos/laser-tag.webm";
 const FRAME_PINK_SRC = "/about/frame-pink.png";
 
 export default function AboutUsVid() {
     return (
         <div className={styles.photoBox}>
             <div className={styles.photoInner}>
-                <Image
-                    src={PHOTO_SRC}
-                    alt="Players setting up the laser tag arena"
-                    fill
+                <video
+                    src={VIDEO_SRC}
                     className={styles.photoImg}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
                 />
             </div>
             <Image

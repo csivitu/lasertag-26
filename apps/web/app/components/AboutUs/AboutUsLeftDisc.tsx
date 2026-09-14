@@ -2,9 +2,9 @@ import Image from "next/image";
 import styles from "./AboutSection.module.css";
 
 const FRAME_PINK_SRC = "/about/frame-pink.png";
-const ICON_VEST_SRC = "/about/icon-vest.png";
-const ICON_GUN_SRC = "/about/icon-gun.png";
-const ICON_TARGET_SRC = "/about/icon-target.png";
+const ICON_VEST_SRC = "/about/vest.svg";
+const ICON_GUN_SRC = "/about/gun.svg";
+const ICON_TARGET_SRC = "/about/Target.svg";
 
 export default function AboutUsLeftDisc() {
     return (
@@ -16,12 +16,11 @@ export default function AboutUsLeftDisc() {
                 className={styles.frameImg}
                 unoptimized
             />
-            <p className={styles.infoIntro}>
-                Laser Tag offers you a chance to step on to
-                <br className="hidden sm:inline" />{" "}
-                the arena for a thrilling multi-player
-                <br className="hidden sm:inline" />{" "}
-                experience.
+            <p
+                className={`${styles.infoIntro} text-[clamp(12px,2.4vw,20px)] leading-[1.35] tracking-[0.04em] lg:text-[24px]`}
+            >
+                Laser Tag offers you a chance to step on to the arena for a
+                thrilling multi-player experience.
             </p>
             <ul className={styles.infoList}>
                 <li>
@@ -42,7 +41,6 @@ export default function AboutUsLeftDisc() {
                     </span>
                     <div>
                         <span>Maximise hits to climb up the</span>{" "}
-                        <br className="hidden sm:inline" />
                         <a href="#leaderboard" className={styles.link}>leaderboard</a>
                     </div>
                 </li>

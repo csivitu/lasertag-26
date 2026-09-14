@@ -58,6 +58,15 @@ export default function AboutUs() {
                     >
                         <AboutUsHeader />
                         <AboutUsLeftDisc />
+                        <div className={styles.pacmanHint}>
+                            <p>
+                                <span className={styles.pacmanHintKey}>←</span> to move pacman
+                            </p>
+                            <p>
+                                reach the end &amp; hunt ghosts{" "}
+                                <span className={styles.pacmanHintKey}>→</span>
+                            </p>
+                        </div>
                         <AboutUsVid />
                         <ArcadeAccessories />
                         <Pacman />
@@ -70,6 +79,11 @@ export default function AboutUs() {
                 <AboutUsHeader />
                 <div className={styles.contentGrid}>
                     <AboutUsLeftDisc />
+                    <div className={styles.pacmanHint}>
+                        <p>
+                            tap pacman to start
+                        </p>
+                    </div>
                     <div className={styles.mediaWrap}>
                         <AboutUsVid />
                         <ArcadeAccessories />
