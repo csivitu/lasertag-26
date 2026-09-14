@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useUserProfile, UserProfileProvider } from "@/hooks/useUserProfile";
 import { ProfileSolo } from "@/components/profile/profile-solo/ProfileSolo";
-import { ProfileTeam1 } from "@/components/profile/profile-team1/ProfileTeam1";
 import { ProfileTeam2 } from "@/components/profile/profile-team2/ProfileTeam2";
 import { Starfield } from "@/components/hero/Starfield";
 import { HeroHeader } from "@/components/hero/HeroHeader";
@@ -98,9 +97,7 @@ function ProfileContent() {
 
   // Determine profile ticket variant from live backend database state
   if (profile?.team) {
-    if (profile.team.isLeader) {
-      return <ProfileTeam1 />;
-    }
+    // Both leader and team members with confirmed booking get the complete pass with slot + QR
     return <ProfileTeam2 />;
   }
 
