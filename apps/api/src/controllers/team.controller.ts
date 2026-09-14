@@ -61,7 +61,7 @@ export const teamController = {
         return {
           id: t.teamCode,
           teamCode: t.teamCode,
-          name: t.teamCode,
+          name: t.name || t.teamCode,
           leaderId: t.leaderId,
           leader: leader || null,
           memberCount: membersList.length,
@@ -76,7 +76,7 @@ export const teamController = {
   },
 
   async createTeam(input: CreateTeamInput) {
-    const { leader_id, team_code, members } = input;
+    const { leader_id, team_code, members, name } = input;
 
     const leaderExists = await db
       .select()
@@ -94,6 +94,22 @@ export const teamController = {
       .where(eq(teamMembers.userId, leader_id));
 
     if (userInAnyTeam.length > 0) {
+      const existingMyTeam = await db
+        .select()
+        .from(teams)
+        .where(and(eq(teams.teamCode, team_code), eq(teams.leaderId, leader_id)));
+      if (existingMyTeam.length > 0) {
+        if (name && existingMyTeam[0].name !== name) {
+          const [updated] = await db
+            .update(teams)
+            .set({ name })
+            .where(eq(teams.teamCode, team_code))
+            .returning();
+          return updated;
+        }
+        return existingMyTeam[0];
+      }
+
       throw new AppError(
         400,
         "You are already in a team. You can only create or be in 1 team at a time."
@@ -132,6 +148,7 @@ export const teamController = {
       .insert(teams)
       .values({
         teamCode: team_code,
+        name: name || team_code,
         leaderId: leader_id,
         members: members ? Math.min(5, members) : 1,
       })
@@ -273,7 +290,7 @@ export const teamController = {
 
     await db.insert(teamMembers).values({
       teamCode: teamId,
-      userId: userId,
+      userId,
     });
 
     const [updatedTeam] = await db

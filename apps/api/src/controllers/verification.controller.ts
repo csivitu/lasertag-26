@@ -1,57 +1,55 @@
 import { db } from "@lasertag-26/database";
-import { bookings, user, slots } from "@lasertag-26/database/schema";
+import { bookings, slots, user } from "@lasertag-26/database/schema";
 import { eq, or } from "drizzle-orm";
-import { HttpError as AppError } from "../errors";
+import { NotFoundError } from "../errors";
 
 export const verificationController = {
   async verifyRegistration(registrationId: string) {
-    const [booking] = await db
-      .select()
+    const [bookingRecord] = await db
+      .select({
+        booking: bookings,
+        user: user,
+        slot: slots,
+      })
       .from(bookings)
-      .where(
-        or(
-          eq(bookings.id, registrationId),
-          eq(bookings.qrToken, registrationId),
-        ),
-      );
+      .innerJoin(user, eq(bookings.userId, user.id))
+      .innerJoin(slots, eq(bookings.slotId, slots.id))
+      .where(or(eq(bookings.id, registrationId), eq(bookings.qrToken, registrationId)));
 
-    if (booking) {
-      const [foundUser] = await db
-        .select()
-        .from(user)
-        .where(eq(user.id, booking.userId));
-
-      const [slot] = await db
-        .select()
-        .from(slots)
-        .where(eq(slots.id, booking.slotId));
-
+    if (bookingRecord) {
       return {
         verified: true,
-        type: "booking",
+        type: "registration",
         data: {
-          booking_id: booking.id,
-          booking_type: booking.type,
-          qr_token: booking.qrToken,
-          user: foundUser
-            ? {
-                id: foundUser.id,
-                name: foundUser.name,
-                email: foundUser.email,
-                role: foundUser.role,
-                is_checked_in: foundUser.isCheckedIn,
-                paid: foundUser.paid,
-              }
-            : null,
-          team_code: booking.teamCode,
-          slot: slot
-            ? {
-                id: slot.id,
-                start_time: slot.startTime,
-                end_time: slot.endTime,
-              }
-            : null,
-          confirmation_email_sent: booking.confirmationEmailSent,
+          registration: {
+            id: bookingRecord.booking.id,
+            type: bookingRecord.booking.type,
+            status: bookingRecord.booking.status,
+            slot_id: bookingRecord.booking.slotId,
+            team_code: bookingRecord.booking.teamCode,
+            qr_token: bookingRecord.booking.qrToken,
+            is_checked_in: bookingRecord.booking.isCheckedIn,
+            checked_in_at: bookingRecord.booking.checkedInAt,
+            confirmed_at: bookingRecord.booking.confirmedAt,
+            confirmation_email_sent: bookingRecord.booking.confirmationEmailSent,
+          },
+          user: {
+            id: bookingRecord.user.id,
+            name: bookingRecord.user.name,
+            email: bookingRecord.user.email,
+            role: bookingRecord.user.role,
+            ph_number: bookingRecord.user.phNumber,
+            qr_token: bookingRecord.user.qrToken,
+            is_checked_in: bookingRecord.user.isCheckedIn,
+            checked_in_at: bookingRecord.user.checkedInAt,
+            paid: bookingRecord.user.paid,
+          },
+          slot: {
+            id: bookingRecord.slot.id,
+            start_time: bookingRecord.slot.startTime,
+            end_time: bookingRecord.slot.endTime,
+            capacity: bookingRecord.slot.capacity,
+          },
         },
       };
     }
@@ -87,7 +85,7 @@ export const verificationController = {
       };
     }
 
-    throw new AppError(404, "Registration / Ticket / User not found for the given ID.");
+    throw new NotFoundError("Registration / Ticket / User not found for the given ID.");
   },
 
   async checkInUser(identifier: string) {
@@ -117,7 +115,7 @@ export const verificationController = {
     }
 
     if (!targetUser) {
-      throw new AppError(404, "User not found.");
+      throw new NotFoundError("User not found.");
     }
 
     if (targetUser.isCheckedIn) {
@@ -127,14 +125,30 @@ export const verificationController = {
       };
     }
 
+    const now = new Date();
     const [updatedUser] = await db
       .update(user)
       .set({
         isCheckedIn: true,
-        checkedInAt: new Date(),
+        checkedInAt: now,
       })
       .where(eq(user.id, targetUser.id))
       .returning();
+
+    // Also update booking check-in state
+    await db
+      .update(bookings)
+      .set({
+        isCheckedIn: true,
+        checkedInAt: now,
+      })
+      .where(
+        or(
+          eq(bookings.id, identifier),
+          eq(bookings.qrToken, identifier),
+          eq(bookings.userId, targetUser.id),
+        ),
+      );
 
     return {
       already_checked_in: false,

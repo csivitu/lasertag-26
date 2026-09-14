@@ -18,6 +18,7 @@ export const createTeamSchema = z.object({
       .string()
       .trim()
       .min(1, "leader_id and team_code are required fields."),
+    name: z.string().trim().optional(),
     members: z.number().int().positive().optional(),
   }),
 });

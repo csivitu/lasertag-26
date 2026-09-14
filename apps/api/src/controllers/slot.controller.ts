@@ -170,10 +170,21 @@ export const slotController = {
         .where(eq(teams.teamCode, team_code));
 
       if (!team) {
-        throw new AppError(404, "Team not found.");
-      }
+        // If team was pending creation from client session, establish it now with user as leader
+        await db.insert(teams).values({
+          teamCode: team_code,
+          leaderId: user_id,
+          members: 1,
+        });
 
-      if (team.leaderId !== user_id) {
+        await db
+          .insert(teamMembers)
+          .values({
+            teamCode: team_code,
+            userId: user_id,
+          })
+          .onConflictDoNothing();
+      } else if (team.leaderId !== user_id) {
         throw new AppError(403, "Only the team leader can reserve a slot for the team.");
       }
     }
