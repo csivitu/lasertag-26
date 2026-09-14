@@ -58,6 +58,7 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
     const trackRef = useRef<HTMLDivElement>(null);
     const audioCtxRef = useRef<AudioContext | null>(null);
     const chompToggleRef = useRef(false);
+    const inViewRef = useRef(false);
 
     const dotPositions = isMobile ? MOBILE_DOT_POSITIONS : DESKTOP_DOT_POSITIONS;
     const pacmanStartX = isMobile ? MOBILE_PACMAN_START_X : DESKTOP_PACMAN_START_X;
@@ -322,9 +323,23 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
         resetLoop,
     ]);
 
-    // Keyboard support (Left/Right Arrows or A/D)
+    // Keyboard support (Left/Right Arrows or A/D) — only while the track is in view
+    useEffect(() => {
+        const el = trackRef.current;
+        if (!el) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                inViewRef.current = entry.isIntersecting;
+            },
+            { threshold: 0.3 }
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (!inViewRef.current) return;
             if (["ArrowLeft", "a", "A"].includes(e.key)) {
                 if (mode === "chase") stepGame();
             } else if (["ArrowRight", "d", "D"].includes(e.key)) {
