@@ -21,7 +21,7 @@ export default function IconsLowerRight() {
 				className={iconClass}
 				style={{ "--icon-accent": "var(--pink)" } as React.CSSProperties}
 			>
-				<FaInstagram size={18} />
+				<FaInstagram size={22} />
 			</a>
 			<a
 				href="https://x.com/csivitu"
@@ -30,7 +30,7 @@ export default function IconsLowerRight() {
 				className={iconClass}
 				style={{ "--icon-accent": "var(--cyan)" } as React.CSSProperties}
 			>
-				<FaXTwitter size={18} />
+				<FaXTwitter size={22} />
 			</a>
 			<a
 				href="https://github.com/csivitu"
@@ -39,7 +39,7 @@ export default function IconsLowerRight() {
 				className={iconClass}
 				style={{ "--icon-accent": "#ffffff" } as React.CSSProperties}
 			>
-				<FaGithub size={18} />
+				<FaGithub size={22} />
 			</a>
 			<a
 				href="https://in.linkedin.com/company/csivitu"
@@ -48,19 +48,19 @@ export default function IconsLowerRight() {
 				className={iconClass}
 				style={{ "--icon-accent": "var(--purple)" } as React.CSSProperties}
 			>
-				<FaLinkedin size={18} />
+				<FaLinkedin size={22} />
 			</a>
 			<a
 				href="https://csivit.com/"
 				target="_blank"
 				rel="noreferrer"
-				className="block rounded"
+				className="block rounded transition-all hover:drop-shadow-[0_0_8px_var(--icon-accent)]"
 				style={{ "--icon-accent": "var(--yellow)" } as React.CSSProperties}
 			>
 				<img
 					src="/footer/divsectionxqghtcontainer.svg"
 					alt="CSI-VIT website"
-					className="block h-8 w-8"
+					className="block h-10 w-10"
 				/>
 			</a>
 		</div>

@@ -39,7 +39,7 @@ export function ArcadeScene() {
 
   return (
     <div
-      className="relative aspect-[621/645.37] max-h-full max-w-full"
+      className="relative aspect-[621/645.37] max-h-full max-w-full select-none"
       style={{
         width: "min(100%, calc(min(77svh, 750px) * 621 / 645.37))",
       }}
@@ -52,6 +52,8 @@ export function ArcadeScene() {
             fill
             priority
             sizes="560px"
+            draggable={false}
+            className="select-none"
           />
 
           {/* Interactive Space Invaders Screen Overlay */}
