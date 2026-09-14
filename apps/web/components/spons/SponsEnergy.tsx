@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 const MAX_ENERGY = 5;
 
 export function SponsEnergy() {
-  const [energy, setEnergy] = useState(1);
-  const increasing = useRef(true);
+  const [energy, setEnergy] = useState(4);
+  const increasing = useRef(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,7 +24,7 @@ export function SponsEnergy() {
 
         return increasing.current ? current + 1 : current - 1;
       });
-    }, 700);
+    }, 550);
 
     return () => clearInterval(interval);
   }, []);
