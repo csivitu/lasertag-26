@@ -252,11 +252,11 @@ export function SpaceInvadersScreen() {
       if (nextLives <= 0) {
         setGameStatus('gameover');
         gameStatusRef.current = 'gameover';
-        playSound('gameOver', 0.65);
+        playSound('gameOver', 0.52);
       } else {
         // Reset player to center after hit
         player.x = GRID_CENTER_X - PLAYER_WIDTH / 2;
-        playSound('playerHit', 0.65);
+        playSound('playerHit', 0.52);
       }
     },
     [spawnExplosion]
@@ -298,7 +298,7 @@ export function SpaceInvadersScreen() {
 
     const player = playerRef.current;
     bulletIdCounterRef.current += 1;
-    playSound('invaderShoot', 0.58);
+    playSound('invaderShoot', 0.45);
     playerBulletsRef.current.push({
       id: `p-bullet-${bulletIdCounterRef.current}`,
       x: player.x + player.width / 2 - BULLET_WIDTH / 2,
@@ -405,7 +405,7 @@ export function SpaceInvadersScreen() {
         if (aliveInvaders.length === 0) {
           setGameStatus('cleared');
           gameStatusRef.current = 'cleared';
-          playSound('waveCleared', 0.65);
+          playSound('waveCleared', 0.52);
           setTimeout(() => {
             waveNumberRef.current += 1;
             fleetRef.current = createInitialFleet();
@@ -503,7 +503,7 @@ export function SpaceInvadersScreen() {
               getInvaderColor(inv.type)
             );
             setScore((prev) => prev + inv.points);
-            playSound('invaderBlast', 0.65);
+            playSound('invaderBlast', 0.52);
             break;
           }
         }
