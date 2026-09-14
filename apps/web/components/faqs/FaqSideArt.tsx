@@ -8,14 +8,14 @@ type FaqSideArtProps = {
 export function FaqSideArt({ isJumping = false, isActive = false }: FaqSideArtProps) {
     return (
         <div className="relative h-full w-full">
-            <div className="absolute bottom-0 right-[3%] lg:right-[5%] xl:right-[8%] hidden h-[65%] lg:h-[70%] xl:h-[75%] max-h-[min(72vh,680px)] w-auto md:block">
+            <div className="absolute bottom-0 right-[3%] hidden w-[clamp(300px,34vw,560px)] lg:right-[5%] lg:block xl:right-[8%]">
                 <Image
                     src="/faq/building.png"
                     alt="Niceland arcade building"
                     width={637}
                     height={820}
                     unoptimized
-                    className="h-full w-auto object-contain object-bottom"
+                    className="h-auto w-full object-contain object-bottom"
                     style={{ imageRendering: "pixelated" }}
                 />
                 <Image
@@ -24,7 +24,7 @@ export function FaqSideArt({ isJumping = false, isActive = false }: FaqSideArtPr
                     width={129}
                     height={143}
                     unoptimized
-                    className={`absolute left-1/2 top-[18%] w-[20%] -translate-x-1/2 object-contain${isJumping ? " ralph-jump" : ""}`}
+                    className={`absolute left-1/2 w-[20%] -translate-x-1/2 object-contain ${isActive ? "top-[18%]" : "top-[20%]"}${isJumping ? " ralph-jump" : ""}`}
                     style={{ imageRendering: "pixelated" }}
                 />
             </div>

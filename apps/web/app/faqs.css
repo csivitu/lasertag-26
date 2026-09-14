@@ -6,7 +6,13 @@
     -webkit-background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0.044em 0.044em 0 var(--color-brand-pink));
+    filter: drop-shadow(-2px 0 0 var(--color-brand-pink));
+}
+
+@media (min-width: 1024px) {
+    .faq-wordmark {
+        filter: drop-shadow(-5px 0 0 var(--color-brand-pink));
+    }
 }
 
 .faq-item__icon {
@@ -158,24 +164,6 @@
     background: currentColor;
 }
 
-/* ── Glow pulse on open FAQ items (filter-based for clip-path compat) ── */
-@keyframes glow-filter-pink {
-    0%, 100% { filter: drop-shadow(0 0 6px #e5349e88); }
-    50%      { filter: drop-shadow(0 0 14px #e5349ecc); }
-}
-@keyframes glow-filter-yellow {
-    0%, 100% { filter: drop-shadow(0 0 6px #fec41488); }
-    50%      { filter: drop-shadow(0 0 14px #fec414cc); }
-}
-@keyframes glow-filter-cyan {
-    0%, 100% { filter: drop-shadow(0 0 6px #23eff188); }
-    50%      { filter: drop-shadow(0 0 14px #23eff1cc); }
-}
-
-.faq-item--open[data-color="pink"]   { animation: glow-filter-pink   1.8s ease-in-out infinite; }
-.faq-item--open[data-color="yellow"] { animation: glow-filter-yellow  1.8s ease-in-out infinite; }
-.faq-item--open[data-color="cyan"]   { animation: glow-filter-cyan   1.8s ease-in-out infinite; }
-
 /* ── Dot glow pulse (box-shadow, no clip-path) ── */
 @keyframes glow-pink {
     0%, 100% { box-shadow: 0 0 8px -2px #e5349e, 0 0 20px -4px #e5349e44; }
@@ -208,6 +196,7 @@
 
 .ralph-jump {
     animation: ralph-bounce 0.7s cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -217,9 +206,6 @@
         transition: none;
     }
 
-    .faq-item--open[data-color="pink"],
-    .faq-item--open[data-color="yellow"],
-    .faq-item--open[data-color="cyan"],
     .faq-dot--open[data-color="pink"],
     .faq-dot--open[data-color="yellow"],
     .faq-dot--open[data-color="cyan"] {

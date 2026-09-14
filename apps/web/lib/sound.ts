@@ -4,6 +4,7 @@ export const SOUNDS = {
   navHover: "/sounds/nav-hover.wav",
   navSelect: "/sounds/nav-select.wav",
   buttonClick: "/sounds/button-click.wav",
+  ralphJump: "/sounds/nav-select-v1.wav",
 } as const;
 
 export type SoundKey = keyof typeof SOUNDS;

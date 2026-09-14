@@ -11,8 +11,7 @@ export function Guidelines() {
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1560px] min-w-0 flex-1 flex-col lg:min-h-0">
         <h2
-          className="shrink-0 text-center font-heading text-[clamp(2rem,9vw,3.75rem)] tracking-[0.06em] text-guideline-yellow sm:text-[clamp(2.75rem,8vw,4.75rem)] md:text-[clamp(3.5rem,7vw,5.75rem)] lg:text-[112px] lg:leading-[0.9] lg:tracking-[0.06em]"
-          style={{ textShadow: "-5px 0 0 var(--color-brand-pink)" }}
+          className="shrink-0 text-center font-heading text-[clamp(2.5rem,11.5vw,3.75rem)] tracking-[0.06em] text-guideline-yellow [text-shadow:-2px_0_0_var(--color-brand-pink)] sm:text-[clamp(2.75rem,8vw,4.75rem)] md:text-[clamp(3.5rem,7vw,5.75rem)] lg:text-[112px] lg:leading-[0.9] lg:tracking-[0.06em] lg:[text-shadow:-5px_0_0_var(--color-brand-pink)]"
         >
           GUIDELINES
         </h2>

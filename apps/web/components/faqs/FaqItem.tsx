@@ -19,12 +19,16 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
     return (
         <div
             data-color={entry.color}
-            className={`faq-pixel-corners relative bg-ink/60 px-4 py-2.5 transition-colors sm:px-5 sm:py-2.5 lg:py-3 ${colors.text}${isOpen ? " faq-item--open" : ""}`}
+            onClick={onToggle}
+            className={`faq-pixel-corners relative bg-ink/60 px-4 py-2.5 transition-colors cursor-pointer sm:px-5 sm:py-2.5 lg:py-3 ${colors.text}${isOpen ? " faq-item--open" : ""}`}
         >
             <FaqPixelFrame />
             <button
                 type="button"
-                onClick={onToggle}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onToggle();
+                }}
                 aria-expanded={isOpen}
                 className="relative z-[2] flex w-full items-center justify-between gap-4 text-left"
             >
@@ -43,7 +47,8 @@ export function FaqItem({ entry, isOpen, onToggle }: FaqItemProps) {
 
             <div className="faq-item__panel relative z-[2]" data-open={isOpen}>
                 <div className="overflow-hidden">
-                    <p className="pt-2 font-body text-xs leading-relaxed text-white/70 sm:pt-3 sm:text-sm">
+                    <div className="-mx-4 mt-2 h-[3px] w-auto bg-current sm:-mx-5 sm:mt-3" aria-hidden />
+                    <p className="pt-2 font-body text-sm leading-relaxed text-white/70 sm:pt-3 sm:text-base">
                         {entry.answer}
                     </p>
                 </div>
