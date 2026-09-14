@@ -27,6 +27,15 @@ interface ActiveModeDetailsProps {
   onChangeMode: () => void;
 }
 
+function formatSlotDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  const match = dateStr.match(/\b(18|19|20)\b/);
+  if (match) {
+    return `${match[1]}th Sep 2026`;
+  }
+  return dateStr.replace(/December/gi, "Sep").replace(/th SEP 2026/gi, " Sep 2026");
+}
+
 export function ActiveModeDetails({
   mode,
   teamInfo,
@@ -186,81 +195,73 @@ export function ActiveModeDetails({
             )}
           </div>
 
-          {/* Reserved Slot Banner */}
+          {/* Reserved Slot Banner - Clean layout without the blue button */}
           <div className="bg-[#12111f]/90 border-2 border-[#FEDC02]/60 rounded-xl p-4 mb-6 shadow-[0_0_20px_rgba(254,220,2,0.15)]">
             <span className="text-[10px] text-[#FEDC02] tracking-widest uppercase block mb-1.5 font-pixel">
               MISSION TIME SLOT
             </span>
             {slotInfo?.dateStr ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🎟️</span>
-                  <div>
-                    <div className="text-white font-bold text-sm tracking-wide">
-                      {slotInfo.dateStr}
-                    </div>
-                    <div className="text-[#00F0FF] font-mono text-xs font-semibold">
-                      {slotInfo.timeStr}
-                    </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎟️</span>
+                <div>
+                  <div className="text-white font-bold text-sm tracking-wide">
+                    {formatSlotDate(slotInfo.dateStr)}
+                  </div>
+                  <div className="text-[#00F0FF] font-mono text-xs font-semibold mt-0.5">
+                    {slotInfo.timeStr}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => router.push("/profile")}
-                  className="px-4 py-2 bg-[#00F0FF] text-black font-bold text-xs rounded hover:bg-[#6ef5ff] transition-all cursor-pointer shadow-[0_2px_0_#008fa0]"
-                >
-                  VIEW PASS →
-                </button>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">⏳</span>
-                  <div>
-                    <div className="text-white font-bold text-xs">
-                      NO ARENA SLOT SECURED YET
-                    </div>
-                    <div className="text-white/60 text-[10px] font-mono">
-                      Pick your deployment slot to mint your pass.
-                    </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">⏳</span>
+                <div>
+                  <div className="text-white font-bold text-xs">
+                    NO ARENA SLOT SECURED YET
+                  </div>
+                  <div className="text-white/60 text-[10px] font-mono mt-0.5">
+                    Pick your deployment slot to mint your pass.
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => router.push("/slot-booking")}
-                  className="px-4 py-2 bg-[#FEDC02] text-black font-bold text-xs rounded hover:bg-[#ffe633] transition-all cursor-pointer shadow-[0_2px_0_#9c8400]"
-                >
-                  BOOK SLOT →
-                </button>
               </div>
             )}
           </div>
 
-          {/* Action Row */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          {/* Action Row - Buttons styled in matching pink PixelButton theme */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
             <button
               type="button"
               onClick={() => setConfirmOpen(true)}
-              className="w-full sm:w-auto px-5 py-2.5 rounded bg-transparent border-2 border-red-500/70 hover:border-red-500 hover:bg-red-500/10 text-red-400 font-pixel text-xs tracking-wider transition-all cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded bg-transparent border border-red-500/60 hover:border-red-500 hover:bg-red-500/10 text-red-400 font-pixel text-xs tracking-wider transition-all cursor-pointer"
             >
               CHANGE COMBAT MODE
             </button>
 
-            {slotInfo?.dateStr ? (
-              <PixelButton
-                label="YOUR DIGITAL PASS →"
-                onClick={() => router.push("/profile")}
-                className="w-full sm:w-auto"
-                interaction="hero"
-              />
-            ) : (
-              <PixelButton
-                label="PROCEED TO SLOT BOOKING →"
-                onClick={() => router.push("/slot-booking")}
-                className="w-full sm:w-auto"
-                interaction="hero"
-              />
-            )}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto justify-end">
+              {slotInfo?.dateStr ? (
+                <>
+                  <PixelButton
+                    label="CHANGE SLOT"
+                    onClick={() => router.push("/slot-booking")}
+                    className="w-full sm:w-auto"
+                    interaction="hero"
+                  />
+                  <PixelButton
+                    label="YOUR DIGITAL PASS →"
+                    onClick={() => router.push("/profile")}
+                    className="w-full sm:w-auto"
+                    interaction="hero"
+                  />
+                </>
+              ) : (
+                <PixelButton
+                  label="PROCEED TO SLOT BOOKING →"
+                  onClick={() => router.push("/slot-booking")}
+                  className="w-full sm:w-auto"
+                  interaction="hero"
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

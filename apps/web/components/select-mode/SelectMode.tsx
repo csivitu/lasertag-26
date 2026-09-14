@@ -46,8 +46,11 @@ export function SelectMode() {
         try {
           const parsedSlot = JSON.parse(slotStr);
           if (parsedSlot?.day && parsedSlot?.time) {
+            const rawDay = String(parsedSlot.day);
+            const match = rawDay.match(/\b(18|19|20)\b/);
+            const dayNum = match ? match[1] : "18";
             setSlotInfo({
-              dateStr: `${parsedSlot.day}th ${parsedSlot.month || "SEP"} 2026`,
+              dateStr: `${dayNum}th Sep 2026`,
               timeStr: parsedSlot.time,
             });
           }
@@ -95,8 +98,11 @@ export function SelectMode() {
             setActiveMode(data.data.activeRegistration.type === "team" ? "team" : "solo");
           }
           if (data?.data?.activeRegistration?.slot) {
+            const rawDate = String(data.data.activeRegistration.slot.slotDate || "");
+            const match = rawDate.match(/\b(18|19|20)\b/);
+            const dayNum = match ? match[1] : "18";
             setSlotInfo({
-              dateStr: data.data.activeRegistration.slot.slotDate,
+              dateStr: `${dayNum}th Sep 2026`,
               timeStr: data.data.activeRegistration.slot.slotTime,
             });
           }
