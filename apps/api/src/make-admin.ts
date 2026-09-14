@@ -1,4 +1,10 @@
-import "dotenv/config";
+import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+
 import { db } from "@lasertag-26/database";
 import { user } from "@lasertag-26/database/schema";
 import { eq } from "drizzle-orm";

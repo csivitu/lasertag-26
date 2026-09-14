@@ -22,6 +22,21 @@ export const participantPaths = {
       security: [],
       responses: { 200: ok("All slots") },
     },
+    post: {
+      summary: "Create a slot",
+      tags: ["Slots"],
+      security: [],
+      responses: { 201: ok("The created slot"), 400: responses.badRequest },
+    },
+  },
+  "/slots/{slot_id}": {
+    delete: {
+      summary: "Delete a slot",
+      tags: ["Slots"],
+      security: [],
+      parameters: [pathParam("slot_id", "slots.id")],
+      responses: { 200: ok("Slot deleted"), 404: responses.error("Slot not found") },
+    },
   },
   "/slots/{slot_id}/reserve": {
     post: {
@@ -40,6 +55,12 @@ export const participantPaths = {
     },
   },
   "/teams": {
+    get: {
+      summary: "Get all teams",
+      tags: ["Teams"],
+      security: [],
+      responses: { 200: ok("All teams") },
+    },
     post: {
       summary: "Create a team",
       tags: ["Teams"],
@@ -85,6 +106,20 @@ export const participantPaths = {
       security: [],
       parameters: [pathParam("team_id", "teams.team_code")],
       responses: { 200: ok("Invite"), 404: responses.error("Team not found") },
+    },
+  },
+  "/teams/{team_id}/convert-to-solo": {
+    post: {
+      summary: "Convert a single-member team into a solo registration",
+      tags: ["Teams"],
+      security: [],
+      parameters: [pathParam("team_id", "teams.team_code")],
+      responses: {
+        200: ok("Converted to solo"),
+        400: responses.badRequest,
+        403: responses.forbidden,
+        404: responses.error("Team not found"),
+      },
     },
   },
   "/verification/{registration_id}": {
@@ -150,7 +185,6 @@ export const participantPaths = {
         401: responses.unauthorized,
         403: responses.forbidden,
         404: responses.error("Registration not found"),
-        409: responses.error("Cancelled registration"),
       },
     },
   },

@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
 import { INPUT_BORDER_SVG, PINK_INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
+import { useSession, apiBaseUrl } from "@/lib/auth-client";
 
 const labelStyle: CSSProperties = {
   fontFamily: "var(--ft-pixel), monospace",
@@ -43,7 +45,13 @@ function generateCode(): string {
   ).join("");
 }
 
-export function CreateTeamForm() {
+interface CreateTeamFormProps {
+  onSuccess?: () => void;
+}
+
+export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
+  const router = useRouter();
+  const { data: session } = useSession();
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
@@ -52,13 +60,28 @@ export function CreateTeamForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (session?.user) {
+      if (session.user.name && !fullName) {
+        setFullName(session.user.name);
+      }
+      if (session.user.email && !emailId) {
+        setEmailId(session.user.email);
+      }
+    }
+  }, [session, fullName, emailId]);
+
   // Generated once when the component mounts; frozen for the session.
-  // TODO: swap with API-returned code once backend is ready.
   const teamCode = useMemo(() => generateCode(), []);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+
+    if (!session?.user?.id) {
+      setError("Please sign in before creating a squad.");
+      return;
+    }
 
     if (
       !fullName.trim() ||
@@ -77,7 +100,52 @@ export function CreateTeamForm() {
     }
 
     setStatus("submitting");
-    window.setTimeout(() => setStatus("success"), 700);
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/teams`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          leader_id: session.user.id,
+          team_code: teamCode,
+          name: teamName.trim(),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || data.message || "Failed to create team in arena database");
+      }
+
+      const teamPayload = {
+        teamCode,
+        teamName: teamName.trim(),
+        isLeader: true,
+      };
+
+      // Clear any previous solo artifacts to cleanly switch to team mode
+      localStorage.removeItem("lasertag_onboarding_solo");
+      sessionStorage.removeItem("lasertag_onboarding_solo");
+
+      localStorage.setItem("lasertag_selected_mode", "team");
+      sessionStorage.setItem("lasertag_selected_mode", "team");
+      localStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+      sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+
+      setStatus("success");
+      window.setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push("/slot-booking");
+        }
+      }, 700);
+    } catch (err: unknown) {
+      setStatus("idle");
+      const msg = err instanceof Error ? err.message : "Failed to create team";
+      setError(msg);
+    }
   }
 
   return (
@@ -119,10 +187,9 @@ export function CreateTeamForm() {
       </div>
 
       {/* Team Code row: pink code badge + Create Team button */}
-      <div className="create-team-submit-row" style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}>
-        <div className="mode-popup-field create-team-code-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}>
+        <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
           <label className="mode-popup-label" style={labelStyle}>TEAM CODE</label>
-          {/* Keep the SVG as the element background so its fill stays inside the stepped border. */}
           <div
             className="mode-popup-code"
             style={{
@@ -150,13 +217,13 @@ export function CreateTeamForm() {
           </div>
         </div>
 
-        <div className="create-team-button-wrap" style={{ flex: "1 1 0", minWidth: 0, display: "flex", justifyContent: "center" }}>
+        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <PixelButton
             type="submit"
-            label={status === "submitting" ? "Creating..." : status === "success" ? "Created" : "Create Team"}
+            label={status === "submitting" ? "CREATING..." : status === "success" ? "CREATED" : "CREATE TEAM"}
             interaction="simple"
-            className="w-full max-w-[240px]"
-            labelClassName="text-[clamp(10px,2.4vw,13px)]"
+            className="w-[240px]"
+            labelClassName="text-[13px]"
             disabled={status === "submitting" || status === "success"}
           />
         </div>

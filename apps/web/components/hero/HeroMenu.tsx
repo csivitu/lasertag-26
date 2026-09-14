@@ -4,7 +4,13 @@ import { useState } from "react";
 
 type NavLink = { label: string; href: string };
 
-export function HeroMenu({ links }: { links: NavLink[] }) {
+export function HeroMenu({
+  links,
+  onNavClick,
+}: {
+  links: NavLink[];
+  onNavClick?: (label: string) => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,8 +46,14 @@ export function HeroMenu({ links }: { links: NavLink[] }) {
             <a
               key={link.label}
               href={link.href}
-              onClick={() => setOpen(false)}
-              className="border-b border-white/10 px-5 py-4 font-pixel text-sm tracking-[1px] text-white outline-offset-[-2px] transition-colors last:border-b-0 focus-visible:outline-2 focus-visible:outline-accent active:text-accent"
+              onClick={(e) => {
+                if (link.label === "SIGN IN" || link.label === "SIGN OUT") {
+                  e.preventDefault();
+                }
+                if (onNavClick) onNavClick(link.label);
+                setOpen(false);
+              }}
+              className="border-b border-white/10 px-5 py-4 font-pixel text-sm tracking-[1px] text-white outline-offset-[-2px] transition-colors last:border-b-0 focus-visible:outline-2 focus-visible:outline-accent active:text-accent cursor-pointer"
             >
               {link.label}
             </a>

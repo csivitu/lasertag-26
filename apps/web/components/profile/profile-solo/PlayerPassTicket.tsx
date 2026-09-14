@@ -1,36 +1,69 @@
-import Image from "next/image";
-import { PlayerPassDetails } from "./PlayerPassDetails";
-import { PlayerPassStubLeft } from "./PlayerPassStubLeft";
-import { PlayerPassStubRight } from "./PlayerPassStubRight";
-import { QrCode } from "./QrCode";
+"use client";
 
-function MobileDetailRow({ icon, text }: { icon: string; text: string }) {
-  return (
-    <div className="flex items-center gap-4 pl-2">
-      <div className="relative w-10 h-10 shrink-0">
-        <Image src={icon} alt="" fill className="object-contain" />
-      </div>
-      <div className="relative h-11 w-48">
-        <Image src={text} alt="" fill className="object-contain object-left" />
-      </div>
-    </div>
-  );
-}
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { QrCode } from "./QrCode";
+import { PlayerPassStubLeft } from "./PlayerPassStubLeft";
+import { PlayerPassDetails } from "./PlayerPassDetails";
+import { PlayerPassStubRight } from "./PlayerPassStubRight";
+import { PassDetailItem } from "../shared/PassDetailItem";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useSession } from "@/lib/auth-client";
+import { formatPassDate, formatPassTime } from "@/lib/formatPassDateTime";
 
 export function PlayerPassTicket() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const { profile } = useUserProfile();
+
+  const playerName = profile?.name || session?.user?.name || "OPERATIVE";
+  const playerEmail = profile?.email || session?.user?.email || "N/A";
+  const playerPhone = profile?.phone || "N/A";
+  const regNo = profile?.activeRegistration?.id || "N/A";
+  const rawDate = profile?.activeRegistration?.slot?.slotDate;
+  const rawTime = profile?.activeRegistration?.slot?.slotTime;
+
+  const slotDate = formatPassDate(rawDate);
+  const slotTime = formatPassTime(rawTime);
+
   return (
     <div className="w-full max-w-[1100px] mx-auto px-2">
-      
       {/* MOBILE TICKET (< lg) */}
-      <div className="lg:hidden relative w-full max-w-sm mx-auto border-[3px] border-[#FEDC02] rounded-[1.5rem] bg-[#0b0b10] flex flex-col">
+      <div className="lg:hidden relative w-full max-w-sm mx-auto border-[3px] border-[#FEDC02] rounded-[1.5rem] bg-[#0b0b10] flex flex-col shadow-2xl">
         {/* Details Section */}
-        <div className="flex flex-col gap-5 px-4 pt-10 pb-6 w-full">
-          <MobileDetailRow icon="/profile/profile-solo/playericon.svg" text="/profile/profile-solo/Group 738.svg" />
-          <MobileDetailRow icon="/profile/profile-solo/email.svg" text="/profile/profile-solo/Group 739.svg" />
-          <MobileDetailRow icon="/profile/profile-solo/regno.svg" text="/profile/profile-solo/Group 740.svg" />
-          <MobileDetailRow icon="/profile/profile-solo/Group 741.svg" text="/profile/profile-solo/Group 749.svg" />
-          <MobileDetailRow icon="/profile/profile-solo/Group 742.svg" text="/profile/profile-solo/Group 745.svg" />
-          <MobileDetailRow icon="/profile/profile-solo/timeslot.svg" text="/profile/profile-solo/Group 747.svg" />
+        <div className="flex flex-col gap-4 px-4 pt-8 pb-6 w-full">
+          <PassDetailItem
+            icon="/profile/profile-solo/playericon.svg"
+            label="PLAYER"
+            value={playerName}
+          />
+          <PassDetailItem
+            icon="/profile/profile-solo/email.svg"
+            label="EMAIL ID"
+            value={playerEmail}
+          />
+          <PassDetailItem
+            icon="/profile/profile-solo/regno.svg"
+            label="REG. NO."
+            value={regNo}
+          />
+          <PassDetailItem
+            icon="/profile/profile-solo/Group 741.svg"
+            label="PHONE NO."
+            value={playerPhone}
+          />
+          <PassDetailItem
+            icon="/profile/profile-solo/Group 742.svg"
+            label="DATE"
+            value={slotDate}
+            multiline
+          />
+          <PassDetailItem
+            icon="/profile/profile-solo/timeslot.svg"
+            label="TIME SLOT"
+            value={slotTime}
+            multiline
+          />
         </div>
 
         {/* Dashed Divider with Notches */}
@@ -47,7 +80,8 @@ export function PlayerPassTicket() {
           </div>
           <button
             type="button"
-            className="w-full max-w-[180px] py-2.5 px-4 bg-[#f949cc] hover:bg-[#ff5be2] active:translate-y-[1px] text-white text-[11px] font-bold rounded-full border-[3px] border-[#ff7beb] shadow-[0_4px_0_#9c187d] transition-all uppercase tracking-wider text-center"
+            onClick={() => router.push("/slot-booking")}
+            className="w-full max-w-[180px] py-2.5 px-4 bg-[#f949cc] hover:bg-[#ff5be2] active:translate-y-[1px] text-white text-[11px] font-bold rounded-full border-[3px] border-[#ff7beb] shadow-[0_4px_0_#9c187d] transition-all uppercase tracking-wider text-center cursor-pointer"
             style={{ fontFamily: "var(--font-pixel), monospace" }}
           >
             CHANGE SLOT
@@ -56,7 +90,7 @@ export function PlayerPassTicket() {
       </div>
 
       {/* DESKTOP TICKET (>= lg) */}
-      <div className="hidden lg:block relative w-full aspect-[1285/622] min-h-[540px]">
+      <div className="hidden lg:block relative w-full aspect-[1100/533] min-h-[460px] select-none">
         {/* Outer yellow border ticket frame (Group 628.svg) */}
         <div className="absolute inset-0 pointer-events-none z-20">
           <Image
@@ -69,13 +103,13 @@ export function PlayerPassTicket() {
         </div>
 
         {/* Inner ticket content container aligned inside the border frame */}
-        <div className="absolute inset-[3.5%] z-10 grid grid-cols-[12%_1px_62%_1px_24%] items-stretch bg-black rounded-lg overflow-hidden p-2">
+        <div className="absolute inset-[3.5%] z-10 grid grid-cols-[11%_1px_62%_1px_26%] items-stretch bg-black rounded-lg overflow-hidden p-2">
           {/* Left stub: Vertical LASERTAG */}
           <div className="h-full">
             <PlayerPassStubLeft />
           </div>
 
-          {/* Solid Divider Line (Left) */}
+          {/* Divider Line (Left) */}
           <div className="relative h-full w-full opacity-90">
             <Image
               src="/profile/profile-solo/Line 115.svg"
@@ -85,12 +119,12 @@ export function PlayerPassTicket() {
             />
           </div>
 
-          {/* Main Ticket Details Area */}
-          <div className="flex-1">
+          {/* Center main area: 3x2 Grid */}
+          <div className="h-full overflow-hidden">
             <PlayerPassDetails />
           </div>
 
-          {/* Dashed Stub Divider Line (Right) */}
+          {/* Divider Line (Right) */}
           <div className="relative h-full w-full opacity-80">
             <Image
               src="/profile/profile-solo/Group 629.svg"
@@ -100,13 +134,12 @@ export function PlayerPassTicket() {
             />
           </div>
 
-          {/* Right stub: SCAN TO PLAY & QR Code & CHANGE SLOT button */}
-          <div className="h-full">
+          {/* Right stub: QR & Action Button */}
+          <div className="h-full overflow-hidden">
             <PlayerPassStubRight />
           </div>
         </div>
       </div>
-
     </div>
   );
 }

@@ -28,6 +28,12 @@ export const slotInputSchema = slotFields.refine(
   { message: "startTime must be before endTime", path: ["startTime"] },
 );
 
+export type CreateSlotInput = {
+  startTime: string | Date;
+  endTime: string | Date;
+  capacity: number;
+};
+
 /**
  * Shape only. The start-before-end rule needs the stored row to compare
  * against when just one of the two fields is supplied, so it lives in
@@ -101,5 +107,3 @@ export const reserveSlotSchema = z.object({
 
 export type ReserveSlotInput = z.infer<typeof reserveSlotSchema>["params"] &
   z.infer<typeof reserveSlotSchema>["body"];
-
-

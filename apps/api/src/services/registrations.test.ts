@@ -96,9 +96,6 @@ const mockUser = {
   role: "user",
 };
 
-
-
-
 const mockReservedBooking = {
   id: "REG-1001",
   type: "individual" as const,
@@ -111,6 +108,8 @@ const mockReservedBooking = {
   cancelledAt: null,
   confirmationEmailSent: false,
   createdAt: new Date(),
+  isCheckedIn: false,
+  checkedInAt: null,
 };
 
 const mockConfirmedBooking = {

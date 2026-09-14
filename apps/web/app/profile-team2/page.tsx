@@ -1,10 +1,5 @@
-import { ProfileTeam2 } from "@/components/profile/profile-team2/ProfileTeam2";
-
-export const metadata = {
-  title: "Team Profile | LaserTag",
-  description: "Check your team status and team pass",
-};
+import { redirect } from "next/navigation";
 
 export default function ProfileTeam2Page() {
-  return <ProfileTeam2 />;
+  redirect("/profile");
 }
