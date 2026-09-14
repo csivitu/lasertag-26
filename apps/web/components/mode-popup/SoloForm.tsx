@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
+import { useSession } from "@/lib/auth-client";
 
 export function SoloForm() {
+  const router = useRouter();
+  const { data: session } = useSession();
+
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
@@ -12,7 +17,18 @@ export function SoloForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (session?.user) {
+      if (session.user.name && !fullName) {
+        setFullName(session.user.name);
+      }
+      if (session.user.email && !emailId) {
+        setEmailId(session.user.email);
+      }
+    }
+  }, [session, fullName, emailId]);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
@@ -27,7 +43,31 @@ export function SoloForm() {
     }
 
     setStatus("submitting");
-    window.setTimeout(() => setStatus("success"), 700);
+
+    try {
+      // Store registration data in localStorage and sessionStorage for the subsequent slot booking step
+      const soloPayload = {
+        fullName: fullName.trim(),
+        registrationNumber: registrationNumber.trim(),
+        email: emailId.trim(),
+        phoneNumber: phoneNumber.trim(),
+        type: "individual",
+      };
+      
+      localStorage.setItem("lasertag_selected_mode", "solo");
+      sessionStorage.setItem("lasertag_selected_mode", "solo");
+      localStorage.setItem("lasertag_onboarding_solo", JSON.stringify(soloPayload));
+      sessionStorage.setItem("lasertag_onboarding_solo", JSON.stringify(soloPayload));
+
+      setStatus("success");
+      setTimeout(() => {
+        router.push("/slot-booking");
+      }, 600);
+    } catch (err: unknown) {
+      setStatus("idle");
+      const message = err instanceof Error ? err.message : "Failed to proceed to slot booking.";
+      setError(message);
+    }
   }
 
   return (
@@ -45,17 +85,14 @@ export function SoloForm() {
       {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
       {status === "success" && (
         <p className="mode-popup-form-success" role="status">
-          Registration submitted successfully. We&apos;ll see you at the arena!
+          Profile recorded! Proceeding to slot booking arena...
         </p>
       )}
-      <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
+      <div style={{ marginTop: "4px" }}>
         <PixelButton
           type="submit"
-          label={status === "submitting" ? "Submitting..." : status === "success" ? "Submitted" : "Submit"}
-          interaction="simple"
-          className="w-[240px]"
-          labelClassName="text-[13px]"
-          disabled={status === "submitting" || status === "success"}
+          label={status === "submitting" ? "RECORDING..." : "CONFIRM PROFILE"}
+          disabled={status === "submitting"}
         />
       </div>
     </form>

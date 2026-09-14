@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
@@ -36,6 +37,7 @@ const inputStyle: CSSProperties = {
 };
 
 export function JoinTeamForm() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
@@ -64,13 +66,30 @@ export function JoinTeamForm() {
       return;
     }
 
-    if (!/^[A-Z]{6}$/.test(teamCode)) {
+    const cleanCode = teamCode.trim().toUpperCase();
+
+    if (!/^[A-Z]{6}$/.test(cleanCode)) {
       setError("Team codes contain exactly 6 letters.");
       return;
     }
 
     setStatus("submitting");
-    window.setTimeout(() => setStatus("success"), 700);
+
+    const teamPayload = {
+      teamCode: cleanCode,
+      isLeader: false,
+    };
+
+    localStorage.setItem("lasertag_selected_mode", "team");
+    sessionStorage.setItem("lasertag_selected_mode", "team");
+    localStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+    sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+
+    setStatus("success");
+    window.setTimeout(() => {
+      // Check team's pass / profile
+      router.push("/profile");
+    }, 700);
   }
 
   return (
@@ -110,7 +129,7 @@ export function JoinTeamForm() {
         {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
         {status === "success" && (
           <p className="mode-popup-form-success" role="status">
-            Request submitted! You&apos;ve been added to the team flow.
+            Request submitted! You&apos;ve joined the team flow.
           </p>
         )}
       </div>
@@ -122,7 +141,7 @@ export function JoinTeamForm() {
           label={status === "submitting" ? "Joining..." : status === "success" ? "Joined" : "Join Team"}
           interaction="simple"
           className="w-[240px]"
-          labelClassName="text-[13px]"
+          labelClassName="text-[13px] cursor-pointer"
           disabled={status === "submitting" || status === "success"}
         />
       </div>

@@ -1,46 +1,21 @@
+"use client";
+
 import Image from "next/image";
-
-interface DetailTileProps {
-  icon: string;
-  label: string;
-  value: string;
-  labelW: string;
-  labelAspect: string;
-  valueW: string;
-  valueAspect: string;
-  alt: string;
-}
-
-function DetailTile({
-  icon,
-  label,
-  value,
-  labelW,
-  labelAspect,
-  valueW,
-  valueAspect,
-  alt,
-}: DetailTileProps) {
-  return (
-    <div className="flex items-center gap-3 sm:gap-4 pl-2">
-      <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0">
-        <Image src={icon} alt="" fill className="object-contain" />
-      </div>
-      <div className="flex flex-col justify-center gap-1">
-        <div className={`relative h-4 sm:h-4.5 ${labelW} ${labelAspect}`}>
-          <Image src={label} alt="" fill className="object-contain object-left" />
-        </div>
-        <div className={`relative h-3.5 sm:h-4 ${valueW} ${valueAspect}`}>
-          <Image src={value} alt={alt} fill className="object-contain object-left" />
-        </div>
-      </div>
-    </div>
-  );
-}
+import { PassDetailItem } from "../shared/PassDetailItem";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useSession } from "@/lib/auth-client";
 
 export function PlayerInfoSection() {
+  const { data: session } = useSession();
+  const { profile } = useUserProfile();
+
+  const playerName = profile?.name || session?.user?.name || "OPERATIVE";
+  const playerEmail = profile?.email || session?.user?.email || "N/A";
+  const playerPhone = profile?.phone || "N/A";
+  const regNo = profile?.activeRegistration?.id || "N/A";
+
   return (
-    <div className="flex flex-col h-full py-4 px-3 sm:px-5">
+    <div className="flex flex-col h-full py-4 px-3 sm:px-5 select-none">
       {/* Header wordmark: PLAYER INFO */}
       <div className="mb-3 sm:mb-4">
         <div className="relative w-40 sm:w-48 aspect-[302/25]">
@@ -49,6 +24,7 @@ export function PlayerInfoSection() {
             alt="PLAYER INFO"
             fill
             className="object-contain object-left"
+            priority
           />
         </div>
       </div>
@@ -56,15 +32,10 @@ export function PlayerInfoSection() {
       {/* Single column stacked list */}
       <div className="flex flex-col justify-between flex-1 gap-2">
         {/* Row 1: PLAYER */}
-        <DetailTile
+        <PassDetailItem
           icon="/profile/profile-solo/playericon.svg"
-          label="/profile/profile-solo/PLAYER.svg"
-          value="/profile/profile-solo/Ananya Chaudhary.svg"
-          labelW="w-20 sm:w-30"
-          labelAspect="aspect-[141/21]"
-          valueW="w-40 sm:w-80"
-          valueAspect="aspect-[176/19]"
-          alt="Ananya Chaudhary"
+          label="PLAYER"
+          value={playerName}
         />
 
         {/* Divider */}
@@ -78,15 +49,10 @@ export function PlayerInfoSection() {
         </div>
 
         {/* Row 2: REG. No. */}
-        <DetailTile
+        <PassDetailItem
           icon="/profile/profile-solo/Group 750.svg"
-          label="/profile/profile-solo/REG. No..svg"
-          value="/profile/profile-solo/25BCE0111.svg"
-          labelW="w-24 sm:w-50"
-          labelAspect="aspect-[180/21]"
-          valueW="w-20 sm:w-30"
-          valueAspect="aspect-[105/14]"
-          alt="25BCE0111"
+          label="REG. NO."
+          value={regNo}
         />
 
         {/* Divider */}
@@ -100,15 +66,10 @@ export function PlayerInfoSection() {
         </div>
 
         {/* Row 3: EMAIL ID */}
-        <DetailTile
+        <PassDetailItem
           icon="/profile/profile-solo/Vector (3).svg"
-          label="/profile/profile-solo/EMAIL ID.svg"
-          value="/profile/profile-solo/abc@gmail.com.svg"
-          labelW="w-24 sm:w-50"
-          labelAspect="aspect-[189/21]"
-          valueW="w-28 sm:w-30"
-          valueAspect="aspect-[146/19]"
-          alt="abc@gmail.com"
+          label="EMAIL ID"
+          value={playerEmail}
         />
 
         {/* Divider */}
@@ -122,15 +83,10 @@ export function PlayerInfoSection() {
         </div>
 
         {/* Row 4: PHONE NO. */}
-        <DetailTile
+        <PassDetailItem
           icon="/profile/profile-solo/Group 752.svg"
-          label="/profile/profile-solo/PHONE NO. (1).svg"
-          value="/profile/profile-solo/9863547243.svg"
-          labelW="w-26 sm:w-50"
-          labelAspect="aspect-[204/21]"
-          valueW="w-20 sm:w-30"
-          valueAspect="aspect-[114/14]"
-          alt="9863547243"
+          label="PHONE NO."
+          value={playerPhone}
         />
       </div>
     </div>

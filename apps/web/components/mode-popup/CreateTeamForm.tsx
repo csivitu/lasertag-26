@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
@@ -44,6 +45,7 @@ function generateCode(): string {
 }
 
 export function CreateTeamForm() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
@@ -53,7 +55,6 @@ export function CreateTeamForm() {
   const [error, setError] = useState("");
 
   // Generated once when the component mounts; frozen for the session.
-  // TODO: swap with API-returned code once backend is ready.
   const teamCode = useMemo(() => generateCode(), []);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -77,7 +78,22 @@ export function CreateTeamForm() {
     }
 
     setStatus("submitting");
-    window.setTimeout(() => setStatus("success"), 700);
+
+    const teamPayload = {
+      teamCode,
+      teamName: teamName.trim(),
+      isLeader: true,
+    };
+
+    localStorage.setItem("lasertag_selected_mode", "team");
+    sessionStorage.setItem("lasertag_selected_mode", "team");
+    localStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+    sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+
+    setStatus("success");
+    window.setTimeout(() => {
+      router.push("/slot-booking");
+    }, 700);
   }
 
   return (
@@ -156,7 +172,7 @@ export function CreateTeamForm() {
             label={status === "submitting" ? "Creating..." : status === "success" ? "Created" : "Create Team"}
             interaction="simple"
             className="w-full max-w-[240px]"
-            labelClassName="text-[clamp(10px,2.4vw,13px)]"
+            labelClassName="text-[clamp(10px,2.4vw,13px)] cursor-pointer"
             disabled={status === "submitting" || status === "success"}
           />
         </div>
