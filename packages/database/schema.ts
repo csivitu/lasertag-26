@@ -1,4 +1,4 @@
-import { user } from './auth-schema';
+import { relations, sql } from 'drizzle-orm';
 import {
   pgTable,
   pgEnum,
@@ -8,7 +8,11 @@ import {
   timestamp,
   integer,
   primaryKey,
+  index,
+  uniqueIndex,
+  check,
 } from 'drizzle-orm/pg-core';
+import { user } from './auth-schema';
 
 // 1. Enum Definitions
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
@@ -23,26 +27,40 @@ export const bookingStatusEnum = pgEnum('booking_status', [
 export const users = user;
 export { user };
 
-// 3. Teams Table
-export const teams = pgTable('teams', {
-  teamCode: text('team_code').primaryKey(),
-  leaderId: text('leader_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  members: integer('members').notNull(),
-});
+// 2. Teams Table
+export const teams = pgTable(
+  'teams',
+  {
+    teamCode: text('team_code').primaryKey(),
+    name: text('name'),
+    leaderId: text('leader_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    members: integer('members').notNull(),
+  },
+  (table) => [
+    index('teams_leader_id_idx').on(table.leaderId),
+  ]
+);
 
-// 4. Slots Table
-// PostgreSQL Exclusion Constraint enforced at DB level:
+// 3. Slots Table
+// PostgreSQL Exclusion Constraint enforced at DB level via GiST index:
 // CONSTRAINT no_overlapping_slots EXCLUDE USING gist (tsrange(start_time, end_time) WITH &&)
-export const slots = pgTable('slots', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  startTime: timestamp('start_time').notNull(),
-  endTime: timestamp('end_time').notNull(),
-  capacity: integer('capacity').notNull(),
-});
+export const slots = pgTable(
+  'slots',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    startTime: timestamp('start_time').notNull(),
+    endTime: timestamp('end_time').notNull(),
+    capacity: integer('capacity').notNull(),
+  },
+  (table) => [
+    index('slots_start_time_idx').on(table.startTime),
+    check('slots_positive_capacity', sql`${table.capacity} >= 0`),
+  ]
+);
 
-// 5. Team Members Table (Junction Table with Composite PK)
+// 4. Team Members Table (Junction Table with Composite PK & 1-Team-Per-User Constraint)
 export const teamMembers = pgTable(
   'team_members',
   {
@@ -58,27 +76,87 @@ export const teamMembers = pgTable(
       columns: [table.teamCode, table.userId],
       name: 'team_members_team_code_user_id_pk',
     }),
+    uniqueIndex('team_members_single_user_idx').on(table.userId),
+    index('team_members_team_code_idx').on(table.teamCode),
   ]
 );
 
-// 6. Bookings Table
-export const bookings = pgTable('bookings', {
-  id: text('id').primaryKey(),
-  type: bookingTypeEnum('type').notNull(),
-  status: bookingStatusEnum('status').notNull().default('reserved'),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  teamCode: text('team_code').references(() => teams.teamCode, {
-    onDelete: 'set null',
+// 5. Bookings / Battle Pass Tickets Table
+export const bookings = pgTable(
+  'bookings',
+  {
+    id: text('id').primaryKey(),
+    type: bookingTypeEnum('type').notNull(),
+    status: bookingStatusEnum('status').notNull().default('reserved'),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    teamCode: text('team_code').references(() => teams.teamCode, {
+      onDelete: 'set null',
+    }),
+    slotId: uuid('slot_id')
+      .notNull()
+      .references(() => slots.id, { onDelete: 'cascade' }),
+
+    // Arena Pass, Verification & Check-in
+    qrToken: text('qr_token'),
+    isCheckedIn: boolean('is_checked_in').notNull().default(false),
+    checkedInAt: timestamp('checked_in_at'),
+
+    confirmedAt: timestamp('confirmed_at'),
+    cancelledAt: timestamp('cancelled_at'),
+    confirmationEmailSent: boolean('confirmation_email_sent')
+      .notNull()
+      .default(false),
+  },
+  (table) => [
+    index('bookings_user_id_idx').on(table.userId),
+    index('bookings_slot_id_idx').on(table.slotId),
+    index('bookings_team_code_idx').on(table.teamCode),
+    index('bookings_qr_token_idx').on(table.qrToken),
+    index('bookings_status_idx').on(table.status),
+    uniqueIndex('bookings_active_user_slot_idx')
+      .on(table.userId, table.slotId)
+      .where(sql`status IN ('reserved', 'confirmed')`),
+  ]
+);
+
+// 6. Drizzle ORM Relations
+export const slotsRelations = relations(slots, ({ many }) => ({
+  bookings: many(bookings),
+}));
+
+export const teamsRelations = relations(teams, ({ one, many }) => ({
+  leader: one(user, {
+    fields: [teams.leaderId],
+    references: [user.id],
   }),
-  slotId: uuid('slot_id')
-    .notNull()
-    .references(() => slots.id, { onDelete: 'cascade' }),
-  qrToken: text('qr_token'),
-  confirmedAt: timestamp('confirmed_at'),
-  cancelledAt: timestamp('cancelled_at'),
-  confirmationEmailSent: boolean('confirmation_email_sent')
-    .notNull()
-    .default(false),
-});
+  members: many(teamMembers),
+  bookings: many(bookings),
+}));
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamMembers.teamCode],
+    references: [teams.teamCode],
+  }),
+  user: one(user, {
+    fields: [teamMembers.userId],
+    references: [user.id],
+  }),
+}));
+
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+  user: one(user, {
+    fields: [bookings.userId],
+    references: [user.id],
+  }),
+  slot: one(slots, {
+    fields: [bookings.slotId],
+    references: [slots.id],
+  }),
+  team: one(teams, {
+    fields: [bookings.teamCode],
+    references: [teams.teamCode],
+  }),
+}));

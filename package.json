@@ -15,6 +15,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
+    "db:clean": "bun run apps/api/src/scripts/clean-db.ts",
+    "db:seed": "bun run apps/api/src/seed.ts",
+    "db:reset": "bun run db:clean && bun run db:seed",
     "prepare": "husky"
   },
   "lint-staged": {
