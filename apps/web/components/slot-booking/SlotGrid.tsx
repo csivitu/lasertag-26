@@ -10,7 +10,6 @@ interface SlotGridProps {
   selectedSlot?: number;
   slots: Slot[];
   isLoading: boolean;
-  reserveSlot: (slotId: string) => Promise<void>;
   onPageChange: (page: number) => void;
   onSelectSlot: (slot: { day: string; index: number }) => void;
 }
@@ -21,7 +20,6 @@ export function SlotGrid({
   selectedSlot,
   slots,
   isLoading,
-  reserveSlot,
   onPageChange,
   onSelectSlot,
 }: SlotGridProps) {
@@ -53,7 +51,7 @@ export function SlotGrid({
               time={slot.time}
               seatsLabel={
                 isSelected
-                  ? "Your Booking"
+                  ? "Selected Slot"
                   : isFull
                   ? "Fully Booked"
                   : `${slot.capacity} Seats`
@@ -64,7 +62,6 @@ export function SlotGrid({
                   ? undefined
                   : () => {
                       onSelectSlot({ day: activeDay, index: slot.index });
-                      void reserveSlot(slot.id);
                     }
               }
               isSelected={isSelected}

@@ -6,7 +6,11 @@ import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
 import { useSession } from "@/lib/auth-client";
 
-export function SoloForm() {
+interface SoloFormProps {
+  onSuccess?: () => void;
+}
+
+export function SoloForm({ onSuccess }: SoloFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -53,7 +57,11 @@ export function SoloForm() {
         phoneNumber: phoneNumber.trim(),
         type: "individual",
       };
-      
+
+      // Clear any prior team state so user isn't mistakenly treated as a team reservation
+      localStorage.removeItem("lasertag_active_team");
+      sessionStorage.removeItem("lasertag_active_team");
+
       localStorage.setItem("lasertag_selected_mode", "solo");
       sessionStorage.setItem("lasertag_selected_mode", "solo");
       localStorage.setItem("lasertag_onboarding_solo", JSON.stringify(soloPayload));
@@ -61,7 +69,11 @@ export function SoloForm() {
 
       setStatus("success");
       setTimeout(() => {
-        router.push("/slot-booking");
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push("/slot-booking");
+        }
       }, 600);
     } catch (err: unknown) {
       setStatus("idle");

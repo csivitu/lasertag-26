@@ -8,6 +8,7 @@ import { ProfileTeam2 } from "@/components/profile/profile-team2/ProfileTeam2";
 import { Starfield } from "@/components/hero/Starfield";
 import { HeroHeader } from "@/components/hero/HeroHeader";
 import { AuthGate } from "@/components/auth/AuthGate";
+import { ModeRequiredModal } from "@/components/mode-popup/ModeRequiredModal";
 
 function ProfileContent() {
   const { profile, isLoading: profileLoading } = useUserProfile();
@@ -45,7 +46,24 @@ function ProfileContent() {
         localStorage.getItem("lasertag_confirmed_slot")))
   );
 
-  // If operative has not booked a slot yet, display appropriate requirement message
+  // If operative has not selected a mode yet, block access with the theme modal
+  if (!hasMode) {
+    return (
+      <div className="relative isolate min-h-screen flex flex-col items-center justify-between bg-[#08080d] text-white pb-12 text-center">
+        <Starfield />
+        <HeroHeader />
+        <ModeRequiredModal
+          isOpen={true}
+          title="ARENA COMBAT MODE REQUIRED"
+          description="OPERATIVE, YOUR DIGITAL BATTLE PASS CANNOT BE GENERATED WITHOUT AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST."
+          redirectUrl="/register"
+          buttonText="SELECT COMBAT MODE →"
+        />
+      </div>
+    );
+  }
+
+  // If operative has selected a mode but not booked a slot yet
   if (!hasBooking) {
     return (
       <div className="relative isolate min-h-screen flex flex-col items-center justify-between bg-[#08080d] text-white pb-12 text-center">
@@ -60,20 +78,18 @@ function ProfileContent() {
             className="font-heading text-2xl text-[#FEDC02] uppercase tracking-wider"
             style={{ textShadow: "-2px 0 0 #E5349E" }}
           >
-            {hasMode ? "SLOT BOOKING REQUIRED" : "NO BATTLE PASS FOUND"}
+            SLOT BOOKING REQUIRED
           </h2>
 
           <p className="font-pixel text-xs text-white/80 leading-relaxed max-w-md">
-            {hasMode
-              ? "OPERATIVE, YOU HAVE REGISTERED YOUR COMBAT MODE, BUT YOU MUST BOOK AN ARENA TIME SLOT TO SECURE YOUR DIGITAL BATTLE PASS."
-              : "OPERATIVE, YOU MUST FIRST SELECT YOUR ARENA COMBAT MODE (SOLO OR TEAM) BEFORE BOOKING A TIME SLOT AND GENERATING YOUR PASS."}
+            OPERATIVE, YOU HAVE REGISTERED YOUR COMBAT PROTOCOL, BUT YOU MUST BOOK AN ARENA TIME SLOT TO SECURE YOUR DIGITAL BATTLE PASS.
           </p>
 
           <Link
-            href={hasMode ? "/slot-booking" : "/register"}
+            href="/slot-booking"
             className="font-pixel text-xs py-3.5 px-7 bg-[#FEDC02] text-black font-bold border-2 border-white hover:bg-[#ffe733] rounded-lg uppercase tracking-wider transition-all hover:scale-105 cursor-pointer shadow-[0_3px_0_#9c8400]"
           >
-            {hasMode ? "BOOK A SLOT NOW →" : "SELECT ARENA MODE →"}
+            BOOK A SLOT NOW →
           </Link>
         </div>
       </div>
@@ -93,10 +109,7 @@ function ProfileContent() {
 
 export default function ProfileGateway() {
   return (
-    <AuthGate
-      title="RESTRICTED ACCESS"
-      message="PLEASE SIGN IN TO IDENTIFY OPERATIVE STATUS AND VIEW YOUR DIGITAL BATTLE PASS."
-    >
+    <AuthGate>
       <UserProfileProvider>
         <ProfileContent />
       </UserProfileProvider>

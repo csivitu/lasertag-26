@@ -15,7 +15,7 @@ export interface Slot {
   endTime: string;
 }
 
-export interface RawApiSlot {
+interface RawApiSlot {
   id: string;
   startTime: string;
   endTime: string;
@@ -31,6 +31,7 @@ export function formatSlotTime(isoString: string): string {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
+      timeZone: "UTC",
     });
   } catch {
     return isoString;
@@ -43,7 +44,7 @@ export function transformApiSlots(apiSlots: RawApiSlot[]): Slot[] {
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   );
 
-  // Group by date (e.g. "2026-12-18")
+  // Group by UTC date (e.g. "2026-09-18")
   const dateGroups = new Map<string, RawApiSlot[]>();
   for (const slot of sorted) {
     const d = new Date(slot.startTime);
@@ -59,8 +60,11 @@ export function transformApiSlots(apiSlots: RawApiSlot[]): Slot[] {
   for (const [dateKey, group] of dateGroups.entries()) {
     group.forEach((slot, indexInDay) => {
       const d = new Date(slot.startTime);
-      const day = String(d.getDate()).padStart(2, "0");
-      const month = d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      const month = d.toLocaleDateString("en-US", {
+        month: "short",
+        timeZone: "UTC",
+      }).toUpperCase();
       const page = Math.floor(indexInDay / SLOTS_PER_PAGE) + 1;
       const index = indexInDay % SLOTS_PER_PAGE;
 
@@ -138,6 +142,7 @@ export function useSlots() {
         const res = await fetch(`${apiBaseUrl}/slots/${slotId}/reserve`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             user_id: options.userId,
             type: options.type,
@@ -147,7 +152,11 @@ export function useSlots() {
 
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.message || "Failed to reserve slot in database");
+          throw new Error(
+            errBody.error ||
+              errBody.message ||
+              "Failed to reserve slot in database"
+          );
         }
       }
 

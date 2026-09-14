@@ -9,6 +9,7 @@ import { JoinTeamForm } from "./JoinTeamForm";
 interface ModePopupMobileProps {
   mode: PopupMode;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 /** On mobile the modal takes most of the screen width, scrolls internally. */
@@ -25,12 +26,13 @@ const overlayStyle: CSSProperties = {
 
 const cardContainerStyle: CSSProperties = {
   background: borderBg(MODAL_BORDER_SVG),
-  padding: "36px 24px 24px",
+  padding: "36px 20px 24px",
   width: "100%",
   maxWidth: "420px",
   maxHeight: "calc(100dvh - 32px)",
-  overflow: "hidden",
+  overflowY: "auto",
   boxSizing: "border-box",
+  position: "relative",
 };
 
 const titleStyle: CSSProperties = {
@@ -43,7 +45,14 @@ const titleStyle: CSSProperties = {
   lineHeight: 1.5,
 };
 
-export function ModePopupMobile({ mode, onClose }: ModePopupMobileProps) {
+export function ModePopupMobile({ mode, onClose, onSuccess }: ModePopupMobileProps) {
+  const modeTitle =
+    mode === "solo"
+      ? "SOLO OPERATIVE"
+      : mode === "create_team"
+      ? "CREATE SQUAD TEAM"
+      : "JOIN SQUAD TEAM";
+
   return (
     <div
       style={overlayStyle}
@@ -53,14 +62,23 @@ export function ModePopupMobile({ mode, onClose }: ModePopupMobileProps) {
       aria-label="Registration details"
     >
       <div
-        className="mode-popup-mobile-card"
+        className="mode-popup-mobile-card relative"
         style={cardContainerStyle}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={titleStyle}>ENTER{"\n"}DETAILS</h2>
-        {mode === "solo" && <SoloForm />}
-        {mode === "create_team" && <CreateTeamForm />}
-        {mode === "join_team" && <JoinTeamForm />}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close modal"
+          className="absolute top-3 right-4 text-white/60 hover:text-white font-mono text-lg cursor-pointer transition-colors p-1"
+        >
+          ✕
+        </button>
+
+        <h2 style={titleStyle}>{modeTitle}</h2>
+        {mode === "solo" && <SoloForm onSuccess={onSuccess} />}
+        {mode === "create_team" && <CreateTeamForm onSuccess={onSuccess} />}
+        {mode === "join_team" && <JoinTeamForm onSuccess={onSuccess} />}
       </div>
     </div>
   );

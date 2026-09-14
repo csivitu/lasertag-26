@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
 import { INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
+import { useSession, apiBaseUrl } from "@/lib/auth-client";
 
 const labelStyle: CSSProperties = {
   fontFamily: "var(--ft-pixel), monospace",
@@ -36,8 +37,13 @@ const inputStyle: CSSProperties = {
   lineHeight: 1.4,
 };
 
-export function JoinTeamForm() {
+interface JoinTeamFormProps {
+  onSuccess?: () => void;
+}
+
+export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
@@ -46,9 +52,25 @@ export function JoinTeamForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (session?.user) {
+      if (session.user.name && !fullName) {
+        setFullName(session.user.name);
+      }
+      if (session.user.email && !emailId) {
+        setEmailId(session.user.email);
+      }
+    }
+  }, [session, fullName, emailId]);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+
+    if (!session?.user?.id) {
+      setError("Please sign in before joining a team.");
+      return;
+    }
 
     if (
       !fullName.trim() ||
@@ -75,21 +97,48 @@ export function JoinTeamForm() {
 
     setStatus("submitting");
 
-    const teamPayload = {
-      teamCode: cleanCode,
-      isLeader: false,
-    };
+    try {
+      const res = await fetch(`${apiBaseUrl}/teams/${cleanCode}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          user_id: session.user.id,
+        }),
+      });
 
-    localStorage.setItem("lasertag_selected_mode", "team");
-    sessionStorage.setItem("lasertag_selected_mode", "team");
-    localStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
-    sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || data.message || "Failed to join team in arena database");
+      }
 
-    setStatus("success");
-    window.setTimeout(() => {
-      // Check team's pass / profile
-      router.push("/profile");
-    }, 700);
+      const teamPayload = {
+        teamCode: cleanCode,
+        isLeader: false,
+      };
+
+      // Clear any previous solo artifacts to cleanly switch to team mode
+      localStorage.removeItem("lasertag_onboarding_solo");
+      sessionStorage.removeItem("lasertag_onboarding_solo");
+
+      localStorage.setItem("lasertag_selected_mode", "team");
+      sessionStorage.setItem("lasertag_selected_mode", "team");
+      localStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+      sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+
+      setStatus("success");
+      window.setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push("/profile");
+        }
+      }, 700);
+    } catch (err: unknown) {
+      setStatus("idle");
+      const msg = err instanceof Error ? err.message : "Failed to join team";
+      setError(msg);
+    }
   }
 
   return (
@@ -115,33 +164,28 @@ export function JoinTeamForm() {
             id="popup-join-code"
             type="text"
             value={teamCode}
-            onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
-            placeholder="GTFXWY"
+            onChange={(e) => setTeamCode(e.target.value)}
+            placeholder="ABCDEF"
+            maxLength={6}
             className="mode-popup-input"
-            style={{
-              ...inputStyle,
-              textTransform: "uppercase",
-            }}
+            style={{ ...inputStyle, letterSpacing: "0.12em", textTransform: "uppercase" }}
             autoComplete="off"
-            spellCheck={false}
           />
         </div>
-        {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
-        {status === "success" && (
-          <p className="mode-popup-form-success" role="status">
-            Request submitted! You&apos;ve joined the team flow.
-          </p>
-        )}
       </div>
 
-      {/* Join Team Button (centered below) */}
-      <div className="mode-popup-submit" style={{ display: "flex", justifyContent: "center", marginTop: "10px" }}>
+      {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
+      {status === "success" && (
+        <p className="mode-popup-form-success" role="status">
+          Joined team {teamCode.trim().toUpperCase()}! Loading operative pass...
+        </p>
+      )}
+
+      <div style={{ marginTop: "4px" }}>
         <PixelButton
           type="submit"
-          label={status === "submitting" ? "Joining..." : status === "success" ? "Joined" : "Join Team"}
+          label={status === "submitting" ? "JOINING..." : status === "success" ? "JOINED" : "JOIN TEAM"}
           interaction="simple"
-          className="w-[240px]"
-          labelClassName="text-[13px] cursor-pointer"
           disabled={status === "submitting" || status === "success"}
         />
       </div>
