@@ -1,9 +1,5 @@
-import { SelectMode } from "@/components/select-mode/SelectMode";
+import { redirect } from "next/navigation";
 
 export default function SelectModePage() {
-  return (
-    <div className="flex flex-1 flex-col">
-      <SelectMode />
-    </div>
-  );
+  redirect("/register");
 }

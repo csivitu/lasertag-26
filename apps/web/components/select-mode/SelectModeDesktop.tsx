@@ -3,6 +3,7 @@
  
 import React from "react";
 import { Starfield } from "../hero/Starfield"; 
+import { HeroHeader } from "../hero/HeroHeader";
 import type { PopupMode } from "../mode-popup/ModePopup";
 
 interface SelectModeDesktopProps {
@@ -12,16 +13,19 @@ interface SelectModeDesktopProps {
 export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) { 
   return ( 
     <section 
-      className="relative hidden h-[100svh] min-h-[640px] overflow-hidden bg-[#08080d] lg:block font-pixel" 
+      className="relative hidden min-h-[100svh] overflow-hidden bg-[#08080d] lg:flex lg:flex-col justify-between font-pixel pb-8 select-none" 
     > 
       {/* Background Decor */}
       <Starfield /> 
+
+      {/* Top Retro Navigation Header */}
+      <HeroHeader />
  
       {/* Main Content Layout */} 
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-10 pt-16"> 
+      <div className="relative z-10 my-auto flex flex-col items-center justify-center p-8"> 
          
         {/* Title */} 
-        <div className="mb-16 w-[600px] max-w-full"> 
+        <div className="mb-10 w-[600px] max-w-full"> 
           <img  
             src="/select-mode/SELECT YOUR MODE.svg"  
             alt="SELECT YOUR MODE"  

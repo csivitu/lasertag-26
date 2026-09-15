@@ -34,11 +34,18 @@ export function errorHandler(
     return;
   }
 
-  if (err instanceof AppError) {
-    res.status(err.status).json({
-      error: err.message,
-      code: err.code,
-      ...err.detail,
+  if (
+    err instanceof AppError ||
+    (Boolean(err) &&
+      typeof err === "object" &&
+      "status" in (err as Record<string, unknown>) &&
+      typeof (err as Record<string, unknown>).status === "number")
+  ) {
+    const appErr = err as AppError;
+    res.status(appErr.status).json({
+      error: appErr.message,
+      code: appErr.code || "error",
+      ...appErr.detail,
     });
     return;
   }

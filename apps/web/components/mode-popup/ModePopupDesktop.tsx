@@ -9,27 +9,15 @@ import { JoinTeamForm } from "./JoinTeamForm";
 interface ModePopupDesktopProps {
   mode: PopupMode;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-/**
- * Card dimensions — traced from the Figma desktop mockup.
- *
- * The design shows the card occupying roughly 59% of a ~1024px-wide viewport
- * (≈603px), with a height that fits the content + generous vertical padding.
- * The box is notably wider than it is tall (landscape rectangle), so we fix
- * the width at 600px and let height be driven by content + padding.
- *
- * The SVG border (boxborder.svg, 864×761 viewBox) scales via
- * preserveAspectRatio="none" so it always fills the card exactly.
- */
 const cardStyle: CSSProperties = {
   position: "relative",
   background: borderBg(MODAL_BORDER_SVG),
-  /* Middleground padding to match reference */
   padding: "36px 44px 32px",
   width: "540px",
   maxWidth: "92vw",
-  /* No fixed height — grows with content */
   maxHeight: "92vh",
   overflowY: "auto",
   boxSizing: "border-box",
@@ -55,7 +43,14 @@ const overlayStyle: CSSProperties = {
   zIndex: 50,
 };
 
-export function ModePopupDesktop({ mode, onClose }: ModePopupDesktopProps) {
+export function ModePopupDesktop({ mode, onClose, onSuccess }: ModePopupDesktopProps) {
+  const modeTitle =
+    mode === "solo"
+      ? "SOLO OPERATIVE REGISTRATION"
+      : mode === "create_team"
+      ? "CREATE SQUAD TEAM"
+      : "JOIN SQUAD TEAM";
+
   return (
     <div
       style={overlayStyle}
@@ -67,11 +62,21 @@ export function ModePopupDesktop({ mode, onClose }: ModePopupDesktopProps) {
       <div
         style={cardStyle}
         onClick={(e) => e.stopPropagation()}
+        className="relative"
       >
-        <h2 style={titleStyle}>ENTER DETAILS</h2>
-        {mode === "solo" && <SoloForm />}
-        {mode === "create_team" && <CreateTeamForm />}
-        {mode === "join_team" && <JoinTeamForm />}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close modal"
+          className="absolute top-4 right-5 text-white/60 hover:text-white font-mono text-xl cursor-pointer transition-colors p-1"
+        >
+          ✕
+        </button>
+
+        <h2 style={titleStyle}>{modeTitle}</h2>
+        {mode === "solo" && <SoloForm onSuccess={onSuccess} />}
+        {mode === "create_team" && <CreateTeamForm onSuccess={onSuccess} />}
+        {mode === "join_team" && <JoinTeamForm onSuccess={onSuccess} />}
       </div>
     </div>
   );

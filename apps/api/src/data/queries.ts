@@ -304,3 +304,42 @@ export async function markUserCheckedIn(userId: string) {
 
   return updated;
 }
+
+export async function findTeamForUser(userId: string) {
+  const [membership] = await db
+    .select()
+    .from(teamMembers)
+    .where(eq(teamMembers.userId, userId));
+
+  if (!membership) return null;
+
+  const [team] = await db
+    .select()
+    .from(teams)
+    .where(eq(teams.teamCode, membership.teamCode));
+
+  if (!team) return null;
+
+  const memberRows = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phNumber,
+    })
+    .from(teamMembers)
+    .innerJoin(user, eq(teamMembers.userId, user.id))
+    .where(eq(teamMembers.teamCode, membership.teamCode));
+
+  return {
+    teamCode: team.teamCode,
+    isLeader: team.leaderId === userId,
+    leaderId: team.leaderId,
+    memberCount: memberRows.length,
+    maxMembers: 5,
+    members: memberRows.map((m) => ({
+      ...m,
+      isLeader: m.id === team.leaderId,
+    })),
+  };
+}

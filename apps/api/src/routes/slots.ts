@@ -6,10 +6,8 @@ import { validateRequest } from "../middlewares/validate";
 import { reserveSlotSchema } from "../validations/slot.validation";
 
 /**
- * Participant-facing slots, carried over from `dev`. Admin slot CRUD lives at
- * /admin/slots (routes/admin.ts) behind the session gate — `dev`'s POST / and
- * DELETE /:slot_id are dropped here rather than duplicated, since that router
- * also covers bulk create, patch, and the capacity-vs-bookings rule.
+ * Public & Mobile Workstation Slot Endpoints.
+ * Connected directly to Neon PostgreSQL database via Drizzle ORM.
  */
 export const publicSlotsRouter = Router();
 
@@ -17,6 +15,34 @@ publicSlotsRouter.get(
   "/",
   asyncHandler(async (_req: Request, res: Response): Promise<void> => {
     res.status(200).json({ success: true, data: await slotController.getAllSlots() });
+  }),
+);
+
+publicSlotsRouter.post(
+  "/",
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const newSlot = await slotController.createSlot({
+      startTime: req.body.startTime,
+      endTime: req.body.endTime,
+      capacity: req.body.capacity || 10,
+    });
+    res.status(201).json({
+      success: true,
+      message: "Slot created successfully.",
+      data: newSlot,
+    });
+  }),
+);
+
+publicSlotsRouter.delete(
+  "/:slot_id",
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const result = await slotController.deleteSlot(req.params.slot_id as string);
+    res.status(200).json({
+      success: true,
+      message: "Slot deleted successfully.",
+      data: result,
+    });
   }),
 );
 

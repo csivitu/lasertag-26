@@ -6,7 +6,13 @@ import { playSound } from "@/lib/sound";
 
 type NavLink = { label: string; href: string };
 
-export function HeroMenu({ links }: { links: NavLink[] }) {
+export function HeroMenu({
+  links,
+  onNavClick,
+}: {
+  links: NavLink[];
+  onNavClick?: (label: string) => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -47,6 +53,10 @@ export function HeroMenu({ links }: { links: NavLink[] }) {
               href={link.href}
               onClick={(e) => {
                 playSound("navSelect", 0.5);
+                if (link.label === "SIGN IN" || link.label === "SIGN OUT") {
+                  e.preventDefault();
+                }
+                if (onNavClick) onNavClick(link.label);
                 setOpen(false);
                 if (link.href.startsWith("#")) {
                   const targetId = link.href.slice(1);
@@ -64,7 +74,7 @@ export function HeroMenu({ links }: { links: NavLink[] }) {
                   }
                 }
               }}
-              className="border-b border-white/10 px-5 py-4 font-pixel text-sm tracking-[1px] text-white outline-offset-[-2px] transition-colors last:border-b-0 focus-visible:outline-2 focus-visible:outline-accent active:text-accent"
+              className="border-b border-white/10 px-5 py-4 font-pixel text-sm tracking-[1px] text-white outline-offset-[-2px] transition-colors last:border-b-0 focus-visible:outline-2 focus-visible:outline-accent active:text-accent cursor-pointer"
             >
               {link.label}
             </a>
