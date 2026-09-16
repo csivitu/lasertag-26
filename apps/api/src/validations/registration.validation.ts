@@ -20,6 +20,21 @@ export const registrationQuerySchema = z.object({
     name: optionalFilter,
     phone: optionalFilter,
     email: optionalFilter,
+    /** Single-box typeahead: OR-matched across name/phone/reg no/email. */
+    q: optionalFilter,
+    /** Restrict to solo (individual) or team bookings. */
+    type: z.preprocess((value) => {
+      const raw = Array.isArray(value) ? value[0] : value;
+      return typeof raw === "string" && raw.trim() !== "" ? raw.trim() : undefined;
+    }, z.enum(["individual", "team"]).optional()),
+    limit: z.preprocess((value) => {
+      const raw = Array.isArray(value) ? value[0] : value;
+      if (typeof raw === "string" && raw.trim() !== "") {
+        const n = Number.parseInt(raw.trim(), 10);
+        return Number.isFinite(n) ? n : undefined;
+      }
+      return undefined;
+    }, z.number().int().min(1).max(100).optional()),
   }),
 });
 

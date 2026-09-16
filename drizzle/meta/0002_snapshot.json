@@ -1,5 +1,5 @@
 {
-  "id": "d2952a60-48e0-41b9-9b50-f8324a79b9a3",
+  "id": "15f943d4-0a23-4530-8867-a0ee1e6c1ffb",
   "prevId": "abb3a606-ad06-4a44-8681-bfc9e3ecac31",
   "version": "7",
   "dialect": "postgresql",
@@ -46,6 +46,13 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "slot_change_count": {
+          "name": "slot_change_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "qr_token": {
           "name": "qr_token",
@@ -283,13 +290,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
-        },
-        "is_hidden": {
-          "name": "is_hidden",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {
@@ -589,6 +589,109 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.verified_participants": {
+      "name": "verified_participants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "reg_number": {
+          "name": "reg_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'import'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "verified_participants_reg_number_uidx": {
+          "name": "verified_participants_reg_number_uidx",
+          "columns": [
+            {
+              "expression": "reg_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "verified_participants_email_uidx": {
+          "name": "verified_participants_email_uidx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "verified_participants_created_at_idx": {
+          "name": "verified_participants_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "verified_participants_has_identifier": {
+          "name": "verified_participants_has_identifier",
+          "value": "reg_number IS NOT NULL OR email IS NOT NULL"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.account": {

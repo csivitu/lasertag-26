@@ -108,9 +108,11 @@ export function useSlots() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSlots = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const fetchSlots = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) {
+      setIsLoading(true);
+      setError(null);
+    }
     try {
       const res = await fetch(`${apiBaseUrl}/slots`, {
         headers: {
@@ -135,7 +137,9 @@ export function useSlots() {
         err instanceof Error ? err.message : "Failed to load slots from server";
       setError(message);
     } finally {
-      setIsLoading(false);
+      if (!opts?.silent) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
@@ -155,16 +159,31 @@ export function useSlots() {
     setError(null);
     try {
       if (options?.userId && options?.type) {
-        const res = await fetch(`${apiBaseUrl}/slots/${slotId}/reserve`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            user_id: options.userId,
-            type: options.type,
-            team_code: options.teamCode,
-          }),
-        });
+        const postReserve = () =>
+          fetch(`${apiBaseUrl}/slots/${slotId}/reserve`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              user_id: options.userId,
+              type: options.type,
+              team_code: options.teamCode,
+            }),
+          });
+
+        let res: Response;
+        try {
+          res = await postReserve();
+        } catch {
+          // Network blip (fetch itself threw — no response received, so no
+          // seat could have been confirmed): one retry, then give up.
+          // HTTP error statuses never throw, so 4xx/409s are never retried.
+          try {
+            res = await postReserve();
+          } catch {
+            throw new Error("Network hiccup — please try again.");
+          }
+        }
 
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
@@ -185,6 +204,10 @@ export function useSlots() {
         )
       );
     } catch (err: unknown) {
+      // Counts on screen may be stale (someone else grabbed seats, or our
+      // optimistic decrement never applied) — quietly refresh from the DB
+      // so the grid never disagrees with the server.
+      await fetchSlots({ silent: true });
       const message =
         err instanceof Error ? err.message : "Failed to reserve slot";
       setError(message);

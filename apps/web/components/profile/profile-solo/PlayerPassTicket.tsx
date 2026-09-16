@@ -3,10 +3,12 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { QrCode } from "./QrCode";
+import { PixelButton } from "@/components/hero/PixelButton";
 import { PlayerPassStubLeft } from "./PlayerPassStubLeft";
 import { PlayerPassDetails } from "./PlayerPassDetails";
 import { PlayerPassStubRight } from "./PlayerPassStubRight";
 import { PassDetailItem } from "../shared/PassDetailItem";
+import { EditablePlayerName } from "./EditablePlayerName";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useSession } from "@/lib/auth-client";
 import { formatPassDate, formatPassTime } from "@/lib/formatPassDateTime";
@@ -33,15 +35,12 @@ export function PlayerPassTicket() {
       <div className="lg:hidden relative w-full max-w-sm mx-auto border-[3px] border-[#FEDC02] rounded-[1.5rem] bg-[#0b0b10] flex flex-col shadow-2xl">
         {/* Details Section */}
         <div className="flex flex-col gap-4 px-4 pt-8 pb-6 w-full">
-          <PassDetailItem
-            icon="/profile/profile-solo/playericon.svg"
-            label="PLAYER"
-            value={playerName}
-          />
+          <EditablePlayerName value={playerName} />
           <PassDetailItem
             icon="/profile/profile-solo/email.svg"
             label="EMAIL ID"
             value={playerEmail}
+            wrap
           />
           <PassDetailItem
             icon="/profile/profile-solo/regno.svg"
@@ -79,14 +78,18 @@ export function PlayerPassTicket() {
           <div className="relative p-2 sm:p-2.5 bg-white rounded-md shadow-lg border-2 border-black">
             <QrCode className="w-32 h-32" value={qrToken} />
           </div>
-          <button
-            type="button"
-            onClick={() => router.push("/slot-booking")}
-            className="w-full max-w-[180px] py-2.5 px-4 bg-[#f949cc] hover:bg-[#ff5be2] active:translate-y-[1px] text-white text-[11px] font-bold rounded-full border-[3px] border-[#ff7beb] shadow-[0_4px_0_#9c187d] transition-all uppercase tracking-wider text-center cursor-pointer"
-            style={{ fontFamily: "var(--font-pixel), monospace" }}
-          >
-            CHANGE SLOT
-          </button>
+          <div className="flex w-full max-w-[180px] flex-col items-center gap-1.5">
+            <PixelButton
+              label="CHANGE SLOT"
+              onClick={() => router.push("/slot-booking")}
+              interaction="hero"
+              className="w-full"
+              labelClassName="text-[11px] cursor-pointer"
+            />
+            <p className="font-pixel text-[8px] tracking-wider text-white/50 uppercase text-center leading-relaxed">
+              (Max 3 slot changes allowed)
+            </p>
+          </div>
         </div>
       </div>
 

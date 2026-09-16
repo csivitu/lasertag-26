@@ -1,15 +1,7 @@
-import { SelectMode } from "@/components/select-mode/SelectMode";
-import { AuthGate } from "@/components/auth/AuthGate";
+import { redirect } from "next/navigation";
 
+// DEPRECATED: team/select-mode flow disabled — sign-in goes straight to slot booking.
+// Kept for easy restore; direct visits redirect to booking.
 export default function SelectModePage() {
-  return (
-    <main className="relative min-h-screen bg-[#08080d]">
-      <AuthGate
-        title="RESTRICTED ACCESS"
-        message="PLEASE SIGN IN TO IDENTIFY OPERATIVE STATUS AND SELECT YOUR ARENA COMBAT MODE."
-      >
-        <SelectMode />
-      </AuthGate>
-    </main>
-  );
+  redirect("/slot-booking");
 }

@@ -7,15 +7,21 @@ import {
   LayoutDashboard,
   CalendarDays,
   QrCode,
-  Users,
+  // DEPRECATED: team feature disabled — re-add Users to restore Teams nav.
+  // Users,
   Search,
+  UserSearch,
+  ShieldCheck,
 } from "lucide-react";
 
 const NAV_MAIN = [
   { name: "Overview", href: "/analytics", icon: LayoutDashboard },
+  { name: "Solo Users", href: "/users", icon: UserSearch },
+  { name: "Verification", href: "/verification", icon: ShieldCheck },
   { name: "Slot Manager", href: "/slots", icon: CalendarDays },
   { name: "Check-In Station", href: "/checkin", icon: QrCode },
-  { name: "Team & Roster", href: "/teams", icon: Users },
+  // DEPRECATED: team feature disabled — uncomment to restore.
+  // { name: "Team & Roster", href: "/teams", icon: Users },
 ];
 
 export function Sidebar() {

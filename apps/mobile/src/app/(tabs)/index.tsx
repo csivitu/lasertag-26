@@ -14,7 +14,8 @@ import {
   RefreshCw,
   CalendarDays,
   QrCode,
-  Users,
+  // DEPRECATED: team feature disabled.
+  // Users,
   Clock,
   Zap,
 } from "lucide-react-native";
@@ -154,7 +155,8 @@ export default function OverviewScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* DEPRECATED: team feature disabled — uncomment to restore Team workstation. */}
+          {/* <TouchableOpacity
             style={styles.workstationCard}
             onPress={() => router.push("/(tabs)/teams")}
             activeOpacity={0.7}
@@ -168,7 +170,7 @@ export default function OverviewScreen() {
                 Search participant rosters & toggle check-in status
               </Text>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Active Game Slots Feed */}

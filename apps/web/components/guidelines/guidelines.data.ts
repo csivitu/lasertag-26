@@ -11,8 +11,10 @@ export const ruleCards: RuleCardData[] = [
     id: 1,
     accent: "pink",
     items: [
-      "Reserve your time on the CSI LaserTag website — sign in solo or create a team.",
-      "For Team, share the team code with up to 5 friends (must be registered on the graVITas website). Only the team leader can book a slot for the entire team.",
+      "Reserve your time on the CSI LaserTag website — sign in solo to book your slot.",
+      // DEPRECATED: team feature disabled — restore team copy below.
+      // "Reserve your time on the CSI LaserTag website — sign in solo or create a team.",
+      // "For Team, share the team code with up to 5 friends (must be registered on the graVITas website). Only the team leader can book a slot for the entire team.",
     ],
   },
   {

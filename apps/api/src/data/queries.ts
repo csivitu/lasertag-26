@@ -6,9 +6,11 @@ import {
   teams,
   teamMembers,
   user,
+  verifiedParticipants,
 } from "@lasertag-26/database";
 
 import type { UserDeps } from "../services/adminAuth";
+import type { VerifiedImportDeps } from "../services/paid-import";
 import type { PaymentsDeps } from "../services/payments";
 import type { RegistrationsDeps, RegistrationRow } from "../services/registrations";
 import type { SlotsDeps } from "../services/slots";
@@ -104,14 +106,27 @@ export const teamQueries: TeamsDeps = {
 export const registrationQueries: RegistrationsDeps = {
   search: (filters): Promise<RegistrationRow[]> => {
     const conditions = [];
+    if (filters.type !== undefined) conditions.push(eq(bookings.type, filters.type));
     if (filters.reg_no !== undefined) conditions.push(eq(bookings.id, filters.reg_no));
     if (filters.name !== undefined) conditions.push(ilike(user.name, `%${filters.name}%`));
     if (filters.phone !== undefined)
       conditions.push(ilike(user.phNumber, `%${filters.phone}%`));
     if (filters.email !== undefined)
       conditions.push(ilike(user.email, `%${filters.email}%`));
+    if (filters.q !== undefined) {
+      const pattern = `%${filters.q}%`;
+      conditions.push(
+        or(
+          ilike(user.name, pattern),
+          ilike(user.phNumber, pattern),
+          ilike(user.email, pattern),
+          ilike(bookings.id, pattern),
+          ilike(user.regNumber, pattern),
+        ),
+      );
+    }
 
-    return db
+    const query = db
       .select({
         regNo: bookings.id,
         type: bookings.type,
@@ -128,7 +143,9 @@ export const registrationQueries: RegistrationsDeps = {
       })
       .from(bookings)
       .innerJoin(user, eq(bookings.userId, user.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .limit(filters.limit ?? 30);
+    return query;
   },
 };
 
@@ -167,6 +184,98 @@ export const paymentQueries: PaymentsDeps = {
     return row!;
   },
 };
+
+/**
+ * Lookups for the paid-list bulk import. Reg numbers are user-typed at
+ * onboarding, so the match is case-insensitive; emails match
+ * case-insensitively too. Additive only — nothing here ever unmarks anyone.
+ */
+export const paidImportQueries: VerifiedImportDeps = {
+  findUserByRegNumber: async (regNumber) => {
+    const [row] = await db
+      .select({ id: user.id, paid: user.paid })
+      .from(user)
+      .where(sql`upper(${user.regNumber}) = ${regNumber}`);
+    return row;
+  },
+
+  findUserByEmail: async (email) => {
+    const [row] = await db
+      .select({ id: user.id, paid: user.paid })
+      .from(user)
+      .where(ilike(user.email, email));
+    return row;
+  },
+
+  setUserPaid: (userId, paid) => paymentQueries.setUserPaid(userId, paid),
+
+  findAllowlisted: async (regNumber, email) => {
+    const conditions = [];
+    if (regNumber) conditions.push(eq(verifiedParticipants.regNumber, regNumber));
+    if (email) conditions.push(eq(verifiedParticipants.email, email));
+    if (conditions.length === 0) return undefined;
+    const [row] = await db
+      .select({
+        id: verifiedParticipants.id,
+        regNumber: verifiedParticipants.regNumber,
+        email: verifiedParticipants.email,
+      })
+      .from(verifiedParticipants)
+      .where(or(...conditions))
+      .limit(1);
+    return row;
+  },
+
+  insertAllowlistEntry: async (entry) => {
+    const [row] = await db
+      .insert(verifiedParticipants)
+      .values(entry)
+      .onConflictDoNothing()
+      .returning({
+        id: verifiedParticipants.id,
+        regNumber: verifiedParticipants.regNumber,
+        email: verifiedParticipants.email,
+      });
+    // onConflictDoNothing leaves nothing to return on a race; the caller
+    // already checked, so fall back to a re-read in that corner.
+    if (row) return row;
+    const existing = await paidImportQueries.findAllowlisted(entry.regNumber, entry.email);
+    return existing!;
+  },
+};
+
+/**
+ * True when this reg number or email sits in the verified-participants
+ * allowlist. Used by the booking gate and the profile sync so someone is
+ * declared verified by EITHER identifier.
+ */
+export async function isIdentityAllowlisted(
+  regNumber: string | null,
+  email: string | null,
+): Promise<boolean> {
+  if (!regNumber && !email) return false;
+  const found = await paidImportQueries.findAllowlisted(regNumber, email);
+  return found !== undefined;
+}
+
+/** Newest-first allowlist slice for the admin verification screen. */
+export async function markUserPaid(userId: string): Promise<void> {
+  await db.update(user).set({ paid: true }).where(eq(user.id, userId));
+}export async function listAllowlistEntries(limit = 200) {
+  const capped = Math.min(Math.max(limit, 1), 500);
+  return db
+    .select({
+      id: verifiedParticipants.id,
+      regNumber: verifiedParticipants.regNumber,
+      email: verifiedParticipants.email,
+      name: verifiedParticipants.name,
+      source: verifiedParticipants.source,
+      createdAt: verifiedParticipants.createdAt,
+    })
+    .from(verifiedParticipants)
+    .orderBy(sql`${verifiedParticipants.createdAt} DESC`)
+    .limit(capped);
+}
 
 /** Only what admin login needs to decide whether to attempt sign-in at all. */
 export const userQueries: UserDeps = {

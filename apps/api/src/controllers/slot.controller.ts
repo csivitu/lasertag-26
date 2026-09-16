@@ -2,10 +2,25 @@ import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
 import { asc, eq, and, inArray, lt, gt } from "drizzle-orm";
 
-import { claimSlotSeat, releaseSlotSeat } from "../data/queries";
+import { claimSlotSeat, isIdentityAllowlisted, releaseSlotSeat } from "../data/queries";
 import { HttpError as AppError } from "../errors";
 import { sendBookingConfirmationEmail, sendSlotChangeEmail } from "../services/mailer/booking-mailer";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
+
+/** Max times one booking may move between slots. Same-slot re-books don't count. */
+const MAX_SLOT_CHANGES = 3;
+
+/** Allowlist lookup that fails closed (false) instead of 500ing the booking. */
+async function isAllowlistedSafe(targetUser: {
+  regNumber: string | null;
+  email: string;
+}): Promise<boolean> {
+  try {
+    return await isIdentityAllowlisted(targetUser.regNumber, targetUser.email);
+  } catch {
+    return false;
+  }
+}
 
 /** Postgres unique-violation, unwrapped through driver error nesting. */
 function isUniqueViolation(err: unknown): boolean {
@@ -168,6 +183,11 @@ export const slotController = {
       throw new AppError(404, "User not found.");
     }
 
+    // Paid-verification gate: only verified (paid) participants may take a
+    // FIRST slot. Changing an already-held slot stays open — that path is
+    // governed by the MAX_SLOT_CHANGES allowance below instead.
+    // The client also grey-outs booking, but this is the enforced check.
+
     // 1. If Solo (individual), verify user is NOT currently in a team
     if (type === "individual") {
       const userInTeam = await db
@@ -231,6 +251,26 @@ export const slotController = {
     // Same-slot re-books already hold a seat and skip the claim.
     const prevBooking = existingActiveBookings[0];
     const needsSeat = !prevBooking || prevBooking.slotId !== slot_id;
+
+    // First-time bookings require a verified (paid) participant. Slot
+    // CHANGES skip this: holders keep moving within their change allowance.
+    // The allowlist is checked live so freshly-verified users aren't stuck
+    // behind a stale paid flag. Allowlist failures fail closed to the 403
+    // below instead of 500ing the booking.
+    if (!prevBooking && !targetUser.paid && !(await isAllowlistedSafe(targetUser))) {
+      throw new AppError(
+        403,
+        "Slot booking is open only for verified participants. If you have registered but slot booking is not available, please contact us."
+      );
+    }
+
+    // Change-slot limit: a booking may move between slots at most
+    // MAX_SLOT_CHANGES times. Checked before claiming so a rejected change
+    // never consumes a seat. Re-booking the SAME slot is always allowed.
+    if (needsSeat && prevBooking && (prevBooking.slotChangeCount ?? 0) >= MAX_SLOT_CHANGES) {
+      throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+    }
+
     if (needsSeat) {
       const claimed = await claimSlotSeat(slot_id);
       if (!claimed) {
@@ -245,8 +285,14 @@ export const slotController = {
     const moveBookingToSlot = async (
       prev: typeof existingActiveBookings[number],
     ) => {
+      const changedSlot = prev.slotId !== slot_id;
+      // Enforced here too (not just pre-claim) so the race-recovery path
+      // can't push a booking past the allowance either.
+      if (changedSlot && prev.slotChangeCount >= MAX_SLOT_CHANGES) {
+        throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+      }
       // If slot changed, restore 1 capacity to the old slot (atomic).
-      if (prev.slotId !== slot_id) {
+      if (changedSlot) {
         await releaseSlotSeat(prev.slotId);
       }
 
@@ -262,6 +308,9 @@ export const slotController = {
           qrToken,
           confirmedAt: new Date(),
           confirmationEmailSent: false,
+          // Same booking keeps its id and QR across moves; only real moves
+          // consume from the change allowance.
+          slotChangeCount: changedSlot ? prev.slotChangeCount + 1 : prev.slotChangeCount,
         })
         .where(eq(bookings.id, prev.id))
         .returning();

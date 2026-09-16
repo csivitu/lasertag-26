@@ -2,10 +2,10 @@ import Image from "next/image";
 import styles from "./AboutSection.module.css";
 
 const GHOSTS = [
-    { src: "/about/ghost-1.png", alt: "Blinky" },
-    { src: "/about/ghost-2.png", alt: "Inky" },
-    { src: "/about/ghost-3.png", alt: "Pinky" },
-    { src: "/about/ghost-4.png", alt: "Clyde" },
+    { src: "/about/ghost-1.webp", alt: "Blinky" },
+    { src: "/about/ghost-2.webp", alt: "Inky" },
+    { src: "/about/ghost-3.webp", alt: "Pinky" },
+    { src: "/about/ghost-4.webp", alt: "Clyde" },
 ];
 
 export default function Ghosts() {

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useUserProfile, UserProfileProvider } from "@/hooks/useUserProfile";
 import { ProfileSolo } from "@/components/profile/profile-solo/ProfileSolo";
-import { ProfileTeam2 } from "@/components/profile/profile-team2/ProfileTeam2";
+// DEPRECATED: team feature disabled — solo-only flow.
+// import { ProfileTeam2 } from "@/components/profile/profile-team2/ProfileTeam2";
 import { Starfield } from "@/components/hero/Starfield";
 import { HeroHeader } from "@/components/hero/HeroHeader";
 import { AuthGate } from "@/components/auth/AuthGate";
@@ -26,17 +27,20 @@ function ProfileContent() {
     );
   }
 
-  const hasMode = Boolean(
-    profile?.team ||
-    profile?.activeRegistration ||
-    (typeof window !== "undefined" &&
-      (localStorage.getItem("lasertag_selected_mode") ||
-        sessionStorage.getItem("lasertag_selected_mode") ||
-        localStorage.getItem("lasertag_active_team") ||
-        sessionStorage.getItem("lasertag_active_team") ||
-        localStorage.getItem("lasertag_onboarding_solo") ||
-        sessionStorage.getItem("lasertag_onboarding_solo")))
-  );
+  // DEPRECATED: team feature disabled — solo-only flow, mode step skipped.
+  // Mode is implied; only booking is required.
+  const hasMode = true;
+  // const hasMode = Boolean(
+  //   profile?.team ||
+  //   profile?.activeRegistration ||
+  //   (typeof window !== "undefined" &&
+  //     (localStorage.getItem("lasertag_selected_mode") ||
+  //       sessionStorage.getItem("lasertag_selected_mode") ||
+  //       localStorage.getItem("lasertag_active_team") ||
+  //       sessionStorage.getItem("lasertag_active_team") ||
+  //       localStorage.getItem("lasertag_onboarding_solo") ||
+  //       sessionStorage.getItem("lasertag_onboarding_solo")))
+  // );
 
   const hasBooking = Boolean(
     profile?.activeRegistration ||
@@ -46,6 +50,7 @@ function ProfileContent() {
   );
 
   // If operative has not selected a mode yet, block access with the theme modal
+  // DEPRECATED: team/select-mode step disabled — redirect straight to booking.
   if (!hasMode) {
     return (
       <div className="relative isolate min-h-screen flex flex-col items-center justify-between bg-[#08080d] text-white pb-12 text-center">
@@ -55,8 +60,8 @@ function ProfileContent() {
           isOpen={true}
           title="ARENA COMBAT MODE REQUIRED"
           description="OPERATIVE, YOUR DIGITAL BATTLE PASS CANNOT BE GENERATED WITHOUT AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST."
-          redirectUrl="/select-mode"
-          buttonText="SELECT COMBAT MODE →"
+          redirectUrl="/slot-booking"
+          buttonText="BOOK A SLOT →"
         />
       </div>
     );
@@ -96,10 +101,12 @@ function ProfileContent() {
   }
 
   // Determine profile ticket variant from live backend database state
-  if (profile?.team) {
-    // Both leader and team members with confirmed booking get the complete pass with slot + QR
-    return <ProfileTeam2 />;
-  }
+  // DEPRECATED: team feature disabled — always render solo pass.
+  // if (profile?.team) {
+  //   // Both leader and team members with confirmed booking get the complete pass with slot + QR
+  //   return <ProfileTeam2 />;
+  // }
+  void profile;
 
   return <ProfileSolo />;
 }

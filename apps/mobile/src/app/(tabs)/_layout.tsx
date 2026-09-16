@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
-import { LayoutDashboard, QrCode, CalendarDays, Users } from "lucide-react-native";
+import { LayoutDashboard, QrCode, CalendarDays } from "lucide-react-native";
+// DEPRECATED: team feature disabled — re-add Users icon to restore Teams tab.
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { THEME } from "@/constants/theme";
 
@@ -56,7 +57,8 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
+      {/* DEPRECATED: team feature disabled — uncomment to restore Teams tab. */}
+      {/* <Tabs.Screen
         name="teams"
         options={{
           title: "Teams",
@@ -64,7 +66,7 @@ export default function TabLayout() {
             <Users size={size || 20} color={color} />
           ),
         }}
-      />
+      /> */}
     </Tabs>
   );
 }
