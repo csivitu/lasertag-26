@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, ne, or } from "drizzle-orm";
+import { and, count, eq, ilike, ne, or, sql } from "drizzle-orm";
 import {
   db,
   bookings,
@@ -265,16 +265,27 @@ export async function confirmRegistration(reservationId: string, qrToken: string
 }
 
 export async function cancelRegistration(reservationId: string) {
-  const [updated] = await db
-    .update(bookings)
-    .set({
-      status: "cancelled",
-      cancelledAt: new Date(),
-    })
-    .where(eq(bookings.id, reservationId))
-    .returning();
+  return await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(bookings)
+      .set({
+        status: "cancelled",
+        cancelledAt: new Date(),
+      })
+      .where(and(eq(bookings.id, reservationId), ne(bookings.status, "cancelled")))
+      .returning();
 
-  return updated;
+    if (updated?.slotId) {
+      await tx
+        .update(slots)
+        .set({
+          capacity: sql`${slots.capacity} + 1`,
+        })
+        .where(eq(slots.id, updated.slotId));
+    }
+
+    return updated;
+  });
 }
 
 export async function findRegistrationForScan(identifier: string) {

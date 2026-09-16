@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 
 import { UnauthorizedError } from "../errors";
 import { registrationService } from "../services/registrations";
+import { slotController } from "./slot.controller";
 
 export const createSoloRegistration = async (
   req: Request<Record<string, never>, unknown, { slot_id: string }>,
@@ -12,10 +13,11 @@ export const createSoloRegistration = async (
   }
 
   const { slot_id } = req.body;
-  const booking = await registrationService.createSoloRegistration(
-    req.user.id,
+  const booking = await slotController.reserveSlot({
     slot_id,
-  );
+    user_id: req.user.id,
+    type: "individual",
+  });
 
   res.status(201).json({
     success: true,
