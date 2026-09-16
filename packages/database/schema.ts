@@ -70,6 +70,10 @@ export const teamMembers = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    confirmationEmailSent: boolean('confirmation_email_sent')
+      .notNull()
+      .default(false),
+    emailSentAt: timestamp('email_sent_at'),
   },
   (table) => [
     primaryKey({
