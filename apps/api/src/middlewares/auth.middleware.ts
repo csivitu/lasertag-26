@@ -54,7 +54,21 @@ export function makeRequireAdmin(getSession: GetSession): RequestHandler {
 
   return async (req: Request, res: Response, next: NextFunction) => {
     await authenticate(req, res, () => {});
-    if (req.user?.role !== "admin") throw new ForbiddenError();
+    if (req.user?.role !== "admin" && req.user?.role !== "super_admin")
+      throw new ForbiddenError();
+
+    res.locals.user = req.user;
+    next();
+  };
+}
+
+/** Super admin only — full access (e.g. create/delete slots). */
+export function makeRequireSuperAdmin(getSession: GetSession): RequestHandler {
+  const authenticate = makeRequireAuth(getSession);
+
+  return async (req: Request, res: Response, next: NextFunction) => {
+    await authenticate(req, res, () => {});
+    if (req.user?.role !== "super_admin") throw new ForbiddenError();
 
     res.locals.user = req.user;
     next();
@@ -68,3 +82,4 @@ const getSession: GetSession = async (args) => {
 
 export const requireAuth = makeRequireAuth(getSession);
 export const requireAdmin = makeRequireAdmin(getSession);
+export const requireSuperAdmin = makeRequireSuperAdmin(getSession);

@@ -1,8 +1,10 @@
 import { Router } from "express";
 
-import { adminLogin, adminLogout } from "../controllers/admin-auth.controller";
+import { adminLogin, adminLogout, adminMe } from "../controllers/admin-auth.controller";
+import { requireAdmin } from "../middlewares/auth.middleware";
+import { loginRateLimit } from "../middlewares/rateLimit";
 import { validate } from "../middlewares/validate";
-import { loginSchema } from "../validations/auth.validation";
+import { adminLoginSchema } from "../validations/auth.validation";
 
 /**
  * Not mounted under `/admin` — that whole subtree requires an existing admin
@@ -10,5 +12,6 @@ import { loginSchema } from "../validations/auth.validation";
  */
 export const adminAuthRouter = Router();
 
-adminAuthRouter.post("/login", validate(loginSchema), adminLogin);
+adminAuthRouter.post("/login", loginRateLimit, validate(adminLoginSchema), adminLogin);
 adminAuthRouter.post("/logout", adminLogout);
+adminAuthRouter.get("/me", requireAdmin, adminMe);

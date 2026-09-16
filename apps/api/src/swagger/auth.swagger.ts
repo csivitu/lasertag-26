@@ -1,8 +1,9 @@
-import { loginResponseSchema, loginSchema } from "../validations/auth.validation";
+import { adminLoginSchema, loginResponseSchema, loginSchema } from "../validations/auth.validation";
 import { responses, toSchema } from "./shared";
 
 export const authSchemas = {
   Login: toSchema(loginSchema.shape.body),
+  AdminLogin: toSchema(adminLoginSchema.shape.body),
   LoginResponse: toSchema(loginResponseSchema),
 };
 
@@ -41,16 +42,19 @@ export const authPaths = {
   },
   "/admin-auth/login": {
     post: {
-      summary: "Sign in as an admin",
+      summary: "Sign in as staff (password only)",
       description:
-        "Same as /auth/login, but rejects the attempt before checking the password if the email isn't an admin's — with the same 401 either way, so the response can't be used to tell 'unknown email' apart from 'exists, not an admin'.",
+        "Password-only login. The super-admin password signs in as super_admin, the admin password as admin. Same 401 either way for a wrong password.",
       tags: ["Auth"],
       security: [],
-      requestBody: loginBody,
+      requestBody: {
+        required: true,
+        content: { "application/json": { schema: { $ref: "#/components/schemas/AdminLogin" } } },
+      },
       responses: {
         200: loginResponse,
         400: responses.badRequest,
-        401: responses.error("Invalid email or password, or not an admin"),
+        401: responses.error("Invalid password"),
       },
     },
   },
@@ -60,6 +64,18 @@ export const authPaths = {
       tags: ["Auth"],
       security: [],
       responses: { 200: { description: "Signed out" } },
+    },
+  },
+  "/admin-auth/me": {
+    get: {
+      summary: "Current staff session (id, email, role)",
+      description: "Lets the admin UI know which role is signed in to hide super-admin-only actions.",
+      tags: ["Auth"],
+      responses: {
+        200: { description: "Session user" },
+        401: responses.unauthorized,
+        403: responses.forbidden,
+      },
     },
   },
 };
