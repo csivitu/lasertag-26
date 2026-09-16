@@ -24,6 +24,9 @@ import type { Env } from "./env";
 export function createApp(env: Env): Express {
     const app = express();
 
+    // Behind Nginx (TLS ends at proxy) — needed so Secure cookies + proto work.
+    app.set("trust proxy", 1);
+
     const allowedOrigins = [
         env.WEB_ORIGIN,
         env.ADMIN_ORIGIN,

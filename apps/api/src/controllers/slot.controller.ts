@@ -70,6 +70,7 @@ export const slotController = {
         startTime,
         endTime,
         capacity,
+        totalCapacity: capacity,
       })
       .returning();
 
