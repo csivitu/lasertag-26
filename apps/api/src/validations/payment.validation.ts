@@ -15,6 +15,19 @@ export const updatePaymentSchema = z.object({
 export type GetPaymentDetailsInput = z.infer<typeof getPaymentDetailsSchema>;
 export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>;
 
+/** Pasted verification list: raw text, split server-side. */
+export const pasteImportSchema = z.object({
+  body: z.object({
+    text: z
+      .string()
+      .trim()
+      .min(1, "Paste at least one reg number or email.")
+      .max(20000, "Pasted list is too long — split it and retry."),
+  }),
+});
+
+export type PasteImportInput = z.infer<typeof pasteImportSchema>;
+
 /** Response shapes, for the OpenAPI document only — never used to parse input. */
 export const paymentDetailResponseSchema = z.object({
   bookingId: z.string(),

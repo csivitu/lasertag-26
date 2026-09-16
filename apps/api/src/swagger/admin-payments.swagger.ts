@@ -20,6 +20,21 @@ const registrationIdParam = {
 };
 
 export const paymentPaths = {
+  "/admin/payments": {
+    get: {
+      summary: "List payment rows for the verification screen",
+      description: "One row per booking with the owner's paid flag.",
+      tags: ["Payments"],
+      responses: {
+        200: {
+          description: "Payment rows",
+          content: { "application/json": { schema: { type: "array", items: { type: "object" } } } },
+        },
+        401: responses.unauthorized,
+        403: responses.forbidden,
+      },
+    },
+  },
   "/admin/payments/verify": {
     post: {
       summary: "Bulk-verify payments",
@@ -29,6 +44,55 @@ export const paymentPaths = {
         401: responses.unauthorized,
         403: responses.forbidden,
         501: responses.error("Not implemented"),
+      },
+    },
+  },
+  "/admin/payments/import": {
+    post: {
+      summary: "Bulk-verify participants from an xlsx/csv list",
+      description:
+        "Multipart upload (field 'file'). Every row is stored in the verified-participants allowlist (reg number first, email fallback) and signed-up matches are flipped to paid. Additive only. ?dryRun=true previews without writing. Super admin only.",
+      tags: ["Payments"],
+      responses: {
+        200: {
+          description: "Import summary with allowlisted / paid / invalid counts",
+          content: { "application/json": { schema: { type: "object" } } },
+        },
+        400: responses.error("Unreadable file, missing columns, or no file attached"),
+        401: responses.unauthorized,
+        403: responses.forbidden,
+      },
+    },
+  },
+  "/admin/payments/import-text": {
+    post: {
+      summary: "Bulk-verify participants from a pasted list",
+      description:
+        "JSON body { text } — one reg number or email per line (commas, semicolons, tabs split too). Same allowlist + paid semantics as the file import. Super admin only.",
+      tags: ["Payments"],
+      responses: {
+        200: {
+          description: "Import summary with allowlisted / paid / invalid counts",
+          content: { "application/json": { schema: { type: "object" } } },
+        },
+        400: responses.error("Empty or oversized pasted list"),
+        401: responses.unauthorized,
+        403: responses.forbidden,
+      },
+    },
+  },
+  "/admin/payments/allowlist": {
+    get: {
+      summary: "List verified-participant allowlist entries",
+      description: "Newest first, capped at 500 rows.",
+      tags: ["Payments"],
+      responses: {
+        200: {
+          description: "Allowlist entries",
+          content: { "application/json": { schema: { type: "object" } } },
+        },
+        401: responses.unauthorized,
+        403: responses.forbidden,
       },
     },
   },
