@@ -66,6 +66,10 @@ const envSchema = z.object({
     emptyToUndefined,
     z.string().default("admin12345"),
   ),
+  RESET_STAFF_PASSWORDS: z.preprocess(
+    emptyToUndefined,
+    z.coerce.boolean().default(false),
+  ),
   SMTP_HOST: z.preprocess(
     emptyToUndefined,
     z.string().min(1).default("smtp.gmail.com"),

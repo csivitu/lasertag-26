@@ -8,8 +8,12 @@ function fakeReq(ip: string) {
 }
 
 function fakeRes() {
-  const state: { status?: number; body?: unknown } = {};
+  const state: { status?: number; body?: unknown; headers?: Record<string, string> } = {};
   const res = {
+    set(field: string, value: string) {
+      state.headers = { ...(state.headers ?? {}), [field]: value };
+      return this;
+    },
     status(code: number) {
       state.status = code;
       return this;
@@ -38,6 +42,7 @@ describe("bookingRateLimit", () => {
     expect(next).not.toHaveBeenCalled();
     expect(state.status).toBe(429);
     expect(state.body).toEqual({ error: "Too many booking requests, try again shortly" });
+    expect(state.headers?.["Retry-After"]).toBe("60");
   });
 
   test("limits per IP independently", () => {

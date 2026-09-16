@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
@@ -8,6 +8,12 @@ import { clearStaffRole } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
+  // Read via window (not useSearchParams) so this page prerenders without a
+  // Suspense boundary.
+  const [unavailable, setUnavailable] = useState(false);
+  useEffect(() => {
+    setUnavailable(new URLSearchParams(window.location.search).get("reason") === "unavailable");
+  }, []);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,17 +27,44 @@ export default function LoginPage() {
       method: "POST",
       body: JSON.stringify({ password }),
     });
-    setLoading(false);
-    if (res.success) {
+    if (!res.success) {
+      setLoading(false);
+      // 429 carries Retry-After; surface a human message instead of a raw error.
+      setError(
+        res.status === 429
+          ? "Too many login attempts, wait a minute and try again."
+          : (res.error || "Login failed"),
+      );
+      return;
+    }
+    // The login POST can return 200 while the browser dropped the session
+    // cookie (Secure/Domain mismatch, proxy stripping Set-Cookie). Verify the
+    // session actually persisted before navigating, or the middleware bounces
+    // straight back to /login looking like a phantom success.
+    const me = await apiFetch<{ user?: { role?: string } }>("/admin-auth/me");
+    if (me.success) {
       clearStaffRole();
+      // Keep loading=true through the navigation so the button stays on
+      // "Signing in..." instead of flickering back to "Sign in".
       router.push("/");
-    } else setError(res.error || "Login failed");
+      router.refresh();
+    } else {
+      setLoading(false);
+      setError(
+        me.status === 0
+          ? "Login reached the server but the session check failed (API unreachable). Retry."
+          : "Login succeeded but the session did not persist. Check cookies / try again.",
+      );
+    }
   };
 
   return (
     <div className="min-h-screen grid place-items-center bg-[#09090B] p-4">
       <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4 bg-[#141417] border border-[#27272A] p-6 rounded-2xl">
         <h1 className="text-lg font-bold text-[#FAFAFA]">Staff Login</h1>
+        {unavailable && (
+          <p className="text-xs text-amber-400">API was unreachable. Check connection, then sign in again.</p>
+        )}
         {error && <p className="text-xs text-rose-400">{error}</p>}
         <div className="relative">
           <input
