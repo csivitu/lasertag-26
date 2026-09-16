@@ -15,7 +15,7 @@ export function Spons() {
       </div>
 
       {/* Headset */}
-      <div className="relative z-10 -mt-[14vh] flex w-full justify-center max-sm:my-auto max-sm:mt-[12vh] max-sm:px-4 sm:-mt-[4vh] md:-mt-[5vh] lg:-mt-[8vh] lg:pb-[4vh] xl:-mt-[12vh]">
+      <div className="relative z-10 -mt-[14vh] flex w-full justify-center max-sm:my-auto max-sm:mt-[12vh] max-sm:px-4 sm:-mt-[2vh] md:-mt-[3vh] lg:-mt-[5vh] lg:pb-[4vh] xl:-mt-[9vh]">
         <SponsHeadset />
       </div>
 

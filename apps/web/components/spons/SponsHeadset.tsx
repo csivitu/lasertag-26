@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function SponsHeadset() {
   return (
-    <div className="relative w-[min(74vw,1060px)] select-none max-sm:w-[94vw] max-sm:scale-y-[1.35]">
+    <div className="relative w-[min(66vw,940px)] select-none max-sm:-mx-[19vw] max-sm:w-[138vw] max-sm:scale-y-[1.1]">
 
       {/* BOTTOM — middle section */}
       <Image
