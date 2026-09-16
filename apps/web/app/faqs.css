@@ -164,8 +164,7 @@
     background: currentColor;
 }
 
-/* ── Dot glow pulse (opacity only — box-shadow animation forced a repaint
-   every frame while open; same pulsing feel, composited) ── */
+/* ── Dot glow pulse ── */
 @keyframes glow-pink {
     0%, 100% { opacity: 1; }
     50%      { opacity: 0.55; }
@@ -200,8 +199,6 @@
     will-change: transform;
 }
 
-/* Higher arc for building clicks — defined after .ralph-jump so it wins
-   when both classes land at once */
 @keyframes ralph-bounce-high {
     0%   { transform: translateY(0); }
     32%  { transform: translateY(-58px); }

@@ -208,8 +208,7 @@ export function AuthModal({
       aria-label="Account Authentication"
     >
       <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
-        {/* Header Tabs — same select animation as the navbar
-            (arrow marker + nudge), but silent: no sounds in the modal. */}
+        {/* Header Tabs */}
         <div className="flex justify-center gap-4 mb-4 border-b border-[#333] pb-3">
           <button
             type="button"
@@ -253,8 +252,7 @@ export function AuthModal({
           </button>
         </div>
 
-        {/* Google OAuth Button — arcade style: bold theme type, big logo,
-            short label, flat (no glow/shine). */}
+        {/* Google OAuth Button */}
         <div className="mb-4">
           <button
             type="button"

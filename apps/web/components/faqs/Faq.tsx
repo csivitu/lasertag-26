@@ -23,7 +23,6 @@ export function Faq() {
         jumpTimer.current = setTimeout(() => setIsJumping(false), 700);
     }, []);
 
-    // Building click (desktop only): same jump sound, higher arc.
     const handleBuildingClick = useCallback(() => {
         playSound("ralphJump", 0.56);
         setIsBuildingJump(true);

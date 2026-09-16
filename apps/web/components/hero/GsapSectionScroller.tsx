@@ -7,8 +7,7 @@ export function GsapSectionScroller() {
     if (typeof window === "undefined") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    // Desktop-only: section hijack must never engage on phones/tablets,
-    // including after resize or device rotation — re-evaluated live.
+    // Desktop-only section hijack; phones/tablets never engage it.
     const desktopMq = window.matchMedia("(min-width: 1024px)");
     if (!desktopMq.matches) return;
 
@@ -32,11 +31,7 @@ export function GsapSectionScroller() {
 
       let isAnimating = false;
 
-      // Acceleration-based momentum filter (fullPage.js-style):
-      // a real finger push ACCELERATES (each tick >= recent average);
-      // a momentum tail DECELERATES. Ticks that keep up are intent,
-      // falling-off ticks are the tail and get ignored — no dead
-      // windows, no per-device threshold tuning.
+      // Acceleration filter: active pushes fire, momentum tails ignored.
       const AVG_WINDOW = 10;
       const RECENT_MS = 250;
       const recentDeltas: number[] = [];
@@ -70,9 +65,6 @@ export function GsapSectionScroller() {
           overwrite: "auto",
           onComplete: () => {
             isAnimating = false;
-            // Carry a gesture that was recorded mid-glide: a second flick
-            // fired while the first glide was running fires the moment we
-            // land, instead of being dropped.
             if (
               pendingDirection &&
               performance.now() - lastPushTime < RECENT_MS
@@ -89,8 +81,6 @@ export function GsapSectionScroller() {
             }
             pendingDirection = null;
           },
-          // Anchor-nav kills our tween via killTweensOf — release the lock
-          // or wheel snapping bricks until reload.
           onInterrupt: () => {
             isAnimating = false;
             pendingDirection = null;
@@ -109,8 +99,6 @@ export function GsapSectionScroller() {
         const isAccelerating = magnitude >= average;
 
         if (isAnimating) {
-          // Only accelerating pushes count as queued intent; the tail
-          // never queues a surprise jump.
           if (isAccelerating || isReversal) {
             pendingDirection = direction;
             lastPushTime = performance.now();
@@ -118,7 +106,6 @@ export function GsapSectionScroller() {
           return;
         }
 
-        // A falling-off tick (tail) is ignored — unless it reverses.
         if (!isReversal && !isAccelerating) return;
         const current = getCurrentIndex();
         const next = current + direction;
@@ -132,7 +119,6 @@ export function GsapSectionScroller() {
         const obs = self as { deltaY?: number; event?: WheelEvent } | null;
         let d = obs?.deltaY ?? 0;
         const mode = obs?.event?.deltaMode ?? 0;
-        // Firefox reports lines, others pixels — normalize before use.
         if (mode === 1) d *= 40;
         else if (mode === 2) d *= 800;
         return d;

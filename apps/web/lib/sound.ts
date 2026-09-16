@@ -22,11 +22,8 @@ export const SOUNDS = {
 export type SoundKey = keyof typeof SOUNDS;
 
 const audioPool: Partial<Record<SoundKey, HTMLAudioElement[]>> = {};
-// Small pools — overlapping same-sound playback beyond 3 is inaudible.
 const POOL_SIZE = 3;
 
-// Landing-critical sounds warmed on first interaction; the rest lazy-load
-// on first actual play (playSound creates its pool on demand).
 const WARM_SOUNDS: SoundKey[] = [
   "navHover",
   "navSelect",

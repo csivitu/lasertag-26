@@ -426,9 +426,7 @@
   }
 }
 
-/* ── Footer "ARE YOU READY?" screen: CRT attract-mode flicker + glow ──
-   Mostly full-on with a slow glow breathe, plus a brief neon stutter
-   near the end of each cycle. Opacity/filter on one small layer. */
+/* ── Footer "ARE YOU READY?" CRT flicker ── */
 @keyframes ready-crt {
   0%,
   88% {

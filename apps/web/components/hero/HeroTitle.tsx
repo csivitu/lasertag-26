@@ -1,7 +1,4 @@
 export function HeroTitle() {
-  // The arcade font's "A" carries a much wider left side-bearing than any
-  // other glyph, so every letter before an A (L→A, T→A) reads as a gap.
-  // Pull each A back individually; R gets the deliberate word gap before T.
   const A_PULL = "-ml-[0.08em]";
   const WORD_GAP = "mr-[0.12em]";
   return (

@@ -11,7 +11,6 @@ import { useSession, signOut } from "@/lib/auth-client";
 import { readHasAccount } from "@/lib/auth-mode";
 import { playSound } from "@/lib/sound";
 
-// Defer the modal bundle off the landing critical path — only loaded on open.
 const AuthModal = dynamic(
   () => import("../auth/AuthModal").then((m) => m.AuthModal),
   { ssr: false }
@@ -50,7 +49,6 @@ export function HeroHeader() {
             : document.getElementById(targetId);
         if (targetElement) {
           e.preventDefault();
-          // Kill any in-flight section-snap tween so it doesn't fight this jump.
           import("gsap").then(({ gsap }) => {
             gsap.killTweensOf(window);
             targetElement.scrollIntoView({ behavior: "instant" });

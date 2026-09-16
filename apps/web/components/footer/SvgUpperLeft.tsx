@@ -20,10 +20,6 @@ export default function SvgUpperLeft() {
             height: "13.02%",
           }}
         >
-          {/* Real pixel-font text instead of the baked SVG: scales with the
-              cabinet via cqw, pink offset matches the original art. */}
-          {/* perspective() + rotateY: left edge closer/bigger, shrinking
-              smoothly toward the right like text receding on the glass. */}
           <p className="ready-crt font-pixel text-[5.3cqw] leading-[1.25] whitespace-nowrap text-brand-yellow [text-shadow:0.35cqw_0.35cqw_0_var(--color-brand-pink)] [transform:perspective(350px)_rotateY(10deg)_skewX(7deg)]">
             ARE YOU
             <br />
