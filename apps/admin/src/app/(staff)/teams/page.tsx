@@ -315,14 +315,14 @@ export default function TeamsPage() {
                     {selectedTeam.bookings.map((bkg: any, i: number) => {
                       const startFormatted = bkg.startTime
                         ? new Date(bkg.startTime).toLocaleString("en-US", {
-                            timeZone: "UTC",
+                            timeZone: "Asia/Kolkata",
                             dateStyle: "medium",
                             timeStyle: "short",
                           })
                         : "N/A";
                       const endFormatted = bkg.endTime
                         ? new Date(bkg.endTime).toLocaleTimeString("en-US", {
-                            timeZone: "UTC",
+                            timeZone: "Asia/Kolkata",
                             timeStyle: "short",
                           })
                         : "N/A";

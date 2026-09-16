@@ -10,15 +10,12 @@ export async function apiFetch<T>(
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
-  // Admin dev fallback header if session cookie isn't attached
-  if (!headers.has("x-user-id")) {
-    headers.set("x-user-id", "11111111-1111-1111-1111-111111111111");
-  }
 
   try {
     const res = await fetch(url, {
       ...options,
       headers,
+      credentials: "include",
     });
 
     const text = await res.text();

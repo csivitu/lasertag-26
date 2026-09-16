@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
+import { getStaffRole, type StaffRole } from "@/lib/auth";
 
 interface SlotItem {
   id: string;
@@ -27,6 +28,10 @@ export default function SlotsPage() {
 
   // Filter Date State
   const [filterDate, setFilterDate] = useState("");
+  const [role, setRole] = useState<StaffRole | null>(null);
+  const canManageSlots = role === "super_admin";
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deletingSelected, setDeletingSelected] = useState(false);
 
   // Default date
   const defaultDateStr = "2026-09-18";
@@ -44,7 +49,7 @@ export default function SlotsPage() {
 
   const fetchSlots = async () => {
     setLoading(true);
-    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/slots");
+    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/admin/slots");
     if (res.success && res.data) {
       const list = Array.isArray(res.data)
         ? res.data
@@ -60,6 +65,8 @@ export default function SlotsPage() {
       });
 
       setSlots(sorted);
+      // Drop selections for slots that no longer exist.
+      setSelected((prev) => new Set([...prev].filter((id) => sorted.some((s) => s.id === id))));
     } else {
       setSlots([]);
     }
@@ -67,6 +74,7 @@ export default function SlotsPage() {
   };
 
   useEffect(() => {
+    getStaffRole().then(setRole);
     fetchSlots();
     const interval = setInterval(() => {
       fetchSlots();
@@ -91,25 +99,40 @@ export default function SlotsPage() {
     }
   };
 
-  // Helper to build clean UTC ISO string YYYY-MM-DDTHH:mm:ss.000Z
-  const makeUtcIso = (dateStr: string, timeStr: string) => {
-    return `${dateStr}T${timeStr}:00.000Z`;
+  // Arena wall-clock is IST. Inputs are IST wall time; storage is UTC.
+  // IST is UTC+5:30 with no DST, so this offset is exact.
+  // (The old helper suffixed Z onto IST wall time, storing 10:00 IST as
+  // 10:00 UTC — which every IST display then showed as 3:30 PM.)
+  const ARENA_TIME_ZONE = "Asia/Kolkata";
+  const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+
+  const istToUtcIso = (dateStr: string, timeStr: string) => {
+    const [y, mo, d] = dateStr.split("-").map(Number);
+    const [h, mi] = timeStr.split(":").map(Number);
+    return new Date(Date.UTC(y, mo - 1, d, h, mi) - IST_OFFSET_MS).toISOString();
   };
+
+  const istDateKey = (iso: string) =>
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: ARENA_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(iso));
 
   // Count slots for a specific date (for 100/day limit check)
   const getSlotCountForDate = (dateStr: string) => {
     return slots.filter((s) => {
       if (!s.startTime) return false;
-      const d = new Date(s.startTime).toISOString().slice(0, 10);
-      return d === dateStr;
+      return istDateKey(s.startTime) === dateStr;
     }).length;
   };
 
   // Calculate generated bulk intervals
   const getBulkSlotsPreview = () => {
     if (!bulkDate || !bulkStartTime || !bulkEndTime) return [];
-    const startObj = new Date(makeUtcIso(bulkDate, bulkStartTime));
-    const endObj = new Date(makeUtcIso(bulkDate, bulkEndTime));
+    const startObj = new Date(istToUtcIso(bulkDate, bulkStartTime));
+    const endObj = new Date(istToUtcIso(bulkDate, bulkEndTime));
 
     const startMs = startObj.getTime();
     const endMs = endObj.getTime();
@@ -147,8 +170,8 @@ export default function SlotsPage() {
       return;
     }
 
-    const startTimeUtc = makeUtcIso(singleDate, singleStartTime);
-    const endTimeUtc = makeUtcIso(singleDate, singleEndTime);
+    const startTimeUtc = istToUtcIso(singleDate, singleStartTime);
+    const endTimeUtc = istToUtcIso(singleDate, singleEndTime);
 
     const startObj = new Date(startTimeUtc);
     const endObj = new Date(endTimeUtc);
@@ -160,7 +183,7 @@ export default function SlotsPage() {
 
     setSubmittingSingle(true);
 
-    const res = await apiFetch<SlotItem>("/slots", {
+    const res = await apiFetch<SlotItem>("/admin/slots", {
       method: "POST",
       body: JSON.stringify({
         startTime: startTimeUtc,
@@ -207,10 +230,10 @@ export default function SlotsPage() {
       capacity: 10,
     }));
 
-    // Try batch endpoint
-    const res = await apiFetch<{ count?: number }>("/slots/bulk", {
+    // Batch endpoint expects a raw JSON array (see bulkCreateSlotsSchema).
+    const res = await apiFetch<{ count?: number }>("/admin/slots/bulk", {
       method: "POST",
-      body: JSON.stringify({ slots: slotPayloads }),
+      body: JSON.stringify(slotPayloads),
     });
 
     if (res.success) {
@@ -225,7 +248,7 @@ export default function SlotsPage() {
     let failCount = 0;
 
     for (const item of slotPayloads) {
-      const singleRes = await apiFetch<SlotItem>("/slots", {
+      const singleRes = await apiFetch<SlotItem>("/admin/slots", {
         method: "POST",
         body: JSON.stringify(item),
       });
@@ -252,7 +275,7 @@ export default function SlotsPage() {
   const handleDeleteSlot = async (slotId: string) => {
     if (!confirm("Are you sure you want to delete this slot?")) return;
 
-    const res = await apiFetch<{ message?: string }>(`/slots/${slotId}`, {
+    const res = await apiFetch<{ message?: string }>(`/admin/slots/${slotId}`, {
       method: "DELETE",
     });
 
@@ -264,14 +287,48 @@ export default function SlotsPage() {
     }
   };
 
+  const toggleSelect = (slotId: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(slotId)) next.delete(slotId);
+      else next.add(slotId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === filteredSlots.length) setSelected(new Set());
+    else setSelected(new Set(filteredSlots.map((s) => s.id)));
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} selected slot(s)? Slots with bookings cannot be deleted.`)) return;
+    setDeletingSelected(true);
+    setError(null);
+    setSuccess(null);
+    let ok = 0;
+    let fail = 0;
+    for (const id of selected) {
+      const res = await apiFetch(`/admin/slots/${id}`, { method: "DELETE" });
+      if (res.success) ok++;
+      else fail++;
+    }
+    setSelected(new Set());
+    fetchSlots();
+    if (ok > 0) setSuccess(`Deleted ${ok} slot(s).`);
+    if (fail > 0) setError(`Failed to delete ${fail} slot(s) — they may have bookings.`);
+    setDeletingSelected(false);
+  };
+
   const slotList = Array.isArray(slots) ? slots : [];
   const bulkPreview = getBulkSlotsPreview();
 
-  // Extract unique dates
+  // Extract unique dates (IST calendar days)
   const uniqueDates = Array.from(
     new Set(
       slotList
-        .map((s) => (s.startTime ? new Date(s.startTime).toISOString().slice(0, 10) : null))
+        .map((s) => (s.startTime ? istDateKey(s.startTime) : null))
         .filter((d): d is string => d !== null)
     )
   ).sort();
@@ -280,8 +337,7 @@ export default function SlotsPage() {
   const filteredSlots = slotList.filter((s) => {
     if (!filterDate) return true;
     if (!s.startTime) return false;
-    const slotDateStr = new Date(s.startTime).toISOString().slice(0, 10);
-    return slotDateStr === filterDate;
+    return istDateKey(s.startTime) === filterDate;
   });
 
   return (
@@ -291,7 +347,7 @@ export default function SlotsPage() {
         <div>
           <h1 className="text-xl font-bold text-[#FAFAFA] tracking-tight">Slot Manager Workstation</h1>
           <p className="text-xs text-[#71717A] mt-0.5">
-            Configure individual slots or batch generate 15, 20, 25, or 30-min windows (Max 100 slots/day)
+            Configure individual slots or batch generate 10, 15, 20, 25, or 30-min windows (Max 100 slots/day)
           </p>
         </div>
         <button
@@ -319,8 +375,15 @@ export default function SlotsPage() {
 
       {/* Grid Layout: Forms Column + Existing Slots List */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Creation Workstations Column (Single + Bulk) */}
-        <div className="space-y-6">
+        {/* Creation Workstations Column (Single + Bulk) — super_admin only.
+            Always rendered but disabled for plain admins so the restriction
+            is visible instead of looking broken. Backend 403s enforce it. */}
+        <div className={`space-y-6 ${role !== null && !canManageSlots ? "opacity-60" : ""}`}>
+          {!canManageSlots && role !== null && (
+            <div className="p-3 bg-sky-500/10 border border-sky-500/30 text-sky-400 rounded-xl text-xs font-mono">
+              Slot creation is super-admin only. You are signed in as admin.
+            </div>
+          )}
           {/* 1. SINGLE SLOT CREATION CARD */}
           <div className="bg-[#141417] border border-[#27272A] p-5 rounded-2xl space-y-4 shadow-sm">
             <div className="flex items-center gap-2 border-b border-[#27272A] pb-3">
@@ -331,6 +394,7 @@ export default function SlotsPage() {
             </div>
 
             <form onSubmit={handleCreateSingleSlot} className="space-y-3">
+              <fieldset disabled={!canManageSlots} className="space-y-3">
               {/* Event Date Buttons */}
               <div>
                 <label className="block text-[11px] text-[#A1A1AA] mb-1.5 font-medium flex items-center gap-1.5">
@@ -393,6 +457,7 @@ export default function SlotsPage() {
               >
                 {submittingSingle ? "Creating..." : "Create Slot"}
               </button>
+              </fieldset>
             </form>
           </div>
 
@@ -406,6 +471,7 @@ export default function SlotsPage() {
             </div>
 
             <form onSubmit={handleCreateBulkSlots} className="space-y-3">
+              <fieldset disabled={!canManageSlots} className="space-y-3">
               {/* Event Date Buttons */}
               <div>
                 <label className="block text-[11px] text-[#A1A1AA] mb-1.5 font-medium flex items-center gap-1.5">
@@ -469,6 +535,7 @@ export default function SlotsPage() {
                   onChange={(e) => setSlotDurationMins(Number(e.target.value))}
                   className="w-full bg-[#09090B] border border-[#27272A] rounded-xl px-3 py-2 text-xs text-[#FAFAFA] font-mono focus:outline-none focus:border-[#3F3F46]"
                 >
+                  <option value={10}>10 Minutes Each</option>
                   <option value={15}>15 Minutes Each</option>
                   <option value={20}>20 Minutes Each</option>
                   <option value={25}>25 Minutes Each</option>
@@ -488,7 +555,7 @@ export default function SlotsPage() {
                       <div key={idx} className="flex justify-between border-b border-[#27272A] pb-1">
                         <span>Slot {idx + 1}:</span>
                         <span className="text-[#FAFAFA]">
-                          {item.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} - {item.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
+                          {item.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })} - {item.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                         </span>
                       </div>
                     ))}
@@ -503,12 +570,13 @@ export default function SlotsPage() {
               >
                 {submittingBulk ? "Generating Slots..." : `Generate (${bulkPreview.length}) Slots`}
               </button>
+              </fieldset>
             </form>
           </div>
         </div>
 
         {/* Existing Slots List with Date Filter Bar */}
-        <div className="lg:col-span-2 space-y-3">
+        <div className={`${canManageSlots ? "lg:col-span-2" : "lg:col-span-3"} space-y-3`}>
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-[#FAFAFA] tracking-tight">
               Configured Game Slots
@@ -559,10 +627,10 @@ export default function SlotsPage() {
                 .filter((dateStr) => !EVENT_DATES.some((ed) => ed.val === dateStr))
                 .map((dateStr) => {
                   const isSelected = filterDate === dateStr;
-                  const formattedLabel = new Date(`${dateStr}T00:00:00Z`).toLocaleDateString("en-US", {
+                  const formattedLabel = new Date(`${dateStr}T00:00:00+05:30`).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
-                    timeZone: "UTC",
+                    timeZone: "Asia/Kolkata",
                   });
 
                   return (
@@ -581,6 +649,35 @@ export default function SlotsPage() {
                 })}
             </div>
           </div>
+
+          {canManageSlots && !loading && filteredSlots.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 p-3 bg-[#141417] border border-[#27272A] rounded-2xl text-xs">
+              <label className="flex items-center gap-2 text-[#A1A1AA] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={selected.size === filteredSlots.length}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer"
+                />
+                Select all ({filteredSlots.length})
+              </label>
+              {selected.size > 0 && (
+                <>
+                  <span className="font-mono text-emerald-400">{selected.size} selected</span>
+                  <button onClick={() => setSelected(new Set())} className="text-[#71717A] hover:text-[#FAFAFA] transition-colors">
+                    Clear
+                  </button>
+                  <button
+                    onClick={handleDeleteSelected}
+                    disabled={deletingSelected}
+                    className="ml-auto px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 font-semibold rounded-xl transition-all disabled:opacity-50"
+                  >
+                    {deletingSelected ? "Deleting..." : `Delete selected (${selected.size})`}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {loading ? (
             <p className="text-[#71717A] text-xs">Loading slots...</p>
@@ -601,7 +698,7 @@ export default function SlotsPage() {
               {filteredSlots.map((slot, idx) => {
                 const startFormatted = slot.startTime
                   ? new Date(slot.startTime).toLocaleString("en-US", {
-                      timeZone: "UTC",
+                      timeZone: "Asia/Kolkata",
                       dateStyle: "short",
                       timeStyle: "short",
                     })
@@ -609,7 +706,7 @@ export default function SlotsPage() {
 
                 const endFormatted = slot.endTime
                   ? new Date(slot.endTime).toLocaleTimeString("en-US", {
-                      timeZone: "UTC",
+                      timeZone: "Asia/Kolkata",
                       timeStyle: "short",
                     })
                   : "N/A";
@@ -617,9 +714,18 @@ export default function SlotsPage() {
                 return (
                   <div
                     key={slot.id || idx}
-                    className="p-4 bg-[#141417] border border-[#27272A] hover:border-[#3F3F46] rounded-2xl flex items-center justify-between transition-all"
+                    className="p-4 bg-[#141417] border border-[#27272A] hover:border-[#3F3F46] rounded-2xl flex items-center justify-between gap-3 transition-all"
                   >
-                    <div className="space-y-1">
+                    {canManageSlots && (
+                      <input
+                        type="checkbox"
+                        checked={selected.has(slot.id)}
+                        onChange={() => toggleSelect(slot.id)}
+                        aria-label="Select slot"
+                        className="w-4 h-4 shrink-0 accent-emerald-500 cursor-pointer"
+                      />
+                    )}
+                    <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="px-2.5 py-0.5 bg-[#09090B] border border-[#27272A] text-xs font-mono text-emerald-400 rounded-md font-semibold">
                           Slot {idx + 1}
@@ -631,13 +737,15 @@ export default function SlotsPage() {
                       </p>
                     </div>
 
-                    <button
-                      onClick={() => handleDeleteSlot(slot.id)}
-                      className="p-2 text-[#71717A] hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
-                      title="Delete Slot"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {canManageSlots && (
+                      <button
+                        onClick={() => handleDeleteSlot(slot.id)}
+                        className="p-2 text-[#71717A] hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
+                        title="Delete Slot (super admin only)"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 );
               })}
