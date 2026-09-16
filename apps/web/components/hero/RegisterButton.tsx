@@ -32,7 +32,7 @@ function Face({ bands, className }: { bands: typeof RESTING_BANDS; className: st
 export function RegisterButton() {
   return (
     <Link
-      href="/register"
+      href="/select-mode"
       onClick={() => playSound("buttonClick", 0.7)}
       className="@container hero-btn group relative block w-full outline-offset-4 transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >

@@ -55,7 +55,7 @@ function ProfileContent() {
           isOpen={true}
           title="ARENA COMBAT MODE REQUIRED"
           description="OPERATIVE, YOUR DIGITAL BATTLE PASS CANNOT BE GENERATED WITHOUT AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST."
-          redirectUrl="/register"
+          redirectUrl="/select-mode"
           buttonText="SELECT COMBAT MODE →"
         />
       </div>

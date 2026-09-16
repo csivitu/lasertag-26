@@ -93,7 +93,7 @@ export function Team2ActionSection() {
       {/* 4. SWITCH / REGISTER BUTTON */}
       <button
         type="button"
-        onClick={() => router.push("/register")}
+        onClick={() => router.push("/select-mode")}
         className="w-full max-w-[150px] py-1.5 px-3 bg-[#E5349E] hover:bg-[#ff4db7] text-white font-pixel text-[9px] sm:text-[10px] rounded border-2 border-[#ff7beb] shadow-[0_3px_0_#9c187d] transition-all hover:scale-102 active:translate-y-[1px] uppercase tracking-wider text-center cursor-pointer mt-1"
       >
         CHANGE MODE / TEAM

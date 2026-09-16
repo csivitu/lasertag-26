@@ -72,7 +72,7 @@ export function HeroHeader() {
   const navLinks = session?.user
     ? [
         { label: "HOME", href: "/" },
-        { label: "ARENA MODES", href: "/register" },
+        { label: "SELECT MODE", href: "/select-mode" },
         { label: "BOOK SLOT", href: "/slot-booking" },
         { label: "MY PASS", href: "/profile" },
         { label: "SIGN OUT", href: "#sign-out" },
@@ -140,8 +140,8 @@ export function HeroHeader() {
             if (pathname !== "/") router.push("/#about");
           } else if (label === "FAQs") {
             if (pathname !== "/") router.push("/#faqs");
-          } else if (label === "ARENA MODES") {
-            router.push("/register");
+          } else if (label === "SELECT MODE") {
+            router.push("/select-mode");
           } else if (label === "BOOK SLOT") {
             router.push("/slot-booking");
           } else if (label === "MY PASS") {
