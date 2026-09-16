@@ -1,11 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
+"use client";
+
+import { playSound } from "@/lib/sound";
+
 export default function TextUpperRight() {
   return (
-    <div className="flex w-full max-w-[649px] flex-col items-center justify-center gap-4 text-center sm:gap-6">
+    <div className="flex w-full max-w-[649px] -translate-y-5 flex-col items-center justify-center gap-8 text-center sm:gap-10 lg:max-w-[680px]">
       <div className="hero-grid-title text-[13px] leading-[20px] tracking-[0.08em] sm:text-[18px] sm:leading-[28px] md:text-[24px] md:leading-[36px] lg:text-[32px] lg:leading-[44px]">
-        ENTER THE GRID
+        PRESS START!
         <br />
-        SECURE YOUR SLOT
+        SECURE YOUR SPOT
         <br />
         FOR THE ULTIMATE
         <br />
@@ -17,7 +21,8 @@ export default function TextUpperRight() {
       <button
         type="button"
         data-testid="cta-placeholder-box"
-        className="btn-book-now group relative block aspect-[305/87] h-auto w-[180px] max-w-full cursor-pointer sm:w-[220px]"
+        onClick={() => playSound("buttonClick", 0.7)}
+        className="btn-book-now group relative block aspect-[305/87] h-auto w-[185px] max-w-full cursor-pointer sm:w-[250px]"
         aria-label="Book Now"
       >
         <img

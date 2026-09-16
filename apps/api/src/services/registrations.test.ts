@@ -782,13 +782,13 @@ describe("registrationService.scanRegistration", () => {
       slot: mockSlot,
     });
     markUserCheckedInMock.mockResolvedValueOnce({
-      ...mockUser,
+      ...mockConfirmedBooking,
       isCheckedIn: true,
       checkedInAt,
     });
 
     const result = await registrationService.scanRegistration("abc123qrtokenhex");
-    expect(queries.markUserCheckedIn).toHaveBeenCalledWith(mockUser.id);
+    expect(queries.markUserCheckedIn).toHaveBeenCalledWith(mockConfirmedBooking.id);
     expect(result.user.checkedInAt).toEqual(checkedInAt);
   });
 
@@ -806,7 +806,25 @@ describe("registrationService.scanRegistration", () => {
 
     const result = await registrationService.scanRegistration("abc123qrtokenhex");
     expect(result.user).toBeDefined();
-    expect(result.booking).toEqual(mockConfirmedBooking);
+    expect(result.booking).toBeDefined();
     expect(result.slot).toEqual(mockSlot);
+  });
+
+  test("scanRegistration: markUserCheckedIn is called with booking id, not user id", async () => {
+    findRegistrationForScanMock.mockResolvedValueOnce({
+      booking: mockConfirmedBooking,
+      user: { ...mockUser, isCheckedIn: false, paid: true },
+      slot: mockSlot,
+    });
+    markUserCheckedInMock.mockResolvedValueOnce({
+      ...mockConfirmedBooking,
+      isCheckedIn: true,
+      checkedInAt: new Date(),
+    });
+
+    await registrationService.scanRegistration("abc123qrtokenhex");
+    // Must be called with the booking id — never the user id
+    expect(queries.markUserCheckedIn).toHaveBeenCalledWith(mockConfirmedBooking.id);
+    expect(queries.markUserCheckedIn).not.toHaveBeenCalledWith(mockUser.id);
   });
 });

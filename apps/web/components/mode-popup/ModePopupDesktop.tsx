@@ -9,7 +9,6 @@ import { JoinTeamForm } from "./JoinTeamForm";
 interface ModePopupDesktopProps {
   mode: PopupMode;
   onClose: () => void;
-  onSuccess?: () => void;
 }
 
 const cardStyle: CSSProperties = {
@@ -43,13 +42,13 @@ const overlayStyle: CSSProperties = {
   zIndex: 50,
 };
 
-export function ModePopupDesktop({ mode, onClose, onSuccess }: ModePopupDesktopProps) {
+export function ModePopupDesktop({ mode, onClose }: ModePopupDesktopProps) {
   const modeTitle =
     mode === "solo"
-      ? "SOLO OPERATIVE REGISTRATION"
+      ? "SOLO REGISTRATION"
       : mode === "create_team"
-      ? "CREATE SQUAD TEAM"
-      : "JOIN SQUAD TEAM";
+      ? "CREATE TEAM"
+      : "JOIN TEAM";
 
   return (
     <div
@@ -74,9 +73,9 @@ export function ModePopupDesktop({ mode, onClose, onSuccess }: ModePopupDesktopP
         </button>
 
         <h2 style={titleStyle}>{modeTitle}</h2>
-        {mode === "solo" && <SoloForm onSuccess={onSuccess} />}
-        {mode === "create_team" && <CreateTeamForm onSuccess={onSuccess} />}
-        {mode === "join_team" && <JoinTeamForm onSuccess={onSuccess} />}
+        {mode === "solo" && <SoloForm onClose={onClose} />}
+        {mode === "create_team" && <CreateTeamForm onClose={onClose} />}
+        {mode === "join_team" && <JoinTeamForm onClose={onClose} />}
       </div>
     </div>
   );

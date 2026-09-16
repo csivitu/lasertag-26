@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
@@ -8,10 +8,10 @@ import { useSession, apiBaseUrl } from "@/lib/auth-client";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface SoloFormProps {
-  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export function SoloForm({ onSuccess }: SoloFormProps) {
+export function SoloForm({ onClose }: SoloFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { profile, refetch } = useUserProfile();
@@ -22,22 +22,22 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
+  const prefilled = useRef(false);
 
   useEffect(() => {
+    if (prefilled.current) return;
     if (profile) {
-      if (profile.name && !fullName) setFullName(profile.name);
-      if (profile.regNo && !registrationNumber) setRegistrationNumber(profile.regNo);
-      if (profile.email && !emailId) setEmailId(profile.email);
-      if (profile.phone && !phoneNumber) setPhoneNumber(profile.phone);
+      prefilled.current = true;
+      if (profile.name) setFullName(profile.name);
+      if (profile.regNo) setRegistrationNumber(profile.regNo);
+      if (profile.email) setEmailId(profile.email);
+      if (profile.phone) setPhoneNumber(profile.phone);
     } else if (session?.user) {
-      if (session.user.name && !fullName) {
-        setFullName(session.user.name);
-      }
-      if (session.user.email && !emailId) {
-        setEmailId(session.user.email);
-      }
+      prefilled.current = true;
+      if (session.user.name) setFullName(session.user.name);
+      if (session.user.email) setEmailId(session.user.email);
     }
-  }, [session, profile, fullName, registrationNumber, emailId, phoneNumber]);
+  }, [session, profile]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,6 +45,11 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
 
     if (!fullName.trim() || !registrationNumber.trim() || !emailId.trim() || !phoneNumber.trim()) {
       setError("Please fill in all fields before submitting.");
+      return;
+    }
+
+    if (phoneNumber.trim().length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -73,16 +78,9 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
         throw new Error(errJson.error || errJson.message || "Failed to update profile.");
       }
 
-      await refetch();
+      await refetch?.();
 
       setStatus("success");
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push("/slot-booking");
-        }
-      }, 600);
     } catch (err: unknown) {
       setStatus("idle");
       const message = err instanceof Error ? err.message : "Failed to proceed to slot booking.";
@@ -101,18 +99,38 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
         onRegistrationNumberChange={setRegistrationNumber}
         onEmailIdChange={setEmailId}
         onPhoneNumberChange={setPhoneNumber}
+        emailLocked={Boolean(session?.user?.email)}
       />
       {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
       {status === "success" && (
-        <p className="mode-popup-form-success" role="status">
-          Profile recorded! Proceeding to slot booking arena...
-        </p>
+        <div className="flex flex-col items-center gap-3 pt-1 text-center" role="status">
+          <p className="font-pixel text-[13px] tracking-[0.1em] text-[#FEDC02]">
+            SOLO LOCKED IN
+          </p>
+          <PixelButton
+            label="PROCEED TO SLOT BOOKING →"
+            onClick={() => router.push("/slots")}
+            labelClassName="text-[12px] lg:text-[14px]"
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer font-pixel text-[11px] tracking-[0.1em] text-white/60 transition-colors hover:text-white"
+          >
+            ← PICK DIFFERENT
+          </button>
+        </div>
       )}
-      <PixelButton
-        type="submit"
-        disabled={status === "submitting"}
-        label={status === "submitting" ? "CONNECTING..." : "CONFIRM & PROCEED"}
-      />
+      {status !== "success" && (
+        <div style={{ marginTop: "4px", display: "flex", justifyContent: "center" }}>
+          <PixelButton
+            type="submit"
+            label={status === "submitting" ? "RECORDING..." : "CONFIRM PROFILE"}
+            labelClassName="text-[12px] lg:text-[14px]"
+            disabled={status === "submitting"}
+          />
+        </div>
+      )}
     </form>
   );
 }

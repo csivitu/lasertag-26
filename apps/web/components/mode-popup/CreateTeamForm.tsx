@@ -1,61 +1,102 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
+import { INPUT_BORDER_SVG, PINK_INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
 import { useSession, apiBaseUrl } from "@/lib/auth-client";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
-function generateTeamCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+const labelStyle: CSSProperties = {
+  fontFamily: "var(--ft-pixel), monospace",
+  fontSize: "12px",
+  color: "#ffffff",
+  letterSpacing: "0.1em",
+  marginBottom: "8px",
+  display: "block",
+  lineHeight: 1,
+};
+
+const inputWrapStyle: CSSProperties = {
+  position: "relative",
+  background: borderBg(INPUT_BORDER_SVG),
+};
+
+const inputStyle: CSSProperties = {
+  display: "block",
+  width: "100%",
+  background: "transparent",
+  color: "#ffffff",
+  fontFamily: "var(--ft-body), sans-serif",
+  fontWeight: 400,
+  fontSize: "16px",
+  padding: "10px 14px",
+  outline: "none",
+  border: "none",
+  lineHeight: 1.4,
+};
+
+/** Generates a random 6 char uppercase team code, seeded once on mount. */
+function generateCode(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  return Array.from({ length: 6 }, () =>
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join("");
 }
 
 interface CreateTeamFormProps {
-  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
+export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { profile, refetch } = useUserProfile();
-
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [teamName, setTeamName] = useState("");
-  const [teamCode, setTeamCode] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    setTeamCode(generateTeamCode());
-  }, []);
+  const prefilled = useRef(false);
 
   useEffect(() => {
+    if (prefilled.current) return;
     if (profile) {
-      if (profile.name && !fullName) setFullName(profile.name);
-      if (profile.regNo && !registrationNumber) setRegistrationNumber(profile.regNo);
-      if (profile.email && !emailId) setEmailId(profile.email);
-      if (profile.phone && !phoneNumber) setPhoneNumber(profile.phone);
+      prefilled.current = true;
+      if (profile.name) setFullName(profile.name);
+      if (profile.regNo) setRegistrationNumber(profile.regNo);
+      if (profile.email) setEmailId(profile.email);
+      if (profile.phone) setPhoneNumber(profile.phone);
     } else if (session?.user) {
-      if (session.user.name && !fullName) {
-        setFullName(session.user.name);
-      }
-      if (session.user.email && !emailId) {
-        setEmailId(session.user.email);
-      }
+      prefilled.current = true;
+      if (session.user.name) setFullName(session.user.name);
+      if (session.user.email) setEmailId(session.user.email);
     }
-  }, [session, profile, fullName, registrationNumber, emailId, phoneNumber]);
+  }, [session, profile]);
 
-  function handleRegenerateCode() {
-    setTeamCode(generateTeamCode());
+  // Generated once when the component mounts; frozen for the session.
+  const teamCode = useMemo(() => generateCode(), []);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopyCode() {
+    try {
+      await navigator.clipboard.writeText(teamCode);
+    } catch {
+      // Clipboard API unavailable (permissions/insecure context) — fallback.
+      const ta = document.createElement("textarea");
+      ta.value = teamCode;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -68,13 +109,19 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       return;
     }
 
-    if (!teamName.trim()) {
-      setError("Please enter a squad / team name.");
+    if (
+      !fullName.trim() ||
+      !registrationNumber.trim() ||
+      !emailId.trim() ||
+      !phoneNumber.trim() ||
+      !teamName.trim()
+    ) {
+      setError("Please fill in all fields before creating your team.");
       return;
     }
 
-    if (!fullName.trim() || !registrationNumber.trim() || !emailId.trim() || !phoneNumber.trim()) {
-      setError("Please complete all leader personal fields.");
+    if (phoneNumber.trim().length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -86,15 +133,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     setStatus("submitting");
 
     try {
-      // Create team and update profile directly on server (Zero localStorage)
       const res = await fetch(`${apiBaseUrl}/teams`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           leader_id: leaderId,
+          team_code: teamCode,
           name: teamName.trim(),
-          team_code: teamCode.trim(),
           fullName: fullName.trim(),
           regNo: registrationNumber.trim(),
           phone: phoneNumber.trim(),
@@ -102,148 +148,161 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       });
 
       if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || errJson.message || "Failed to establish squad.");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || data.message || "Failed to create team in arena database");
       }
 
-      await refetch();
+      await refetch?.();
+
+      const teamPayload = {
+        teamCode,
+        teamName: teamName.trim(),
+        isLeader: true,
+      };
+
+      // Clear any previous solo artifacts to cleanly switch to team mode
+      localStorage.removeItem("lasertag_onboarding_solo");
+      sessionStorage.removeItem("lasertag_onboarding_solo");
+
+      localStorage.setItem("lasertag_selected_mode", "team");
+      sessionStorage.setItem("lasertag_selected_mode", "team");
+      localStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+      sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
 
       setStatus("success");
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push("/profile");
-        }
-      }, 700);
     } catch (err: unknown) {
       setStatus("idle");
-      const message = err instanceof Error ? err.message : "Failed to create squad.";
-      setError(message);
+      const msg = err instanceof Error ? err.message : "Failed to create team";
+      setError(msg);
     }
   }
 
   return (
     <form className="mode-popup-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-      {/* Team Name Input */}
-      <div className="mode-popup-field">
-        <label htmlFor="team-name" className="mode-popup-label">
-          SQUAD DESIGNATION (TEAM NAME)
+      <BaseFields
+        fullName={fullName}
+        registrationNumber={registrationNumber}
+        emailId={emailId}
+        phoneNumber={phoneNumber}
+        onFullNameChange={setFullName}
+        onRegistrationNumberChange={setRegistrationNumber}
+        onEmailIdChange={setEmailId}
+        onPhoneNumberChange={setPhoneNumber}
+        emailLocked={Boolean(session?.user?.email)}
+      />
+
+      {/* Team Name */}
+      <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <label className="mode-popup-label" htmlFor="popup-team-name" style={labelStyle}>
+          TEAM NAME<sup style={{ color: "#ff7abf", fontSize: "0.85em", lineHeight: 0 }}>*</sup>
         </label>
-        <div className="mode-popup-input-wrapper">
+        <div className="mode-popup-input-wrap" style={inputWrapStyle}>
           <input
-            id="team-name"
+            id="popup-team-name"
             type="text"
-            className="mode-popup-input"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
-            placeholder="e.g. CYBER VIPERS"
+            placeholder="Code Red"
+            className="mode-popup-input"
+            style={inputStyle}
             autoComplete="off"
           />
         </div>
+      {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
+      {status === "success" && (
+        <div className="flex flex-col items-center gap-3 pt-1 text-center" role="status">
+          <p className="font-pixel text-[13px] tracking-[0.1em] text-[#FEDC02]">
+            TEAM CREATED
+          </p>
+          <PixelButton
+            label="PROCEED TO SLOT BOOKING →"
+            onClick={() => router.push("/slots")}
+            labelClassName="text-[12px] lg:text-[14px]"
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer font-pixel text-[11px] tracking-[0.1em] text-white/60 transition-colors hover:text-white"
+          >
+            ← PICK DIFFERENT
+          </button>
+        </div>
+      )}
       </div>
 
-      {/* Generated Team Code Display */}
-      <div className="mode-popup-field">
-        <label className="mode-popup-label">ASSIGNED SQUAD CODE</label>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
+      {/* Team Code row: pink code badge + Create Team button */}
+      <div
+        className="max-sm:flex-col max-sm:items-stretch max-sm:gap-3"
+        style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}
+      >
+        <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
+          <label className="mode-popup-label" style={labelStyle}>TEAM CODE</label>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <div
-            className="mode-popup-input-wrapper"
-            style={{ flex: 1, position: "relative" }}
+            className="mode-popup-code"
+            style={{
+              position: "relative",
+              background: borderBg(PINK_INPUT_BORDER_SVG),
+              width: "140px",
+              height: "40px",
+              display: "flex",
+              alignItems: "center",
+            }}
           >
-            <input
-              type="text"
-              readOnly
-              value={teamCode}
+            <div
               className="mode-popup-input"
               style={{
-                letterSpacing: "0.2em",
-                fontFamily: "var(--ft-pixel), monospace",
-                color: "#FEDC02",
-                fontWeight: "bold",
+                ...inputStyle,
+                color: "#ffffff",
+                textAlign: "center",
+                letterSpacing: "0.12em",
+                userSelect: "all",
+                padding: "0 12px",
               }}
-            />
+            >
+              {teamCode}
+            </div>
           </div>
           <button
             type="button"
-            onClick={handleRegenerateCode}
-            title="Generate new code"
-            style={{
-              background: "rgba(254, 220, 2, 0.1)",
-              border: "1px solid rgba(254, 220, 2, 0.4)",
-              color: "#FEDC02",
-              fontFamily: "var(--ft-pixel), monospace",
-              fontSize: "9px",
-              padding: "8px 10px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
+            onClick={handleCopyCode}
+            title={copied ? "Copied!" : "Copy team code"}
+            aria-label="Copy team code"
+            className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center transition-all hover:scale-110 active:scale-95"
+            style={{ color: copied ? "#4ade80" : "#e5349e" }}
           >
-            ROLL NEW
+            {copied ? (
+              <svg viewBox="0 0 24 24" aria-hidden shapeRendering="crispEdges" className="h-6 w-6" fill="currentColor">
+                <rect x="3" y="12" width="3" height="3" />
+                <rect x="6" y="15" width="3" height="3" />
+                <rect x="9" y="12" width="3" height="3" />
+                <rect x="12" y="9" width="3" height="3" />
+                <rect x="15" y="6" width="3" height="3" />
+                <rect x="18" y="3" width="3" height="3" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden shapeRendering="crispEdges" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="3" width="12" height="12" />
+                <rect x="3" y="9" width="12" height="12" fill="#08080d" />
+              </svg>
+            )}
           </button>
+          </div>
         </div>
-        <p
-          style={{
-            margin: "4px 0 0",
-            fontSize: "9px",
-            color: "rgba(255,255,255,0.45)",
-            fontFamily: "var(--ft-pixel), monospace",
-          }}
-        >
-          Share this combat code with up to 4 operatives to join your squad.
-        </p>
+
+        {status !== "success" && (
+          <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+            <PixelButton
+              type="submit"
+              label={status === "submitting" ? "CREATING..." : "CREATE TEAM"}
+              interaction="simple"
+              className="w-[240px]"
+              labelClassName="text-[12px] lg:text-[14px]"
+              disabled={status === "submitting"}
+            />
+          </div>
+        )}
       </div>
-
-      {/* Leader details */}
-      <div
-        style={{
-          borderTop: "1px dashed rgba(254, 220, 2, 0.3)",
-          paddingTop: "12px",
-          marginTop: "4px",
-        }}
-      >
-        <p
-          style={{
-            margin: "0 0 10px",
-            fontFamily: "var(--ft-pixel), monospace",
-            fontSize: "10px",
-            color: "#FEDC02",
-            letterSpacing: "0.05em",
-          }}
-        >
-          SQUAD LEADER CREDENTIALS:
-        </p>
-        <BaseFields
-          fullName={fullName}
-          registrationNumber={registrationNumber}
-          emailId={emailId}
-          phoneNumber={phoneNumber}
-          onFullNameChange={setFullName}
-          onRegistrationNumberChange={setRegistrationNumber}
-          onEmailIdChange={setEmailId}
-          onPhoneNumberChange={setPhoneNumber}
-        />
-      </div>
-
-      {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
-      {status === "success" && (
-        <p className="mode-popup-form-success" role="status">
-          Squad forged! Redirecting to operative profile...
-        </p>
-      )}
-
-      <PixelButton
-        type="submit"
-        disabled={status === "submitting"}
-        label={status === "submitting" ? "FORGING SQUAD..." : "FORGE SQUAD"}
-      />
     </form>
   );
 }

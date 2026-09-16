@@ -2,20 +2,30 @@ import Image from "next/image";
 
 type FaqSideArtProps = {
     isJumping?: boolean;
+    isBuildingJump?: boolean;
     isActive?: boolean;
+    onBuildingClick?: () => void;
 };
 
-export function FaqSideArt({ isJumping = false, isActive = false }: FaqSideArtProps) {
+export function FaqSideArt({
+    isJumping = false,
+    isBuildingJump = false,
+    isActive = false,
+    onBuildingClick,
+}: FaqSideArtProps) {
     return (
         <div className="relative h-full w-full">
-            <div className="absolute bottom-0 right-[3%] lg:right-[5%] xl:right-[8%] hidden h-[65%] lg:h-[70%] xl:h-[75%] max-h-[min(72vh,680px)] w-auto md:block">
+            <div className="absolute bottom-0 right-[3%] hidden w-[clamp(300px,34vw,560px)] lg:right-[5%] lg:block xl:right-[8%]">
                 <Image
-                    src="/faq/building.png"
+                    src="/faq/building.webp"
                     alt="Niceland arcade building"
                     width={637}
                     height={820}
                     unoptimized
-                    className="h-full w-auto object-contain object-bottom"
+                    onClick={onBuildingClick}
+                    className={`h-auto w-full object-contain object-bottom select-none${
+                        onBuildingClick ? " pointer-events-auto cursor-pointer" : ""
+                    }`}
                     style={{ imageRendering: "pixelated" }}
                 />
                 <Image
@@ -24,7 +34,10 @@ export function FaqSideArt({ isJumping = false, isActive = false }: FaqSideArtPr
                     width={129}
                     height={143}
                     unoptimized
-                    className={`absolute left-1/2 top-[18%] w-[20%] -translate-x-1/2 object-contain${isJumping ? " ralph-jump" : ""}`}
+                    onClick={onBuildingClick}
+                    className={`absolute left-1/2 w-[20%] -translate-x-1/2 object-contain select-none${
+                        onBuildingClick ? " pointer-events-auto cursor-pointer" : ""
+                    } ${isActive ? "top-[18%]" : "top-[20%]"}${isJumping ? " ralph-jump" : ""}${isBuildingJump ? " ralph-jump-high" : ""}`}
                     style={{ imageRendering: "pixelated" }}
                 />
             </div>

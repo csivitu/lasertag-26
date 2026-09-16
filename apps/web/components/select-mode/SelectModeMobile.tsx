@@ -3,16 +3,19 @@
 import React from "react";
 import { Starfield } from "../hero/Starfield";
 import { HeroHeader } from "../hero/HeroHeader";
+import { PlayerCountLabel } from "./PlayerCountLabel";
 import type { PopupMode } from "../mode-popup/ModePopup";
 
 interface SelectModeMobileProps {
   onSelect: (mode: PopupMode) => void;
+  currentModeNote?: string | null;
 }
 
-export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
+export function SelectModeMobile({ onSelect, currentModeNote }: SelectModeMobileProps) {
   return (
     <section
-      className="relative block min-h-[100svh] overflow-hidden bg-[#08080d] lg:hidden font-pixel pb-10"
+      className="relative flex min-h-[100svh] flex-col overflow-hidden bg-[#08080d] lg:hidden font-pixel pb-10 select-none"
+      onDragStart={(e) => e.preventDefault()}
     >
       {/* Background Decor */}
       <Starfield />
@@ -21,7 +24,7 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
       <HeroHeader />
 
       {/* Main Content Layout */}
-      <div className="relative z-10 flex flex-col items-center justify-start p-6 pt-4 pb-12 gap-8">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-[clamp(1.5rem,6vw,3rem)] px-[clamp(1rem,5vw,2rem)] py-8">
         
         {/* Title */}
         <div className="w-[300px] max-w-full mt-2">
@@ -32,12 +35,17 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
             className="w-full h-auto"
           />
         </div>
+        {currentModeNote && (
+          <p className="-mt-3 font-pixel text-[10px] tracking-[0.2em] text-white/50">
+            {currentModeNote}
+          </p>
+        )}
 
         {/* Selection Column */}
         <div className="flex flex-col items-center justify-center gap-6 w-full max-w-md">
           
           {/* SOLO PANEL */}
-          <div className="relative flex flex-col items-center w-full max-w-[340px] aspect-square p-8 group cursor-pointer">
+          <div className="relative flex flex-col items-center w-full max-w-[clamp(300px,84vw,380px)] aspect-square p-8 group cursor-pointer">
             {/* Box Background */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
@@ -61,7 +69,7 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
             />
 
             {/* Content Container */}
-            <div className="relative z-10 flex flex-col items-center flex-1 w-full">
+            <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full">
               {/* Avatar */}
               <div className="h-28 flex items-end justify-center mb-3 transition-transform duration-300 group-hover:-translate-y-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -86,11 +94,7 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
 
               {/* 1 Player */}
               <div className="h-8 flex items-center justify-center">
-                <div className="flex items-center gap-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/select-mode/select-mode-solo/icon.svg" alt="" className="h-5 w-auto" />
-                  <span className="text-[#f5d506] text-sm uppercase tracking-widest"></span>
-                </div>
+                <PlayerCountLabel text="1 PLAYER" size="sm" />
               </div>
 
               {/* Join Button */}
@@ -127,7 +131,7 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
           </div>
 
           {/* TEAM PANEL */}
-          <div className="relative flex flex-col items-center w-full max-w-[340px] aspect-square p-8 group cursor-pointer">
+          <div className="relative flex flex-col items-center w-full max-w-[clamp(300px,84vw,380px)] aspect-square p-8 group cursor-pointer">
             {/* Box Background */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
@@ -151,17 +155,15 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
             />
 
             {/* Content Container */}
-            <div className="relative z-10 flex flex-col items-center flex-1 w-full">
+            <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full">
               {/* Team Avatars */}
               <div className="flex flex-row items-end justify-center gap-0 h-24 mb-3 transition-transform duration-300 group-hover:-translate-y-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/select-mode/select-mode-team/blue-guy.svg" alt="" className="h-[90%] w-auto -mr-2" />
+                <img src="/select-mode/select-mode-team/blue-guy.svg" alt="" className="h-[85%] w-auto -mr-4" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/select-mode/select-mode-team/purple-guy.svg" alt="" className="h-[90%] w-auto z-10" />
+                <img src="/select-mode/select-mode-team/yellow-guy.svg" alt="" className="h-[85%] w-auto z-10 -translate-y-2" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/select-mode/select-mode-team/yellow-guy.svg" alt="" className="h-[90%] w-auto z-10" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/select-mode/select-mode-team/pink-guy.svg" alt="" className="h-[90%] w-auto -ml-1" />
+                <img src="/select-mode/select-mode-team/pink-guy.svg" alt="" className="h-[85%] w-auto -ml-4" />
               </div>
 
               {/* TEAM text */}
@@ -176,12 +178,9 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
                 </div>
               </div>
 
-              {/* 5 Players */}
+              {/* MAX 5 PLAYERS — same shared label as solo/desktop */}
               <div className="h-8 flex items-center justify-center">
-                <div className="w-32">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/select-mode/select-mode-team/no-of-players.svg" alt="5 Players" className="w-full h-auto" />
-                </div>
+                <PlayerCountLabel text="MAX 5 PLAYERS" size="sm" />
               </div>
 
               {/* Create/Join Team Buttons */}

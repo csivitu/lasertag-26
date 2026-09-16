@@ -57,9 +57,8 @@ export function Team2ActionSection() {
       {/* Action Button */}
       <button
         type="button"
-        onClick={() => router.push("/slot-booking")}
-        className="w-full max-w-[160px] py-1.5 px-2 bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20 text-[#00F0FF] text-[9px] font-bold rounded border border-[#00F0FF] transition-all uppercase tracking-wider text-center cursor-pointer"
-        style={{ fontFamily: "var(--font-pixel), monospace" }}
+        onClick={() => router.push("/slots")}
+        className="w-full max-w-[150px] py-1.5 px-3 bg-[#E5349E] hover:bg-[#ff4db7] text-white font-pixel text-[9px] sm:text-[10px] rounded border-2 border-[#ff7beb] shadow-[0_3px_0_#9c187d] transition-all hover:scale-102 active:translate-y-[1px] uppercase tracking-wider text-center cursor-pointer mt-1"
       >
         ARENA SLOTS
       </button>

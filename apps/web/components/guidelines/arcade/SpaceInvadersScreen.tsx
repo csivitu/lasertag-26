@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { playSound } from '@/lib/sound';
 import {
   BULLET_HEIGHT,
   BULLET_SPEED,
@@ -251,15 +252,38 @@ export function SpaceInvadersScreen() {
       if (nextLives <= 0) {
         setGameStatus('gameover');
         gameStatusRef.current = 'gameover';
+        playSound('gameOver', 0.73);
       } else {
         // Reset player to center after hit
         player.x = GRID_CENTER_X - PLAYER_WIDTH / 2;
+        playSound('playerHit', 0.73);
       }
     },
     [spawnExplosion]
   );
 
+  // Reset the game back to its original (attract) state — ESC key or STOP button
+  const resetToIdle = useCallback(() => {
+    setScore(INITIAL_SCORE);
+    setLives(INITIAL_LIVES);
+    livesRef.current = INITIAL_LIVES;
+    playerRef.current.x = GRID_CENTER_X - PLAYER_WIDTH / 2;
+    fleetRef.current = createInitialFleet();
+    playerBulletsRef.current = [];
+    enemyBulletsRef.current = [];
+    particlesRef.current = [];
+    fleetDirectionRef.current = 1;
+    fleetStepTimerRef.current = 0;
+    waveNumberRef.current = 1;
+    invulnerableUntilRef.current = 0;
+    keysPressedRef.current.left = false;
+    keysPressedRef.current.right = false;
+    setGameStatus('idle');
+    gameStatusRef.current = 'idle';
+  }, []);
+
   const firePlayerBullet = useCallback(() => {
+
     if (gameStatusRef.current === 'idle') {
       setGameStatus('playing');
       gameStatusRef.current = 'playing';
@@ -274,6 +298,7 @@ export function SpaceInvadersScreen() {
 
     const player = playerRef.current;
     bulletIdCounterRef.current += 1;
+    playSound('invaderShoot', 0.63);
     playerBulletsRef.current.push({
       id: `p-bullet-${bulletIdCounterRef.current}`,
       x: player.x + player.width / 2 - BULLET_WIDTH / 2,
@@ -313,6 +338,10 @@ export function SpaceInvadersScreen() {
   // Handle keyboard inputs (ONLY Arrow keys and Space)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Escape') {
+        resetToIdle();
+        return;
+      }
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         keysPressedRef.current.left = true;
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
@@ -341,7 +370,7 @@ export function SpaceInvadersScreen() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [firePlayerBullet]);
+  }, [firePlayerBullet, resetToIdle]);
 
   // Click on screen starts game or fires
   const handleClick = () => {
@@ -353,6 +382,12 @@ export function SpaceInvadersScreen() {
     let animationFrameId: number;
 
     const gameLoop = () => {
+      // Hidden tab: keep the rAF chain + all ref state alive, skip the
+      // update/draw work (no paint, no sounds, no setState). Nothing resets.
+      if (typeof document !== 'undefined' && document.hidden) {
+        animationFrameId = requestAnimationFrame(gameLoop);
+        return;
+      }
       const now = performance.now();
       const status = gameStatusRef.current;
       const player = playerRef.current;
@@ -376,6 +411,7 @@ export function SpaceInvadersScreen() {
         if (aliveInvaders.length === 0) {
           setGameStatus('cleared');
           gameStatusRef.current = 'cleared';
+          playSound('waveCleared', 0.73);
           setTimeout(() => {
             waveNumberRef.current += 1;
             fleetRef.current = createInitialFleet();
@@ -473,6 +509,7 @@ export function SpaceInvadersScreen() {
               getInvaderColor(inv.type)
             );
             setScore((prev) => prev + inv.points);
+            playSound('invaderBlast', 0.73);
             break;
           }
         }
@@ -610,10 +647,10 @@ export function SpaceInvadersScreen() {
       className="relative h-full w-full select-none overflow-hidden rounded-[4px] bg-black cursor-pointer"
       tabIndex={0}
       role="application"
-      aria-label="Space Invaders Arcade Game. Use Left and Right Arrow keys to move, Space to fire."
+      aria-label="Space Invaders Arcade Game. Use Left and Right Arrow keys to move, Space to fire, Escape to reset."
     >
       {/* HUD Header */}
-      <div className="absolute left-0 top-0 z-20 flex w-full items-center justify-between px-3 py-1 text-[9px] font-mono tracking-wider text-[#35ecf0]">
+      <div className="absolute left-0 top-0 z-20 flex w-full items-center justify-between px-3 py-1 text-[11px] font-mono tracking-wider text-[#35ecf0]">
         <div className="flex items-center gap-1">
           <span className="text-white">SCORE</span>
           <span className="text-[#35ecf0]">
@@ -628,8 +665,8 @@ export function SpaceInvadersScreen() {
               key={`life-${i}`}
               src={SVG_PLAYER_SHIP}
               alt=""
-              width={10}
-              height={9}
+              width={12}
+              height={11}
               className="inline-block"
             />
           ))}
@@ -646,8 +683,8 @@ export function SpaceInvadersScreen() {
 
       {/* Controls Communication Bar in CRT Screen */}
       <div className="pointer-events-none absolute bottom-1.5 left-0 right-0 z-20 text-center">
-        <span className="rounded bg-black/80 px-2 py-0.5 font-mono text-[7px] tracking-wider text-guideline-cyan border border-guideline-cyan/30 shadow-sm">
-          ◄ / ► ARROW KEYS TO MOVE • SPACE TO SHOOT
+        <span className="bg-black/80 px-2 py-0.5 font-mono text-[8px] font-bold tracking-wider text-guideline-cyan border border-guideline-cyan/30 shadow-sm">
+          ◄ / ► MOVE • SPACE SHOOT • ESC RESET
         </span>
       </div>
 
@@ -655,7 +692,7 @@ export function SpaceInvadersScreen() {
       {gameStatus === 'idle' && (
         <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/40">
           <div className="flex flex-col items-center gap-1 rounded bg-black/85 px-2.5 py-1.5 border border-brand-pink/50 shadow-lg text-center">
-            <span className="animate-pulse font-mono text-[8px] font-bold tracking-wider text-guideline-yellow">
+            <span className="animate-pulse font-mono text-[10px] font-bold tracking-wider text-guideline-yellow">
               PRESS SPACE OR CLICK TO START
             </span>
           </div>
@@ -665,7 +702,7 @@ export function SpaceInvadersScreen() {
 
       {/* Wave Cleared Message */}
       {gameStatus === 'cleared' && (
-        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/60 font-mono text-xs font-bold text-[#f6ce01]">
+        <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/60 font-mono text-sm font-bold text-[#f6ce01]">
           WAVE CLEARED!
         </div>
       )}
@@ -673,13 +710,13 @@ export function SpaceInvadersScreen() {
       {/* Game Over Screen */}
       {gameStatus === 'gameover' && (
         <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-1 bg-black/80 font-mono">
-          <span className="text-sm font-bold tracking-widest text-[#ff2a6d] animate-pulse">
+          <span className="text-base font-bold tracking-widest text-[#ff2a6d] animate-pulse">
             GAME OVER
           </span>
-          <span className="text-[9px] text-[#35ecf0]">
+          <span className="text-[11px] text-[#35ecf0]">
             FINAL SCORE: {score.toString().padStart(4, '0')}
           </span>
-          <span className="mt-1 rounded bg-black px-2 py-0.5 text-[7px] text-white/90 border border-white/30">
+          <span className="mt-1 rounded bg-black px-2 py-0.5 text-[8px] text-white/90 border border-white/30">
             [ PRESS SPACE OR CLICK TO RESTART ]
           </span>
         </div>

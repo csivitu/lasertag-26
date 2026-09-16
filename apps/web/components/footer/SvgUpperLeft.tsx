@@ -1,29 +1,30 @@
 /* eslint-disable @next/next/no-img-element */
 export default function SvgUpperLeft() {
   return (
-    <div className="flex w-full items-center justify-center">
-      <div className="relative w-full translate-x-[2%] max-w-[360px] sm:max-w-[480px] md:max-w-[580px] lg:max-w-[680px] xl:max-w-[737px]">
+    <div className="flex w-full select-none items-center justify-center mt-3 sm:mt-4">
+      <div className="relative w-full translate-x-[2%] max-w-[400px] [container-type:inline-size] sm:max-w-[480px] md:max-w-[480px] lg:max-w-[750px] xl:max-w-[820px]">
         <img
           src="/footer/upper-left-group.svg"
           alt="Laser tag arcade cabinet"
+          draggable={false}
           className="h-auto w-full select-none object-contain drop-shadow-[0_0_35px_rgba(237,43,132,0.2)]"
           fetchPriority="high"
         />
 
-        <div
-          className="pointer-events-none absolute"
+          <div
+          className="absolute flex flex-col items-center justify-center text-center"
           style={{
-            left: "32%",
+            left: "32.8%",
             top: "31.5%",
             width: "35.28%",
             height: "13.02%",
           }}
         >
-          <img
-            src="/footer/are-you-ready.svg"
-            alt="ARE YOU READY?"
-            className="h-full w-full select-none object-contain drop-shadow-[0_0_8px_rgba(254,220,2,0.5)]"
-          />
+          <p className="ready-crt font-pixel text-[5.3cqw] leading-[1.25] whitespace-nowrap text-brand-yellow [text-shadow:0.35cqw_0.35cqw_0_var(--color-brand-pink)] [transform:perspective(350px)_rotateY(10deg)_skewX(7deg)]">
+            ARE YOU
+            <br />
+            READY?
+          </p>
         </div>
       </div>
     </div>

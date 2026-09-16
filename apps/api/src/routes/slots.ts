@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 
 import { slotController } from "../controllers/slot.controller";
 import { asyncHandler } from "../middlewares/errorHandler";
+import { bookingRateLimit } from "../middlewares/rateLimit";
 import { validateRequest } from "../middlewares/validate";
 import { reserveSlotSchema } from "../validations/slot.validation";
 
@@ -20,6 +21,7 @@ publicSlotsRouter.get(
 
 publicSlotsRouter.post(
   "/",
+  bookingRateLimit,
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const newSlot = await slotController.createSlot({
       startTime: req.body.startTime,
@@ -48,6 +50,7 @@ publicSlotsRouter.delete(
 
 publicSlotsRouter.post(
   "/:slot_id/reserve",
+  bookingRateLimit,
   validateRequest(reserveSlotSchema),
   asyncHandler(async (req: Request<{ slot_id: string }, unknown, { user_id: string; type: "individual" | "team"; team_code?: string; side?: "red" | "blue" }>, res: Response): Promise<void> => {
     const newBooking = await slotController.reserveSlot({

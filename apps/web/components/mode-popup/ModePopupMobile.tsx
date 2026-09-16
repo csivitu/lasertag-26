@@ -9,7 +9,6 @@ import { JoinTeamForm } from "./JoinTeamForm";
 interface ModePopupMobileProps {
   mode: PopupMode;
   onClose: () => void;
-  onSuccess?: () => void;
 }
 
 /** On mobile the modal takes most of the screen width, scrolls internally. */
@@ -45,13 +44,13 @@ const titleStyle: CSSProperties = {
   lineHeight: 1.5,
 };
 
-export function ModePopupMobile({ mode, onClose, onSuccess }: ModePopupMobileProps) {
+export function ModePopupMobile({ mode, onClose }: ModePopupMobileProps) {
   const modeTitle =
     mode === "solo"
-      ? "SOLO OPERATIVE"
+      ? "SOLO"
       : mode === "create_team"
-      ? "CREATE SQUAD TEAM"
-      : "JOIN SQUAD TEAM";
+      ? "CREATE TEAM"
+      : "JOIN TEAM";
 
   return (
     <div
@@ -76,9 +75,9 @@ export function ModePopupMobile({ mode, onClose, onSuccess }: ModePopupMobilePro
         </button>
 
         <h2 style={titleStyle}>{modeTitle}</h2>
-        {mode === "solo" && <SoloForm onSuccess={onSuccess} />}
-        {mode === "create_team" && <CreateTeamForm onSuccess={onSuccess} />}
-        {mode === "join_team" && <JoinTeamForm onSuccess={onSuccess} />}
+        {mode === "solo" && <SoloForm onClose={onClose} />}
+        {mode === "create_team" && <CreateTeamForm onClose={onClose} />}
+        {mode === "join_team" && <JoinTeamForm onClose={onClose} />}
       </div>
     </div>
   );

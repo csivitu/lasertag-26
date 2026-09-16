@@ -22,15 +22,24 @@ export function FaqAccordion({ onToggle: onToggleCallback, onActiveChange }: { o
 
     return (
         <div className="relative w-full py-0">
-            <div
-                className="absolute left-[10px] top-3 bottom-3 w-px bg-white/15 sm:left-3 sm:top-0 sm:bottom-0"
-                aria-hidden
-            />
-
-            <ol className="flex flex-col gap-2.5 sm:gap-2.5 lg:gap-3">
+            <ol className="flex flex-col gap-4 sm:gap-4 lg:gap-5">
                 {faqItems.map((entry, index) => (
-                    <li key={entry.question} className="relative flex items-center gap-4 sm:gap-5">
-                        <div className="flex w-5 shrink-0 items-center justify-center sm:w-6">
+                    <li key={entry.question} className="relative flex items-start gap-4 sm:gap-5">
+                        {/* Upper half-segment: from mid-gap above down to this dot's center (not on first item) */}
+                        {index > 0 && (
+                            <div
+                                className="absolute left-[8px] -top-2 bottom-[calc(100%_-_18px)] w-1 bg-white/15 sm:left-[10px] sm:bottom-[calc(100%_-_20px)] lg:-top-2.5 lg:bottom-[calc(100%_-_22px)]"
+                                aria-hidden
+                            />
+                        )}
+                        {/* Lower half-segment: from this dot's center down to mid-gap below (not on last item) */}
+                        {index < faqItems.length - 1 && (
+                            <div
+                                className="absolute left-[8px] top-[18px] -bottom-2 w-1 bg-white/15 sm:left-[10px] sm:top-5 lg:top-[22px] lg:-bottom-2.5"
+                                aria-hidden
+                            />
+                        )}
+                        <div className="flex w-5 shrink-0 justify-center pt-2 sm:w-6 lg:pt-2.5">
                             <span
                                 data-color={entry.color}
                                 className={`relative z-10 flex size-5 items-center justify-center rounded-full border-2 bg-ink sm:size-6 ${DOT_RING[entry.color]}${openIndex === index ? " faq-dot--open" : ""}`}

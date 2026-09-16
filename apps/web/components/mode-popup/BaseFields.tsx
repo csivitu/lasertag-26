@@ -12,6 +12,7 @@ export interface BaseFieldsProps {
   onRegistrationNumberChange: (v: string) => void;
   onEmailIdChange: (v: string) => void;
   onPhoneNumberChange: (v: string) => void;
+  emailLocked?: boolean;
 }
 
 /**
@@ -61,6 +62,8 @@ interface FieldProps {
   type?: string;
   inputMode?: "text" | "email" | "tel" | "numeric";
   maxLength?: number;
+  disabled?: boolean;
+  required?: boolean;
 }
 
 function Field({
@@ -72,13 +75,24 @@ function Field({
   type = "text",
   inputMode,
   maxLength,
+  disabled = false,
+  required = false,
 }: FieldProps) {
   return (
     <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <label className="mode-popup-label" htmlFor={id} style={labelStyle}>
         {label}
+        {required && (
+          <sup style={{ color: "#ff7abf", fontSize: "0.85em", lineHeight: 0 }}>*</sup>
+        )}
       </label>
-      <div className="mode-popup-input-wrap" style={inputWrapStyle}>
+      <div
+        className="mode-popup-input-wrap"
+        style={{
+          ...inputWrapStyle,
+          ...(disabled ? { opacity: 0.55, cursor: "not-allowed" } : null),
+        }}
+      >
         <input
           id={id}
           type={type}
@@ -93,6 +107,7 @@ function Field({
           spellCheck={false}
           inputMode={inputMode}
           maxLength={maxLength}
+          disabled={disabled}
         />
       </div>
     </div>
@@ -109,6 +124,7 @@ export function BaseFields({
   onRegistrationNumberChange,
   onEmailIdChange,
   onPhoneNumberChange,
+  emailLocked = false,
 }: BaseFieldsProps) {
   return (
     <>
@@ -125,6 +141,7 @@ export function BaseFields({
         value={registrationNumber}
         onChange={onRegistrationNumberChange}
         placeholder="24XYZ006"
+        required
       />
       <Field
         label="EMAIL ID"
@@ -133,16 +150,18 @@ export function BaseFields({
         onChange={onEmailIdChange}
         placeholder="abc@gmail.com"
         type="email"
+        disabled={emailLocked}
       />
       <Field
         label="PHONE NUMBER"
         id="popup-phone"
         value={phoneNumber}
         onChange={onPhoneNumberChange}
-        placeholder="9374537484"
+        placeholder="9876543210"
         type="tel"
         inputMode="numeric"
         maxLength={10}
+        required
       />
     </>
   );

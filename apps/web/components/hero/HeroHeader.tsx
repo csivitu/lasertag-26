@@ -2,12 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { HeroMenu } from "./HeroMenu";
 import { NavArrow } from "./NavArrow";
-import { AuthModal } from "../auth/AuthModal";
 import { useSession, signOut } from "@/lib/auth-client";
+import { readHasAccount } from "@/lib/auth-mode";
+import { playSound } from "@/lib/sound";
+
+const AuthModal = dynamic(
+  () => import("../auth/AuthModal").then((m) => m.AuthModal),
+  { ssr: false }
+);
 
 export function HeroHeader() {
   const { data: session } = useSession();
@@ -17,9 +24,10 @@ export function HeroHeader() {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
 
   function handleNavClick(e: React.MouseEvent, link: { label: string; href: string }) {
+    playSound("navSelect", 0.7);
     if (link.label === "SIGN IN") {
       e.preventDefault();
-      setAuthMode("signin");
+      setAuthMode(readHasAccount() ? "signin" : "signup");
       setAuthOpen(true);
       return;
     }
@@ -32,6 +40,27 @@ export function HeroHeader() {
       if (pathname !== "/") {
         e.preventDefault();
         router.push("/" + link.href.replace(/^#/, ""));
+      } else {
+        // Same-page anchor: instant scroll without smooth-scroll fighting
+        const targetId = link.href.replace(/^\/?#/, "");
+        const targetElement =
+          targetId === "home" || !targetId
+            ? document.getElementById("home") || document.documentElement
+            : document.getElementById(targetId);
+        if (targetElement) {
+          e.preventDefault();
+          import("gsap").then(({ gsap }) => {
+            gsap.killTweensOf(window);
+            targetElement.scrollIntoView({ behavior: "instant" });
+          }).catch(() => {
+            targetElement.scrollIntoView({ behavior: "instant" });
+          });
+          if (targetId) {
+            history.pushState(null, "", `#${targetId}`);
+          } else {
+            history.pushState(null, "", window.location.pathname);
+          }
+        }
       }
     }
   }
@@ -40,7 +69,7 @@ export function HeroHeader() {
   const navLinks = session?.user
     ? [
         { label: "HOME", href: "/" },
-        { label: "ARENA MODES", href: "/register" },
+        { label: "SELECT MODE", href: "/select-mode" },
         { label: "BOOK SLOT", href: "/slot-booking" },
         { label: "MY PASS", href: "/profile" },
         { label: "SIGN OUT", href: "#sign-out" },
@@ -66,7 +95,8 @@ export function HeroHeader() {
           height={240}
           priority
           unoptimized
-          className="size-full object-contain"
+          draggable={false}
+          className="size-full object-contain select-none"
         />
       </Link>
 
@@ -78,6 +108,7 @@ export function HeroHeader() {
           <Link
             key={link.label}
             href={link.href}
+            onMouseEnter={() => playSound("navHover", 0.56)}
             onClick={(e) => handleNavClick(e, link)}
             className="group relative inline-flex items-center whitespace-nowrap font-pixel leading-[1.338] tracking-[0.1em] text-white outline-offset-4 transition-colors duration-150 hover:text-accent focus-visible:text-accent focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none"
           >
@@ -96,7 +127,7 @@ export function HeroHeader() {
         links={navLinks}
         onNavClick={(label) => {
           if (label === "SIGN IN") {
-            setAuthMode("signin");
+            setAuthMode(readHasAccount() ? "signin" : "signup");
             setAuthOpen(true);
           } else if (label === "SIGN OUT") {
             signOut();
@@ -106,8 +137,8 @@ export function HeroHeader() {
             if (pathname !== "/") router.push("/#about");
           } else if (label === "FAQs") {
             if (pathname !== "/") router.push("/#faqs");
-          } else if (label === "ARENA MODES") {
-            router.push("/register");
+          } else if (label === "SELECT MODE") {
+            router.push("/select-mode");
           } else if (label === "BOOK SLOT") {
             router.push("/slot-booking");
           } else if (label === "MY PASS") {

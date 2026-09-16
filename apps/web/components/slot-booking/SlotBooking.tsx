@@ -163,7 +163,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     }
 
     if (!selectedMode) {
-      router.push("/register");
+      router.push("/select-mode");
       return;
     }
 
@@ -236,7 +236,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
           isOpen={true}
           title="COMBAT PROTOCOL REQUIRED"
           description="OPERATIVE, ACCESS TO ARENA TIME SLOTS REQUIRES AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST."
-          redirectUrl="/register"
+          redirectUrl="/select-mode"
           buttonText="SELECT COMBAT MODE →"
         />
       </section>

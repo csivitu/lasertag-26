@@ -6,11 +6,13 @@ import { useEffect, useRef, useState } from "react";
 const MAX_ENERGY = 5;
 
 export function SponsEnergy() {
-  const [energy, setEnergy] = useState(1);
-  const increasing = useRef(true);
+  const [energy, setEnergy] = useState(4);
+  const increasing = useRef(false);
 
   useEffect(() => {
+    // Skip ticks while the tab is hidden — value + direction preserved.
     const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       setEnergy((current) => {
         if (current === MAX_ENERGY) {
           increasing.current = false;
@@ -24,20 +26,21 @@ export function SponsEnergy() {
 
         return increasing.current ? current + 1 : current - 1;
       });
-    }, 700);
+    }, 550);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="flex items-center">
+    <div className="flex select-none items-center">
       <div className="relative size-[clamp(28px,4.1vw,59px)] shrink-0">
         <Image
           src="/spons/energy.svg"
           alt=""
           fill
           sizes="(min-width: 1024px) 4.1vw, 4.1vw"
-          className="object-contain"
+          draggable={false}
+          className="object-contain select-none"
         />
       </div>
 
@@ -53,7 +56,8 @@ export function SponsEnergy() {
             alt=""
             width={44}
             height={32}
-            className={`h-auto w-[clamp(20px,3.02vw,44px)] shrink-0 ${
+            draggable={false}
+            className={`h-auto w-[clamp(20px,3.02vw,44px)] shrink-0 select-none ${
               index > 0 ? "-ml-[0.42vw]" : ""
             }`}
           />

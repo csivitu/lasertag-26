@@ -14,18 +14,38 @@ const DESIGN_HEIGHT = 900;
 export default function AboutUs() {
     const stageRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
+    // Start false so the first client render matches the SSR HTML, then sync
+    // to the real viewport in the effect below. Reading matchMedia in the
+    // useState initializer diverges on desktop (SSR: false, client: true)
+    // and throws a hydration mismatch that regenerates the whole tree.
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        const mq = window.matchMedia("(min-width: 1024px)");
+        setIsDesktop(mq.matches);
+        const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+        mq.addEventListener("change", onChange);
+        return () => mq.removeEventListener("change", onChange);
+    }, []);
 
     useEffect(() => {
         const el = stageRef.current;
         if (!el) return;
 
+        let lastScale = 0;
         function updateScale() {
             const el2 = stageRef.current;
             if (!el2) return;
             const width = el2.clientWidth;
             const height = el2.clientHeight;
             const nextScale = Math.min(width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
-            setScale(nextScale > 0 ? nextScale : 1);
+            // Round + skip no-op updates — RO fires continuously during
+            // scroll-snap tweens, and each setState was a full re-render.
+            const rounded = Math.round(nextScale * 1000) / 1000;
+            if (rounded > 0 && Math.abs(rounded - lastScale) > 0.001) {
+                lastScale = rounded;
+                setScale(rounded);
+            }
         }
 
         updateScale();
@@ -41,9 +61,8 @@ export default function AboutUs() {
 
     return (
         <section id="about" className={styles.section} ref={stageRef}>
-            {/* Desktop View (>= 1024px): 1440x900 proportional canvas fitting 100vh with Pacman perimeter */}
-            <div className="hidden lg:contents">
-                <Pacman />
+            {/* Desktop View (>= 1024px): single-mounted, mobile tree not in DOM. */}
+            {isDesktop ? (
                 <div
                     className={styles.stageFrame}
                     style={{
@@ -59,23 +78,40 @@ export default function AboutUs() {
                     >
                         <AboutUsHeader />
                         <AboutUsLeftDisc />
+                        <div className={styles.pacmanHint}>
+                            <p>
+                                <span className={styles.pacmanHintKey}>←</span> to move pacman
+                            </p>
+                            <p>
+                                reach the end &amp; hunt ghosts{" "}
+                                <span className={styles.pacmanHintKey}>→</span>
+                            </p>
+                        </div>
                         <AboutUsVid />
                         <ArcadeAccessories />
+                        <Pacman />
                     </div>
                 </div>
-            </div>
-
-            {/* Mobile View (< 1024px): Fluid responsive column without Pacman */}
-            <div className={styles.mobileContainer}>
-                <AboutUsHeader />
-                <div className={styles.contentGrid}>
-                    <AboutUsLeftDisc />
-                    <div className={styles.mediaWrap}>
-                        <AboutUsVid />
-                        <ArcadeAccessories />
+            ) : (
+                /* Mobile View (< 1024px): desktop canvas not in DOM — halves
+                   video/Pacman/image instances decoded. */
+                <div className={styles.mobileContainer}>
+                    <AboutUsHeader />
+                    <div className={styles.contentGrid}>
+                        <AboutUsLeftDisc />
+                        <div className={styles.pacmanHint}>
+                            <p>
+                                tap pacman to play
+                            </p>
+                        </div>
+                        <div className={styles.mediaWrap}>
+                            <AboutUsVid />
+                            <ArcadeAccessories />
+                        </div>
                     </div>
+                    <Pacman isMobile />
                 </div>
-            </div>
+            )}
         </section>
     );
 }

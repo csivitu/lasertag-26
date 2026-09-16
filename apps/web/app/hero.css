@@ -26,7 +26,7 @@
 
 .btn-book-now:hover {
   transform: scale(1.04);
-  filter: brightness(1.08) drop-shadow(0 0 12px rgba(229, 52, 158, 0.9));
+  filter: brightness(1.08);
 }
 
 .btn-book-now:active {
@@ -243,14 +243,16 @@
 
 @keyframes pew-pew-typewriter {
   from {
-    width: 0ch;
+    clip-path: inset(0 100% 0 0);
   }
   to {
-    width: 7.5ch;
+    clip-path: inset(0 0 0 0);
   }
 }
 
 .pew-pew-typewriter {
+  width: 7.5ch;
+  clip-path: inset(0 100% 0 0);
   animation: pew-pew-typewriter 0.9s steps(7, jump-none) forwards;
 }
 
@@ -262,6 +264,7 @@
   }
   .pew-pew-typewriter {
     width: 7.5ch !important;
+    clip-path: none !important;
   }
   .cursor-blink {
     opacity: 1 !important;
@@ -303,7 +306,8 @@
 
 .hero-wordmark {
   font-family: var(--font-logo);
-  font-size: clamp(3rem, 11vw, 9rem);
+  font-size: clamp(4.2rem, 19vw, 7.4rem);
+  font-weight: 200;
   line-height: 0.62;
   letter-spacing: -0.027em;
   transform: skewX(-7.3deg);
@@ -314,6 +318,12 @@
   color: transparent;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0.044em 0.044em 0 var(--color-brand-pink));
+}
+
+@media (min-width: 1024px) {
+  .hero-wordmark {
+    font-size: clamp(3.2rem, 12vw, 9.8rem);
+  }
 }
 
 .hero-btn__shine {
@@ -413,5 +423,50 @@
     animation: none !important;
     opacity: 1 !important;
     clip-path: none !important;
+  }
+}
+
+/* ── Footer "ARE YOU READY?" CRT flicker ── */
+@keyframes ready-crt {
+  0%,
+  88% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(254, 220, 2, 0.5));
+  }
+  45% {
+    opacity: 0.97;
+    filter: drop-shadow(0 0 10px rgba(254, 220, 2, 0.6));
+  }
+  91% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(254, 220, 2, 0.5));
+  }
+  92.5% {
+    opacity: 0.55;
+    filter: drop-shadow(0 0 4px rgba(254, 220, 2, 0.35));
+  }
+  94% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(254, 220, 2, 0.6));
+  }
+  95.5% {
+    opacity: 0.72;
+    filter: drop-shadow(0 0 5px rgba(254, 220, 2, 0.4));
+  }
+  97%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(254, 220, 2, 0.5));
+  }
+}
+
+.ready-crt {
+  will-change: opacity, filter;
+  animation: ready-crt 4.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ready-crt {
+    animation: none !important;
   }
 }

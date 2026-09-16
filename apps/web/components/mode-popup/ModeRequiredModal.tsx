@@ -40,7 +40,7 @@ export function ModeRequiredModal({
   isOpen,
   title = "ARENA MODE REQUIRED",
   description = "OPERATIVE, ACCESS TO ARENA TIME SLOTS AND YOUR DIGITAL BATTLE PASS REQUIRES AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST.",
-  redirectUrl = "/register",
+  redirectUrl = "/select-mode",
   buttonText = "SELECT ARENA MODE →",
 }: ModeRequiredModalProps) {
   const router = useRouter();

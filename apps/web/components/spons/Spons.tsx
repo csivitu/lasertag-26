@@ -5,18 +5,28 @@ import { SponsHealth } from "./SponsHealth";
 
 export function Spons() {
   return (
-    <section className="relative flex min-h-[100svh] flex-col bg-ink">
+    <section id="spons" className="relative flex min-h-[100svh] flex-col max-sm:min-h-[75svh] max-sm:pb-[8vh] max-sm:pt-[4vh]">
       <SponsHeader />
 
       {/* Health + Energy */}
-      <div className="relative z-10 mt-[8vh] flex w-full items-center justify-between px-[clamp(24px,5.2vw,75px)] max-sm:justify-center max-sm:gap-[6vw]">
+      <div className="relative z-10 mt-[7vh] flex w-full items-center justify-between px-[clamp(24px,5.2vw,75px)] max-sm:mt-[5vh] max-sm:justify-center max-sm:gap-[14vw]">
         <SponsHealth />
         <SponsEnergy />
       </div>
 
       {/* Headset */}
-      <div className="relative z-0 -mt-[11vh] flex w-full justify-center max-sm:mt-[6vh] max-sm:px-4">
+      <div className="relative z-10 -mt-[14vh] flex w-full justify-center max-sm:my-auto max-sm:mt-[12vh] max-sm:px-4 sm:-mt-[2vh] md:-mt-[3vh] lg:-mt-[5vh] lg:pb-[4vh] xl:-mt-[9vh]">
         <SponsHeadset />
+      </div>
+
+      {/* Bottom grid — behind the headset */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 hidden w-full justify-center sm:flex">
+        <img
+          src="/spons/grid.svg"
+          alt=""
+          aria-hidden
+          className="h-auto w-[170%] max-w-none"
+        />
       </div>
     </section>
   );

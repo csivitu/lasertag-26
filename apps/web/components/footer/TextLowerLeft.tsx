@@ -1,11 +1,11 @@
 export default function TextLowerLeft() {
   return (
-    <div className="flex flex-col gap-2 text-center sm:text-left">
+    <div className="flex flex-col gap-1 text-center sm:text-left">
       <h3
-        className="text-transparent font-bold tracking-wider text-[24px] sm:text-[30px]"
+        className="text-transparent font-normal tracking-wider text-[20px] sm:text-[24px]"
         style={{
-          fontFamily: "'Press Start 2P', monospace",
-          WebkitTextStroke: "2px #E5349E",
+          fontFamily: "var(--ft-pixel), monospace",
+          WebkitTextStroke: "1.5px #E5349E",
           lineHeight: "38px"
         }}
       >
@@ -13,9 +13,9 @@ export default function TextLowerLeft() {
       </h3>
       
       <p
-        className="text-white text-[14px] sm:text-[20px]"
+        className="text-white text-[10px] whitespace-nowrap sm:text-[16px]"
         style={{
-          fontFamily: "'Press Start 2P', monospace",
+          fontFamily: "var(--ft-pixel), monospace",
           lineHeight: "28px",
           letterSpacing: "0.02em"
         }}

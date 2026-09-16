@@ -6,13 +6,12 @@ export function Guidelines() {
   return (
     <section
       id="guidelines"
-      className="relative isolate flex min-h-0 h-auto flex-col overflow-x-hidden bg-transparent px-4 py-8 sm:px-8 sm:py-12 lg:min-h-[100svh] lg:h-[100svh] lg:overflow-hidden lg:px-[3.4vw] lg:py-[2svh]"
+      className="relative isolate flex min-h-0 h-auto flex-col overflow-x-hidden bg-transparent px-4 pt-[4vh] pb-8 sm:px-8 sm:pt-[4vh] sm:pb-12 lg:min-h-[100svh] lg:h-[100svh] lg:overflow-hidden lg:px-[3.4vw] lg:pt-[4svh] lg:pb-[4svh]"
     >
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1560px] min-w-0 flex-1 flex-col lg:min-h-0">
         <h2
-          className="shrink-0 text-center font-heading text-[clamp(2rem,9vw,3.75rem)] tracking-[0.06em] text-guideline-yellow lg:text-[112px] lg:leading-[0.9] lg:tracking-[0.06em]"
-          style={{ textShadow: "-5px 0 0 var(--color-brand-pink)" }}
+          className="shrink-0 text-center font-heading text-[clamp(2.5rem,11.5vw,3.75rem)] tracking-[0.06em] text-guideline-yellow [text-shadow:-2px_0_0_var(--color-brand-pink)] sm:text-[clamp(2.75rem,8vw,4.75rem)] md:text-[clamp(3.5rem,7vw,5.75rem)] lg:text-[112px] lg:leading-[0.9] lg:tracking-[0.06em] lg:[text-shadow:-5px_0_0_var(--color-brand-pink)]"
         >
           GUIDELINES
         </h2>
@@ -20,7 +19,7 @@ export function Guidelines() {
           PLAY SMART. PLAY FAIR. PLAY ON.
         </p>
 
-        <div className="mt-6 flex flex-col gap-4 sm:gap-6 lg:mt-[1.2svh] xl:mt-[1.8svh] lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.35fr)] lg:items-stretch lg:gap-6 xl:gap-10">
+        <div className="mt-6 flex flex-col gap-4 sm:gap-6 lg:mt-[1.2svh] xl:mt-[1.8svh] lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)] lg:items-stretch lg:gap-6 xl:gap-10">
           {/* Absent on mobile in Figma, not just shrunk — the mobile frame has no equivalent node. */}
           <div className="hidden min-h-0 items-center justify-center lg:flex lg:h-full">
             <ArcadeScene />
