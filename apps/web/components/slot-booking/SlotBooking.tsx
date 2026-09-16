@@ -243,23 +243,14 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         <h1 className="slot-title m-0">SLOT BOOKING</h1>
       </div>
 
-      {/* ── Active Combat Mode Status Bar (No change mode here) ── */}
-      <div className="relative z-20 w-full max-w-xl px-4 my-1">
-        <div className="bg-[#0b0c14]/90 border border-white/20 rounded-lg py-1.5 px-4 flex items-center justify-center font-mono text-xs text-white/80">
-          <div className="flex items-center gap-2 truncate">
-            <span className="text-xs">⚔️</span>
-            <span className="text-white/60">DEPLOYMENT:</span>
-            <span className="text-[#FEDC02] font-bold truncate">
-              {selectedMode === "team"
-                ? `SQUAD ${activeTeam?.teamName ? `"${activeTeam.teamName}" ` : ""}[${activeTeam?.teamCode || ""}]`
-                : "SOLO RECON MISSION"}
-            </span>
+      {/* ── Current booking badge + single date (side-by-side on desktop) ── */}
+      <div className="slot-current-row relative z-10 my-2">
+        {!isLoading && dates.length === 1 && (
+          <div className="slot-date-box slot-date-static" aria-current="page">
+            <span className="slot-date-day">{dates[0].day}</span>
+            <span className="slot-date-month">{dates[0].month}</span>
           </div>
-        </div>
-      </div>
-
-      {/* ── Current booking badge ── */}
-      <div className="relative z-10 my-2">
+        )}
         <div className="slot-current-badge">
           <span className="slot-current-label">CURRENT BOOKING:</span>
           <span className="slot-current-val">
@@ -277,22 +268,23 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         </div>
       )}
 
-      {/* ── Date switcher (18, 19, 20 September) ── */}
-      <div className="relative z-10 w-full">
-        <DateSwitcher
-          dates={
-            dates.length > 0
-              ? dates
-              : [
-                  { day: "18", month: "SEPT", active: selectedDay === "18" },
-                  { day: "19", month: "SEPT", active: selectedDay === "19" },
-                  { day: "20", month: "SEPT", active: selectedDay === "20" },
-                ]
-          }
-          onSelect={selectDate}
-        />
-      </div>
-
+      {/* ── Date switcher (hidden when only one date has slots) ── */}
+      {(isLoading || dates.length > 1) && (
+        <div className="relative z-10 w-full">
+          <DateSwitcher
+            dates={
+              dates.length > 0
+                ? dates
+                : [
+                    { day: "18", month: "SEPT", active: selectedDay === "18" },
+                    { day: "19", month: "SEPT", active: selectedDay === "19" },
+                    { day: "20", month: "SEPT", active: selectedDay === "20" },
+                  ]
+            }
+            onSelect={selectDate}
+          />
+        </div>
+      )}
       {/* ── Slot grid ── */}
       <div className="slot-grid-shell relative z-10 w-full min-h-0">
         <SlotGrid
