@@ -11,8 +11,8 @@ import { SlotGrid } from "./SlotGrid";
 import { useSession } from "@/lib/auth-client";
 import { AuthModal } from "../auth/AuthModal";
 import { BookingConfirmationModal } from "./BookingConfirmationModal";
-// DEPRECATED: team feature disabled — ModeRequiredModal kept for restore.
-// import { ModeRequiredModal } from "../mode-popup/ModeRequiredModal";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { DetailsRequiredModal } from "./DetailsRequiredModal";
 
 interface SlotBookingProps {
   activeDay?: string;
@@ -58,6 +58,20 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
 
   // Confirmation modal state
   const [confirmationOpen, setConfirmationOpen] = useState(false);
+
+  // Operative verification state (DB-driven): details must be on the row,
+  // and only paid (verified) participants may book.
+  const { profile, isLoading: profileLoading, refetch: refetchProfile } = useUserProfile();
+  const profileReady = !profileLoading;
+  const needsDetails =
+    !!session?.user &&
+    profileReady &&
+    (!profile?.regNumber?.trim() || !profile?.phone?.trim());
+  const isPaid = profile?.paid === true;
+  // Slot holders keep changing slots within their change allowance — the
+  // paid block only gates FIRST bookings.
+  const hasBooking = !!profile?.activeRegistration;
+  const canBook = !!session?.user && profileReady && !needsDetails && (isPaid || hasBooking);
 
   // Server profile wins over local state, so a stale browser cache can
   // never disagree with the DB (e.g. ghost team blocking solo booking).
@@ -177,6 +191,20 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     //   return;
     // }
 
+    // Verification gates: details popup handles itself; unpaid operatives
+    // get the contact notice instead of a booking.
+    if (needsDetails) {
+      return;
+    }
+    if (!canBook) {
+      setReserveError(
+        profileReady && !isPaid && !hasBooking
+          ? "Slot booking is open only for verified participants. If you have registered but slot booking is not available, please contact us."
+          : "Verifying operative status, please wait..."
+      );
+      return;
+    }
+
     if (!booking) {
       setReserveError("Please select a time slot from the schedule below.");
       return;
@@ -286,6 +314,18 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         </div>
       )}
 
+      {/* Unpaid notice — first bookings stay greyed out until verified */}
+      {profileReady && !needsDetails && !isPaid && !hasBooking && session?.user && (
+        <div className="relative z-20 mx-auto max-w-md px-4 py-3 bg-[#0c0c14]/90 border-2 border-[#FEDC02] text-center my-2 rounded">
+          <p className="font-pixel text-xs text-[#FEDC02] uppercase tracking-wider mb-1">
+            Slot booking not available
+          </p>
+          <p className="font-pixel text-[10px] text-white/70 leading-relaxed">
+            IF YOU HAVE REGISTERED BUT SLOT BOOKING IS NOT AVAILABLE, PLEASE CONTACT US.
+          </p>
+        </div>
+      )}
+
       {/* ── Date switcher (hidden when only one date has slots) ── */}
       {(isLoading || dates.length > 1) && (
         <div className="relative z-10 w-full">
@@ -303,8 +343,12 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
           />
         </div>
       )}
-      {/* ── Slot grid ── */}
-      <div className="slot-grid-shell relative z-10 w-full min-h-0">
+      {/* ── Slot grid (greyed out until verified) ── */}
+      <div
+        className={`slot-grid-shell relative z-10 w-full min-h-0 ${
+          !canBook ? "pointer-events-none opacity-40 saturate-50" : ""
+        }`}
+      >
         <SlotGrid
           activeDay={selectedDay}
           currentPage={selectedPage}
@@ -330,10 +374,12 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         <PixelButton
           type="button"
           onClick={handleProceedToConfirm}
-          disabled={isReserving || selectedSlot === undefined}
+          disabled={isReserving || selectedSlot === undefined || !canBook}
           label={
             isReserving
               ? "SECURING SLOT..."
+              : !canBook && profileReady
+              ? "BOOKING LOCKED"
               : "CONFIRM RESERVATION"
           }
           interaction="hero"
@@ -378,6 +424,15 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
             name: session?.user?.name,
             email: session?.user?.email,
           }}
+        />
+      )}
+
+      {/* Persistent details gate — stays until reg number + phone are saved */}
+      {needsDetails && (
+        <DetailsRequiredModal
+          regNumber={profile?.regNumber}
+          phone={profile?.phone}
+          onSaved={() => refetchProfile()}
         />
       )}
     </section>
