@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { bookingRateLimit } from "../middlewares/rateLimit";
 import {
   createSoloRegistration,
   confirmRegistration,
@@ -26,6 +27,7 @@ export const publicRegistrationsRouter = Router();
  */
 publicRegistrationsRouter.post(
   "/solo",
+  bookingRateLimit,
   requireAuth,
   validate(soloRegistrationSchema),
   asyncHandler(createSoloRegistration),
@@ -37,6 +39,7 @@ publicRegistrationsRouter.post(
  */
 publicRegistrationsRouter.post(
   "/:reservation_id/confirm",
+  bookingRateLimit,
   requireAuth,
   validate(confirmRegistrationSchema),
   asyncHandler(confirmRegistration),

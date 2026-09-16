@@ -1,15 +1,20 @@
+import { eq } from "drizzle-orm";
+import { db } from "@lasertag-26/database";
+import { user } from "@lasertag-26/database/schema";
 import { NotFoundError } from "../errors";
 import {
   findUserById,
   findActiveRegistrationWithSlotForUser,
   findTeamForUser,
 } from "../data/queries";
+import type { UpdateMyDetailsInput } from "../validations/users.validation";
 
 export type UserProfileDto = {
   id: string;
   name: string;
   email: string;
   phone: string | null;
+  regNumber: string | null;
   paid: boolean;
   isCheckedIn: boolean;
   team: {
@@ -60,10 +65,14 @@ export const userService = {
 
     let slotDetails = null;
     if (activeReg) {
+      // Arena wall-clock is IST regardless of where the server runs.
+      const IST = "Asia/Kolkata";
       const sStart = new Date(activeReg.slot.startTime);
       const sEnd = new Date(activeReg.slot.endTime);
 
-      const day = sStart.getDate();
+      const day = Number(
+        new Intl.DateTimeFormat("en-US", { timeZone: IST, day: "numeric" }).format(sStart),
+      );
       const nth = (d: number) => {
         if (d > 3 && d < 21) return `${d}th`;
         switch (d % 10) {
@@ -73,12 +82,17 @@ export const userService = {
           default: return `${d}th`;
         }
       };
-      const month = sStart.toLocaleDateString("en-US", { month: "long" });
-      const year = sStart.getFullYear();
+      const month = sStart.toLocaleDateString("en-US", { month: "long", timeZone: IST });
+      const year = sStart.toLocaleDateString("en-US", { year: "numeric", timeZone: IST });
       const slotDate = `${nth(day)} ${month},\n${year}`;
 
       const formatHour = (d: Date) =>
-        d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+        d.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+          timeZone: IST,
+        });
 
       const slotTime = `${formatHour(sStart)} -\n${formatHour(sEnd)}`;
 
@@ -92,11 +106,14 @@ export const userService = {
       };
     }
 
+    // Registration number + phone collected at select-mode onboarding.
+    // Saved via PATCH /users/me/details; read back here for the pass.
     return {
       id: user.id,
       name: user.name,
       email: user.email,
       phone: user.phNumber ?? null,
+      regNumber: user.regNumber ?? null,
       paid: user.paid,
       isCheckedIn: user.isCheckedIn,
       team,
@@ -113,6 +130,32 @@ export const userService = {
             slot: slotDetails,
           }
         : null,
+    };
+  },
+
+  /** Saves select-mode onboarding fields onto the signed-in user's row. */
+  async updateMyDetails(userId: string, input: UpdateMyDetailsInput) {
+    const existing = await findUserById(userId);
+    if (!existing) {
+      throw new NotFoundError("User not found");
+    }
+
+    const [updated] = await db
+      .update(user)
+      .set({
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.phone !== undefined ? { phNumber: input.phone } : {}),
+        ...(input.reg_number !== undefined ? { regNumber: input.reg_number } : {}),
+      })
+      .where(eq(user.id, userId))
+      .returning();
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      phone: updated.phNumber ?? null,
+      regNumber: updated.regNumber ?? null,
     };
   },
 };

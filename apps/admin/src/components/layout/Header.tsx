@@ -14,7 +14,7 @@ export function Header() {
 
   const checkStatus = async () => {
     setLoading(true);
-    const res = await apiFetch<any>("/");
+    const res = await apiFetch<unknown>("/");
     setApiOnline(res.success);
     setLoading(false);
   };

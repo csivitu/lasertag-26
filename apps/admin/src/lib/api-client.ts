@@ -19,29 +19,33 @@ export async function apiFetch<T>(
     });
 
     const text = await res.text();
-    let json: any = {};
+    let json: { error?: unknown; message?: unknown; success?: unknown; data?: unknown } = {};
     try {
-      json = JSON.parse(text);
+      const parsed: unknown = JSON.parse(text);
+      if (parsed && typeof parsed === "object") {
+        json = parsed as typeof json;
+      }
     } catch {
       json = { message: text, success: res.ok };
     }
 
     if (!res.ok) {
+      const errMsg = [json.error, json.message].find((v): v is string => typeof v === "string");
       return {
         success: false,
-        error: json.error || json.message || `HTTP Error ${res.status}`,
+        error: errMsg ?? `HTTP Error ${res.status}`,
       };
     }
 
     return {
-      success: json.success ?? true,
-      data: json.data ?? json,
-      message: json.message,
+      success: typeof json.success === "boolean" ? json.success : true,
+      data: (json.data ?? json) as T | undefined,
+      message: typeof json.message === "string" ? json.message : undefined,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       success: false,
-      error: err.message || "Failed to communicate with API server.",
+      error: err instanceof Error ? err.message : "Failed to communicate with API server.",
     };
   }
 }

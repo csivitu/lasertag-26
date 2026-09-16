@@ -76,12 +76,14 @@ async function seed() {
           startTime: new Date("2026-09-10T10:00:00Z"),
           endTime: new Date("2026-09-10T11:00:00Z"),
           capacity: 10,
+          totalCapacity: 10,
         },
         {
           id: slot2Id,
           startTime: new Date("2026-09-10T14:00:00Z"),
           endTime: new Date("2026-09-10T15:00:00Z"),
           capacity: 10,
+          totalCapacity: 10,
         },
       ])
       .onConflictDoNothing();

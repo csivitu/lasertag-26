@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, ne, or } from "drizzle-orm";
+import { and, count, eq, gt, ilike, ne, or, sql } from "drizzle-orm";
 import {
   db,
   bookings,
@@ -42,7 +42,13 @@ export const slotQueries: SlotsDeps = {
     return row?.value ?? 0;
   },
 
-  insertSlots: (values) => db.insert(slots).values(values).returning(),
+  // New slots open with total = remaining; the claim/trigger pair keeps
+  // total_capacity = capacity + active bookings from here on.
+  insertSlots: (values) =>
+    db
+      .insert(slots)
+      .values(values.map((v) => ({ ...v, totalCapacity: v.capacity })))
+      .returning(),
 
   applyUpdate: async (id, patch) => {
     const [row] = await db
@@ -185,6 +191,31 @@ export async function countActiveBookingsForSlot(slotId: string) {
     .from(bookings)
     .where(and(eq(bookings.slotId, slotId), ne(bookings.status, "cancelled")));
   return row?.value ?? 0;
+}
+
+/**
+ * Atomically claims one seat: decrements only when capacity > 0 and reports
+ * whether a seat was taken. This single statement is the serialization point
+ * for concurrent bookings — Postgres takes a row lock on the slots row, so
+ * racing claims queue up and exactly `capacity` of them succeed. The Neon
+ * HTTP driver cannot hold multi-statement transactions, which is why the
+ * check and the decrement must not be separate statements.
+ */
+export async function claimSlotSeat(slotId: string): Promise<boolean> {
+  const [row] = await db
+    .update(slots)
+    .set({ capacity: sql`${slots.capacity} - 1` })
+    .where(and(eq(slots.id, slotId), gt(slots.capacity, 0)))
+    .returning({ id: slots.id });
+  return row !== undefined;
+}
+
+/** Compensation: gives back a seat claimed by claimSlotSeat. */
+export async function releaseSlotSeat(slotId: string): Promise<void> {
+  await db
+    .update(slots)
+    .set({ capacity: sql`${slots.capacity} + 1` })
+    .where(eq(slots.id, slotId));
 }
 
 export async function findUserById(userId: string) {

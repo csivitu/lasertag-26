@@ -12,6 +12,8 @@ import {
 import {
   findSlotById,
   countActiveBookingsForSlot,
+  claimSlotSeat,
+  releaseSlotSeat,
   findUserById,
   findActiveRegistrationForUser,
   createSoloRegistration as dbCreateSoloRegistration,
@@ -143,13 +145,24 @@ export const registrationService = {
         existing_registration_id: existingRegistration.id,
       });
     }
-    const registrationId = generateRegistrationId();
-    const booking = await dbCreateSoloRegistration({
-      id: registrationId,
-      userId,
-      slotId,
-    });
-    return booking;
+    // Atomic seat claim: serializes concurrent requests so capacity can never
+    // be exceeded. The count check above stays as a cheap early hint.
+    const claimed = await claimSlotSeat(slotId);
+    if (!claimed) {
+      throw new ConflictError("Slot is full");
+    }
+    try {
+      const registrationId = generateRegistrationId();
+      const booking = await dbCreateSoloRegistration({
+        id: registrationId,
+        userId,
+        slotId,
+      });
+      return booking;
+    } catch (err) {
+      await releaseSlotSeat(slotId);
+      throw err;
+    }
   },
   /**
    * GET /registrations/:reservation_id
@@ -247,6 +260,8 @@ export const registrationService = {
       );
     }
     const updated = await dbCancelRegistration(registrationId);
+    // The seat goes back into the pool (capacity column counts seats left).
+    await releaseSlotSeat(result.booking.slotId);
     return { booking: updated };
   },
   /**

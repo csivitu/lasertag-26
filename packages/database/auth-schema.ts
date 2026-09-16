@@ -23,6 +23,7 @@ export const user = pgTable("user", {
 
     // Application fields
     phNumber: text("ph_number"),
+    regNumber: text("reg_number"),
     qrToken: text("qr_token"),
     isCheckedIn: boolean("is_checked_in")
         .default(false)
