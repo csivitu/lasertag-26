@@ -1,5 +1,7 @@
 "use client";
 
+// DEPRECATED: team/select-mode flow disabled — sign-in goes straight to slot booking (solo-only). Kept for restore.
+
 import { useState, useEffect } from "react";
 import { ModePopup, type PopupMode } from "../mode-popup/ModePopup";
 import { SelectModeDesktop } from "./SelectModeDesktop";

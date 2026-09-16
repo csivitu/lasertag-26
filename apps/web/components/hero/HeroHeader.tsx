@@ -67,10 +67,11 @@ export function HeroHeader() {
 
   // Only show the new features after the user is authenticated/signed in.
   // Otherwise, show the original previous navbar (HOME, ABOUT, FAQs, SIGN IN).
+  // DEPRECATED: team feature disabled — SELECT MODE commented out, sign-in goes straight to slot booking.
   const navLinks = session?.user
     ? [
         { label: "HOME", href: "/" },
-        { label: "SELECT MODE", href: "/select-mode" },
+        // { label: "SELECT MODE", href: "/select-mode" },
         { label: "BOOK SLOT", href: "/slot-booking" },
         { label: "MY PASS", href: "/profile" },
         { label: "SIGN OUT", href: "#sign-out" },
@@ -139,7 +140,8 @@ export function HeroHeader() {
           } else if (label === "FAQs") {
             if (pathname !== "/") router.push("/#faqs");
           } else if (label === "SELECT MODE") {
-            router.push("/select-mode");
+            // DEPRECATED: team feature disabled — route kept for restore, redirect to booking.
+            router.push("/slot-booking");
           } else if (label === "BOOK SLOT") {
             router.push("/slot-booking");
           } else if (label === "MY PASS") {
@@ -152,6 +154,8 @@ export function HeroHeader() {
         isOpen={authOpen}
         onClose={() => setAuthOpen(false)}
         initialMode={authMode}
+        // Sign-in goes straight to slot booking (team/select-mode deprecated).
+        onSuccess={() => router.push("/slot-booking")}
       />
     </header>
   );

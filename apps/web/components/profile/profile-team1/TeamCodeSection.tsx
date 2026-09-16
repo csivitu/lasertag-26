@@ -139,7 +139,8 @@ export function TeamCodeSection() {
       localStorage.removeItem("lasertag_active_team");
       sessionStorage.removeItem("lasertag_active_team");
 
-      router.push("/select-mode");
+      // DEPRECATED: team feature disabled — solo-only flow goes straight to booking.
+      router.push("/slot-booking");
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Leave error";

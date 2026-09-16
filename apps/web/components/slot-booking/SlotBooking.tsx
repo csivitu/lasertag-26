@@ -8,10 +8,11 @@ import { PixelButton } from "../hero/PixelButton";
 import { useSlots } from "../../hooks/useSlots";
 import { DateSwitcher } from "./DateSwitcher";
 import { SlotGrid } from "./SlotGrid";
-import { useSession, apiBaseUrl } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { AuthModal } from "../auth/AuthModal";
 import { BookingConfirmationModal } from "./BookingConfirmationModal";
-import { ModeRequiredModal } from "../mode-popup/ModeRequiredModal";
+// DEPRECATED: team feature disabled — ModeRequiredModal kept for restore.
+// import { ModeRequiredModal } from "../mode-popup/ModeRequiredModal";
 
 interface SlotBookingProps {
   activeDay?: string;
@@ -47,7 +48,8 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
   const [reserveError, setReserveError] = useState<string | null>(null);
 
   // Combat mode state
-  const [selectedMode, setSelectedMode] = useState<"solo" | "team" | null>(null);
+  // DEPRECATED: team feature disabled — solo-only flow, sign-in goes straight to booking.
+  const [selectedMode, setSelectedMode] = useState<"solo" | "team" | null>("solo");
   const [activeTeam, setActiveTeam] = useState<{
     teamCode: string;
     teamName?: string;
@@ -59,7 +61,12 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
 
   // Server profile wins over local state, so a stale browser cache can
   // never disagree with the DB (e.g. ghost team blocking solo booking).
+  // DEPRECATED: team feature disabled — always resolve to solo.
   const refreshMode = useCallback(() => {
+    setSelectedMode("solo");
+    setActiveTeam(null);
+    return true;
+    /* TEAM_FEATURE_DISABLED — team-aware refresh, uncomment to restore.
     const readLocal = (): boolean => {
       try {
         const mode =
@@ -118,7 +125,8 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     } else {
       readLocal();
     }
-  }, [session]);
+    END TEAM_FEATURE_DISABLED */
+  }, []);
 
   useEffect(() => {
     refreshMode();
@@ -163,10 +171,11 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       return;
     }
 
-    if (!selectedMode) {
-      router.push("/select-mode");
-      return;
-    }
+    // DEPRECATED: team/select-mode gate disabled — solo-only flow goes straight to booking.
+    // if (!selectedMode) {
+    //   router.push("/select-mode");
+    //   return;
+    // }
 
     if (!booking) {
       setReserveError("Please select a time slot from the schedule below.");
@@ -183,8 +192,13 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     setIsReserving(true);
     setReserveError(null);
 
-    const type = selectedMode === "team" ? "team" : "individual";
-    const teamCode = selectedMode === "team" ? activeTeam?.teamCode : undefined;
+    // DEPRECATED: team booking disabled — solo-only ("individual") flow.
+    const type = "individual" as const;
+    const teamCode = undefined;
+    // const type = selectedMode === "team" ? "team" : "individual";
+    // const teamCode = selectedMode === "team" ? activeTeam?.teamCode : undefined;
+    void selectedMode;
+    void activeTeam;
 
     try {
       await reserveSlot(booking.id, {
@@ -216,22 +230,23 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     }
   };
 
+  // DEPRECATED: team/select-mode gate disabled — solo-only flow, always show booking grid.
   // If operative has not established combat mode yet, show the mode required modal
-  if (!selectedMode) {
-    return (
-      <section className="slot-booking-screen relative flex min-h-screen flex-col items-center justify-between pb-8 bg-[var(--color-ink)] select-none">
-        <Starfield />
-        <HeroHeader />
-        <ModeRequiredModal
-          isOpen={true}
-          title="COMBAT PROTOCOL REQUIRED"
-          description="OPERATIVE, ACCESS TO ARENA TIME SLOTS REQUIRES AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST."
-          redirectUrl="/select-mode"
-          buttonText="SELECT COMBAT MODE →"
-        />
-      </section>
-    );
-  }
+  // if (!selectedMode) {
+  //   return (
+  //     <section className="slot-booking-screen relative flex min-h-screen flex-col items-center justify-between pb-8 bg-[var(--color-ink)] select-none">
+  //       <Starfield />
+  //       <HeroHeader />
+  //       <ModeRequiredModal
+  //         isOpen={true}
+  //         title="COMBAT PROTOCOL REQUIRED"
+  //         description="OPERATIVE, ACCESS TO ARENA TIME SLOTS REQUIRES AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST."
+  //         redirectUrl="/select-mode"
+  //         buttonText="SELECT COMBAT MODE →"
+  //       />
+  //     </section>
+  //   );
+  // }
 
   return (
     <section className="slot-booking-screen relative flex min-h-screen flex-col items-center justify-between pb-8 bg-[var(--color-ink)] select-none">
@@ -351,9 +366,13 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
             time: booking.time,
           }}
           modeInfo={{
-            type: selectedMode === "team" ? "team" : "individual",
-            teamName: activeTeam?.teamName,
-            teamCode: activeTeam?.teamCode,
+            // DEPRECATED: team booking disabled — solo-only.
+            type: "individual",
+            teamName: undefined,
+            teamCode: undefined,
+            // type: selectedMode === "team" ? "team" : "individual",
+            // teamName: activeTeam?.teamName,
+            // teamCode: activeTeam?.teamCode,
           }}
           userInfo={{
             name: session?.user?.name,
