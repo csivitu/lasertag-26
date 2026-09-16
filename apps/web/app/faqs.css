@@ -200,6 +200,22 @@
     will-change: transform;
 }
 
+/* Higher arc for building clicks — defined after .ralph-jump so it wins
+   when both classes land at once */
+@keyframes ralph-bounce-high {
+    0%   { transform: translateY(0); }
+    32%  { transform: translateY(-58px); }
+    58%  { transform: translateY(0); }
+    74%  { transform: translateY(-16px); }
+    88%  { transform: translateY(0); }
+    100% { transform: translateY(0); }
+}
+
+.ralph-jump-high {
+    animation: ralph-bounce-high 0.95s cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
 
     .faq-item__icon,
@@ -214,6 +230,10 @@
     }
 
     .ralph-jump {
+        animation: none;
+    }
+
+    .ralph-jump-high {
         animation: none;
     }
 }

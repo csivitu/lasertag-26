@@ -11,8 +11,10 @@ import { playSound } from "@/lib/sound";
 
 export function Faq() {
     const [isJumping, setIsJumping] = useState(false);
+    const [isBuildingJump, setIsBuildingJump] = useState(false);
     const [isActive, setIsActive] = useState(false);
     const jumpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const buildingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleToggle = useCallback(() => {
         playSound("ralphJump", 0.56);
@@ -21,8 +23,19 @@ export function Faq() {
         jumpTimer.current = setTimeout(() => setIsJumping(false), 700);
     }, []);
 
+    // Building click (desktop only): same jump sound, higher arc.
+    const handleBuildingClick = useCallback(() => {
+        playSound("ralphJump", 0.56);
+        setIsBuildingJump(true);
+        if (buildingTimer.current) clearTimeout(buildingTimer.current);
+        buildingTimer.current = setTimeout(() => setIsBuildingJump(false), 950);
+    }, []);
+
     useEffect(() => {
-        return () => { if (jumpTimer.current) clearTimeout(jumpTimer.current); };
+        return () => {
+            if (jumpTimer.current) clearTimeout(jumpTimer.current);
+            if (buildingTimer.current) clearTimeout(buildingTimer.current);
+        };
     }, []);
 
     // Preload both Ralph sprites so the src swap never decodes mid-animation
@@ -38,14 +51,19 @@ export function Faq() {
 
             {/* Side art — absolutely positioned, desktop only (like hero art) */}
             <div className="pointer-events-none absolute inset-0 bottom-5 z-[5] hidden sm:bottom-6 lg:block">
-                <FaqSideArt isJumping={isJumping} isActive={isActive} />
+                <FaqSideArt
+                    isJumping={isJumping}
+                    isBuildingJump={isBuildingJump}
+                    isActive={isActive}
+                    onBuildingClick={handleBuildingClick}
+                />
             </div>
 
-            <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-3 lg:gap-0 lg:flex-1 lg:justify-start lg:py-8 lg:pt-12">
+            <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-3 lg:pointer-events-none lg:gap-0 lg:flex-1 lg:justify-start lg:py-8 lg:pt-[4svh]">
                 <FaqHeader />
 
                 <div className="mx-auto flex w-full max-w-6xl items-center px-4 sm:px-8 md:px-10 lg:flex-1 lg:px-12">
-                    <div className="w-full lg:w-[62%] xl:w-[58%]">
+                    <div className="w-full lg:pointer-events-auto lg:w-[62%] xl:w-[58%]">
                         {/* Mobile + tablet ralph image — directly above the items (fixed height so the sprite swap never shifts the list) */}
                         <div className="flex h-[89px] items-end justify-center pb-0 sm:h-[106px] lg:hidden">
                             <Image

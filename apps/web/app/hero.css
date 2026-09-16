@@ -424,3 +424,50 @@
     clip-path: none !important;
   }
 }
+
+/* ── Footer "ARE YOU READY?" screen: CRT attract-mode flicker + glow ──
+   Mostly full-on with a slow glow breathe, plus a brief neon stutter
+   near the end of each cycle. Opacity/filter on one small layer. */
+@keyframes ready-crt {
+  0%,
+  88% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(254, 220, 2, 0.5));
+  }
+  45% {
+    opacity: 0.97;
+    filter: drop-shadow(0 0 10px rgba(254, 220, 2, 0.6));
+  }
+  91% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(254, 220, 2, 0.5));
+  }
+  92.5% {
+    opacity: 0.55;
+    filter: drop-shadow(0 0 4px rgba(254, 220, 2, 0.35));
+  }
+  94% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(254, 220, 2, 0.6));
+  }
+  95.5% {
+    opacity: 0.72;
+    filter: drop-shadow(0 0 5px rgba(254, 220, 2, 0.4));
+  }
+  97%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(254, 220, 2, 0.5));
+  }
+}
+
+.ready-crt {
+  will-change: opacity, filter;
+  animation: ready-crt 4.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ready-crt {
+    animation: none !important;
+  }
+}
