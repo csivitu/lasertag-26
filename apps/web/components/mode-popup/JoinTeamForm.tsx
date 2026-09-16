@@ -51,6 +51,12 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
     e.preventDefault();
     setError("");
 
+    const userId = profile?.id || session?.user?.id;
+    if (!userId) {
+      setError("Please sign in before joining a squad.");
+      return;
+    }
+
     if (!teamCode.trim()) {
       setError("Please enter the squad combat code.");
       return;
@@ -75,6 +81,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
+          user_id: userId,
           fullName: fullName.trim(),
           regNo: registrationNumber.trim(),
           phone: phoneNumber.trim(),

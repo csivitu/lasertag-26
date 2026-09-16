@@ -1,10 +1,11 @@
 import { db } from "@lasertag-26/database";
-import { bookings, slots, user, teams } from "@lasertag-26/database/schema";
-import { eq, or, and, inArray } from "drizzle-orm";
-import { NotFoundError } from "../errors";
+import { slots, bookings, user, teams } from "@lasertag-26/database/schema";
+import { eq, and, or, inArray } from "drizzle-orm";
+import { HttpError as AppError, NotFoundError } from "../errors";
 
 export const verificationController = {
   async verifyRegistration(registrationId: string) {
+    // 1. Check if ID matches a booking ID or QR token
     const [bookingRecord] = await db
       .select({
         booking: bookings,
@@ -14,7 +15,12 @@ export const verificationController = {
       .from(bookings)
       .innerJoin(user, eq(bookings.userId, user.id))
       .innerJoin(slots, eq(bookings.slotId, slots.id))
-      .where(or(eq(bookings.id, registrationId), eq(bookings.qrToken, registrationId)));
+      .where(
+        or(
+          eq(bookings.id, registrationId),
+          eq(bookings.qrToken, registrationId),
+        ),
+      );
 
     if (bookingRecord) {
       let teamName = "SOLO";
@@ -28,14 +34,12 @@ export const verificationController = {
 
       return {
         verified: true,
-        type: "registration",
+        type: "booking",
         data: {
-          registration: {
+          booking: {
             id: bookingRecord.booking.id,
             type: bookingRecord.booking.type,
             status: bookingRecord.booking.status,
-            slot_id: bookingRecord.booking.slotId,
-            team_code: bookingRecord.booking.teamCode,
             side: bookingRecord.booking.side,
             qr_token: bookingRecord.booking.qrToken,
             is_checked_in: bookingRecord.booking.isCheckedIn,
@@ -108,33 +112,55 @@ export const verificationController = {
     identifier: string,
     payload?: { name?: string; regNo?: string; team?: string; slot?: string; side?: string },
   ) {
-    let [targetUser] = await db
+    let targetBooking = await db
       .select()
-      .from(user)
-      .where(or(eq(user.id, identifier), eq(user.qrToken, identifier)));
+      .from(bookings)
+      .where(
+        or(
+          eq(bookings.qrToken, identifier),
+          eq(bookings.id, identifier),
+        ),
+      )
+      .then((rows) => rows[0]);
 
-    if (!targetUser) {
-      const [booking] = await db
-        .select()
-        .from(bookings)
-        .where(
-          or(
-            eq(bookings.id, identifier),
-            eq(bookings.qrToken, identifier),
-          ),
-        );
-
-      if (booking) {
-        const [foundUser] = await db
+    if (!targetBooking) {
+      const [u] = await db.select().from(user).where(eq(user.qrToken, identifier));
+      if (u) {
+        const [ub] = await db
           .select()
-          .from(user)
-          .where(eq(user.id, booking.userId));
-        targetUser = foundUser;
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.userId, u.id),
+              inArray(bookings.status, ["reserved", "confirmed"]),
+            ),
+          );
+        targetBooking = ub;
       }
     }
 
+    if (!targetBooking) {
+      throw new NotFoundError("Registration not found for the given QR token or registration ID.");
+    }
+
+    if (targetBooking.status === "cancelled") {
+      throw new AppError(400, "This registration has been cancelled.");
+    }
+    if (targetBooking.status !== "confirmed") {
+      throw new AppError(400, "Registration must be confirmed before check-in.");
+    }
+
+    const [targetUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, targetBooking.userId));
+
     if (!targetUser) {
-      throw new NotFoundError("User not found.");
+      throw new NotFoundError("Participant not found.");
+    }
+
+    if (!targetUser.paid) {
+      throw new AppError(400, "Participant has not completed payment.");
     }
 
     // Find active booking details to retrieve slot and team
@@ -145,12 +171,7 @@ export const verificationController = {
       })
       .from(bookings)
       .innerJoin(slots, eq(bookings.slotId, slots.id))
-      .where(
-        and(
-          eq(bookings.userId, targetUser.id),
-          inArray(bookings.status, ["reserved", "confirmed"]),
-        ),
-      );
+      .where(eq(bookings.id, targetBooking.id));
 
     let teamName = "SOLO";
     let isTeam = false;
@@ -192,7 +213,7 @@ export const verificationController = {
 
     const sideStr = bookingRecord?.booking?.side?.toUpperCase() || payload?.side || "RED";
 
-    if (targetUser.isCheckedIn) {
+    if (targetUser.isCheckedIn || targetBooking.isCheckedIn) {
       return {
         already_checked_in: true,
         user: targetUser,
@@ -218,20 +239,14 @@ export const verificationController = {
       .where(eq(user.id, targetUser.id))
       .returning();
 
-    // Also update booking check-in state
+    // Mark exactly THIS single booking checked in (no broad userId updates)
     await db
       .update(bookings)
       .set({
         isCheckedIn: true,
         checkedInAt: now,
       })
-      .where(
-        or(
-          eq(bookings.id, identifier),
-          eq(bookings.qrToken, identifier),
-          eq(bookings.userId, targetUser.id),
-        ),
-      );
+      .where(eq(bookings.id, targetBooking.id));
 
     return {
       already_checked_in: false,
@@ -258,12 +273,11 @@ export const verificationController = {
         email: user.email,
         phone: user.phNumber,
         teamCode: bookings.teamCode,
-        type: bookings.type,
         side: bookings.side,
-        slotId: slots.id,
-        slotStart: slots.startTime,
-        slotEnd: slots.endTime,
+        type: bookings.type,
         checkedInAt: bookings.checkedInAt,
+        slotStartTime: slots.startTime,
+        slotEndTime: slots.endTime,
       })
       .from(bookings)
       .innerJoin(user, eq(bookings.userId, user.id))
@@ -275,110 +289,66 @@ export const verificationController = {
         ),
       );
 
-    const teamCodes = Array.from(
-      new Set(checkedInRows.map((r) => r.teamCode).filter((c): c is string => Boolean(c))),
-    );
-
-    const teamMetaMap: Record<string, { name: string; totalMembers: number }> = {};
-
-    if (teamCodes.length > 0) {
-      const allTeams = await db
-        .select()
-        .from(teams)
-        .where(inArray(teams.teamCode, teamCodes));
-
-      for (const t of allTeams) {
-        teamMetaMap[t.teamCode] = {
-          name: t.name || t.teamCode,
-          totalMembers: t.members || 1,
-        };
-      }
-    }
-
-    // Compute arrival counts per team
-    const teamArrivalCounts: Record<string, number> = {};
-    for (const r of checkedInRows) {
-      if (r.teamCode) {
-        teamArrivalCounts[r.teamCode] = (teamArrivalCounts[r.teamCode] || 0) + 1;
-      }
-    }
-
-    const waitlist = checkedInRows.map((r) => {
-      const isTeam = Boolean(r.teamCode);
-      const teamMeta = r.teamCode ? teamMetaMap[r.teamCode] : null;
-      const teamName = isTeam ? (teamMeta?.name || r.teamCode!) : "SOLO";
-      const totalTeamMembers = teamMeta?.totalMembers || 1;
-      const arrived = r.teamCode ? (teamArrivalCounts[r.teamCode] || 1) : 1;
-
-      return {
-        id: r.bookingId,
-        userId: r.userId,
-        name: r.name,
-        regNo: r.regNo || "N/A",
-        email: r.email,
-        phone: r.phone,
-        isTeam,
-        teamName,
-        teamCode: r.teamCode || null,
-        arrivedCount: arrived,
-        totalTeamMembers,
-        arrivalStatus: isTeam ? `${arrived} has arrived (${arrived}/${totalTeamMembers})` : "SOLO",
-        slot: `${new Date(r.slotStart).toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${new Date(r.slotStart).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`,
-        side: (r.side || "red").toUpperCase(),
-        checkedInAt: r.checkedInAt ? new Date(r.checkedInAt).toISOString() : new Date().toISOString(),
-      };
-    });
-
-    waitlist.sort((a, b) => new Date(b.checkedInAt).getTime() - new Date(a.checkedInAt).getTime());
-
-    const teamGroups: Record<
+    // Group teams vs solos
+    const teamMap: Record<
       string,
       {
         teamCode: string;
         teamName: string;
-        slot: string;
         side: string;
-        arrivedCount: number;
-        totalMembers: number;
-        arrivalStatus: string;
-        members: Array<{ id: string; name: string; regNo: string; checkedInAt: string }>;
+        slotStartTime: Date;
+        slotEndTime: Date;
+        arrivedMembers: Array<{ name: string; regNo: string | null; checkedInAt: Date | null }>;
       }
     > = {};
 
-    const soloList: typeof waitlist = [];
+    const solos: Array<{
+      bookingId: string;
+      userId: string;
+      name: string;
+      regNo: string | null;
+      side: string;
+      slotStartTime: Date;
+      slotEndTime: Date;
+      checkedInAt: Date | null;
+    }> = [];
 
-    for (const item of waitlist) {
-      if (item.isTeam && item.teamCode) {
-        if (!teamGroups[item.teamCode]) {
-          teamGroups[item.teamCode] = {
-            teamCode: item.teamCode,
-            teamName: item.teamName,
-            slot: item.slot,
-            side: item.side,
-            arrivedCount: item.arrivedCount,
-            totalMembers: item.totalTeamMembers,
-            arrivalStatus: `${item.arrivedCount} has arrived (${item.arrivedCount}/${item.totalTeamMembers})`,
-            members: [],
+    for (const row of checkedInRows) {
+      if (row.type === "team" && row.teamCode) {
+        if (!teamMap[row.teamCode]) {
+          const [team] = await db.select().from(teams).where(eq(teams.teamCode, row.teamCode));
+          teamMap[row.teamCode] = {
+            teamCode: row.teamCode,
+            teamName: team?.name || row.teamCode,
+            side: (row.side || "RED").toUpperCase(),
+            slotStartTime: row.slotStartTime,
+            slotEndTime: row.slotEndTime,
+            arrivedMembers: [],
           };
         }
-        teamGroups[item.teamCode].members.push({
-          id: item.userId,
-          name: item.name,
-          regNo: item.regNo,
-          checkedInAt: item.checkedInAt,
+        teamMap[row.teamCode].arrivedMembers.push({
+          name: row.name,
+          regNo: row.regNo,
+          checkedInAt: row.checkedInAt,
         });
       } else {
-        soloList.push(item);
+        solos.push({
+          bookingId: row.bookingId,
+          userId: row.userId,
+          name: row.name,
+          regNo: row.regNo,
+          side: (row.side || "RED").toUpperCase(),
+          slotStartTime: row.slotStartTime,
+          slotEndTime: row.slotEndTime,
+          checkedInAt: row.checkedInAt,
+        });
       }
     }
 
     return {
-      totalWaiting: waitlist.length,
-      waitlist,
-      teams: Object.values(teamGroups),
-      solos: soloList,
+      teams: Object.values(teamMap),
+      solos,
+      totalWaiting: checkedInRows.length,
     };
   },
 };
-
-export const verificationService = verificationController;

@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   getPaymentDetails,
+  listPayments,
   updatePaymentStatus,
   verifyPayments,
 } from "../controllers/admin-payments.controller";
@@ -13,6 +14,7 @@ import {
 
 export const adminPaymentsRouter = Router();
 
+adminPaymentsRouter.get("/", listPayments);
 adminPaymentsRouter.post("/verify", verifyPayments);
 adminPaymentsRouter.get("/:registration_id", validate(getPaymentDetailsSchema), getPaymentDetails);
 adminPaymentsRouter.patch("/:registration_id", validate(updatePaymentSchema), updatePaymentStatus);

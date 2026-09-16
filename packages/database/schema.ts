@@ -70,6 +70,7 @@ export const teamMembers = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    joinedAt: timestamp('joined_at').notNull().defaultNow(),
   },
   (table) => [
     primaryKey({
@@ -120,6 +121,9 @@ export const bookings = pgTable(
     index('bookings_status_idx').on(table.status),
     uniqueIndex('bookings_active_user_slot_idx')
       .on(table.userId, table.slotId)
+      .where(sql`status IN ('reserved', 'confirmed')`),
+    uniqueIndex('bookings_one_active_user_idx')
+      .on(table.userId)
       .where(sql`status IN ('reserved', 'confirmed')`),
   ]
 );

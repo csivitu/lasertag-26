@@ -1,8 +1,12 @@
 import { Router, type Request, type Response } from "express";
 import { asyncHandler } from "../middlewares/errorHandler";
+import { requireAdmin } from "../middlewares/auth.middleware";
 import { verificationController } from "../controllers/verification.controller";
 
 const router = Router();
+
+// Protect all verification / check-in routes with admin authentication
+router.use(requireAdmin);
 
 const getWaitlist = asyncHandler(async (_req: Request, res: Response): Promise<void> => {
   const result = await verificationController.getWaitingQueue();

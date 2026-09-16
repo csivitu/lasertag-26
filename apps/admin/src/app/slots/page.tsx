@@ -44,11 +44,11 @@ export default function SlotsPage() {
 
   const fetchSlots = async () => {
     setLoading(true);
-    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/slots");
+    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/admin/slots");
     if (res.success && res.data) {
       const list = Array.isArray(res.data)
         ? res.data
-        : Array.isArray(res.data.slots)
+        : res.data && typeof res.data === "object" && "slots" in res.data && Array.isArray(res.data.slots)
         ? res.data.slots
         : [];
 
@@ -160,7 +160,7 @@ export default function SlotsPage() {
 
     setSubmittingSingle(true);
 
-    const res = await apiFetch<SlotItem>("/slots", {
+    const res = await apiFetch<SlotItem>("/admin/slots", {
       method: "POST",
       body: JSON.stringify({
         startTime: startTimeUtc,
@@ -207,10 +207,10 @@ export default function SlotsPage() {
       capacity: 10,
     }));
 
-    // Try batch endpoint
-    const res = await apiFetch<{ count?: number }>("/slots/bulk", {
+    // Send array to batch endpoint /admin/slots/bulk
+    const res = await apiFetch<{ count?: number }>("/admin/slots/bulk", {
       method: "POST",
-      body: JSON.stringify({ slots: slotPayloads }),
+      body: JSON.stringify(slotPayloads),
     });
 
     if (res.success) {
@@ -225,7 +225,7 @@ export default function SlotsPage() {
     let failCount = 0;
 
     for (const item of slotPayloads) {
-      const singleRes = await apiFetch<SlotItem>("/slots", {
+      const singleRes = await apiFetch<SlotItem>("/admin/slots", {
         method: "POST",
         body: JSON.stringify(item),
       });
@@ -252,7 +252,7 @@ export default function SlotsPage() {
   const handleDeleteSlot = async (slotId: string) => {
     if (!confirm("Are you sure you want to delete this slot?")) return;
 
-    const res = await apiFetch<{ message?: string }>(`/slots/${slotId}`, {
+    const res = await apiFetch<{ message?: string }>(`/admin/slots/${slotId}`, {
       method: "DELETE",
     });
 

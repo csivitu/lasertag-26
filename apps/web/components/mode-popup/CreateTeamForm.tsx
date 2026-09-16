@@ -62,6 +62,12 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     e.preventDefault();
     setError("");
 
+    const leaderId = profile?.id || session?.user?.id;
+    if (!leaderId) {
+      setError("Please sign in before creating a squad.");
+      return;
+    }
+
     if (!teamName.trim()) {
       setError("Please enter a squad / team name.");
       return;
@@ -86,6 +92,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
+          leader_id: leaderId,
           name: teamName.trim(),
           team_code: teamCode.trim(),
           fullName: fullName.trim(),

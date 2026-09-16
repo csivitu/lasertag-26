@@ -9,6 +9,7 @@ import {
 import { eq, and, or, inArray, asc } from "drizzle-orm";
 
 import { HttpError as AppError } from "../errors";
+import { env } from "../env";
 import { sendEmail, MAILER_CONFIG } from "../services/mailer";
 import type { CreateTeamInput } from "../validations/team.validation";
 
@@ -77,7 +78,11 @@ export const teamController = {
   },
 
   async createTeam(input: CreateTeamInput) {
-    const { leader_id, team_code, members, name } = input;
+    const { leader_id, team_code, members, name, fullName, regNo, phone } = input;
+
+    if (!leader_id) {
+      throw new AppError(400, "leader_id is required.");
+    }
 
     const leaderExists = await db
       .select()
@@ -86,6 +91,15 @@ export const teamController = {
 
     if (leaderExists.length === 0) {
       throw new AppError(404, "Leader user not found.");
+    }
+
+    // Persist leader profile updates if provided
+    if (fullName || regNo || phone) {
+      const updateData: Partial<{ name: string; regNo: string; phNumber: string }> = {};
+      if (fullName) updateData.name = fullName;
+      if (regNo) updateData.regNo = regNo;
+      if (phone) updateData.phNumber = phone;
+      await db.update(user).set(updateData).where(eq(user.id, leader_id));
     }
 
     // 1. User can only create 1 team at a time and only be in 1 team at a time
@@ -228,7 +242,11 @@ export const teamController = {
     };
   },
 
-  async joinTeam(teamId: string, userId: string) {
+  async joinTeam(
+    teamId: string,
+    userId: string,
+    details?: { fullName?: string; regNo?: string; phone?: string }
+  ) {
     const [team] = await db
       .select()
       .from(teams)
@@ -245,6 +263,15 @@ export const teamController = {
 
     if (!foundUser) {
       throw new AppError(404, "User not found.");
+    }
+
+    // Persist operative profile updates if provided
+    if (details?.fullName || details?.regNo || details?.phone) {
+      const updateData: Partial<{ name: string; regNo: string; phNumber: string }> = {};
+      if (details.fullName) updateData.name = details.fullName;
+      if (details.regNo) updateData.regNo = details.regNo;
+      if (details.phone) updateData.phNumber = details.phone;
+      await db.update(user).set(updateData).where(eq(user.id, userId));
     }
 
     // 1. Team limit is strictly MAX 5 members
@@ -328,108 +355,49 @@ export const teamController = {
 
       if (targetSlot) {
         const slotStartDate = new Date(targetSlot.startTime);
-        const slotEndDate = new Date(targetSlot.endTime);
-        const slotDateStr = slotStartDate.toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-        });
-        const formatHour = (d: Date) =>
-          d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-        const slotTimeStr = `${formatHour(slotStartDate)} - ${formatHour(slotEndDate)}`;
-        slotStatusStr = `${slotDateStr} (${slotTimeStr}) [${(refBooking.side || "RED").toUpperCase()} SQUAD]`;
-
-        // Automatically assign this newly joined member to the team's booked slot
-        const memberQrToken = `QR-${refBooking.slotId.slice(0, 4)}-${userId.slice(0, 6)}-${Math.floor(100 + Math.random() * 900)}`;
-        const bookingId = `BKG-${Date.now()}-${userId.slice(0, 6)}`;
-
-        await db.insert(bookings).values({
-          id: bookingId,
-          type: "team",
-          status: "confirmed",
-          userId,
-          teamCode: teamId,
-          slotId: refBooking.slotId,
-          side: refBooking.side,
-          qrToken: memberQrToken,
-          confirmedAt: new Date(),
-          confirmationEmailSent: false,
-        });
-
-        await db.update(user).set({ qrToken: memberQrToken }).where(eq(user.id, userId));
-
-        if (targetSlot.capacity > 0) {
-          await db
-            .update(slots)
-            .set({ capacity: Math.max(0, targetSlot.capacity - 1) })
-            .where(eq(slots.id, refBooking.slotId));
-        }
+        slotStatusStr = `Confirmed: ${slotStartDate.toDateString()} at ${slotStartDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
       }
     }
 
-    // Asynchronously send team join confirmation email
-    void (async () => {
+    // Send Team Join Confirmation Email asynchronously
+    if (foundUser.email) {
       try {
         await sendEmail({
           to: foundUser.email,
-          subject: `LaserTag 2026: Squad Enlistment Confirmed [${team.name || team.teamCode}]`,
+          subject: `LaserTag 2026 - Squad Deployment Confirmation (${team.name || teamId})`,
           template: MAILER_CONFIG.TEAM_JOIN,
           variables: {
-            name: foundUser.name,
-            teamName: team.name || team.teamCode,
-            teamCode: team.teamCode,
+            name: foundUser.name || "Operative",
+            teamName: team.name || teamId,
+            teamCode: teamId,
             leaderName: leaderUser?.name || "Squad Leader",
-            memberCount: currentTeamMembers.length + 1,
-            slotStatus: slotStatusStr,
-            passUrl: `${process.env.WEB_ORIGIN || "http://localhost:3000"}/profile`,
+            slotDetails: slotStatusStr,
+            dashboardUrl: `${env.WEB_ORIGIN}/profile`,
           },
         });
-      } catch (mailErr) {
-        console.error("[Mailer] Failed to send team join email:", mailErr);
+      } catch (emailErr) {
+        console.error(`Failed to send team-join email to ${foundUser.email}:`, emailErr);
       }
-    })();
+    }
 
-    return {
-      team: updatedTeam,
-      joined_user: {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        role: foundUser.role,
-      },
-    };
+    return updatedTeam;
   },
 
   async getTeamMembers(teamId: string) {
-    const [team] = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.teamCode, teamId));
-
-    if (!team) {
-      throw new AppError(404, "Team not found.");
-    }
-
-    const membersList = await db
+    const members = await db
       .select({
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
         phNumber: user.phNumber,
-        isCheckedIn: user.isCheckedIn,
-        paid: user.paid,
+        regNo: user.regNo,
       })
       .from(teamMembers)
       .innerJoin(user, eq(teamMembers.userId, user.id))
       .where(eq(teamMembers.teamCode, teamId));
 
-    return {
-      team_code: team.teamCode,
-      total_members: membersList.length,
-      max_members: 5,
-      members: membersList,
-    };
+    return members;
   },
 
   async generateInvite(teamId: string) {
@@ -442,88 +410,94 @@ export const teamController = {
       throw new AppError(404, "Team not found.");
     }
 
-    const baseUrl = process.env.CLIENT_URL || "http://localhost:3000";
-    const inviteUrl = `${baseUrl}/join?team_code=${encodeURIComponent(team.teamCode)}`;
-
     return {
+      team_id: teamId,
       team_code: team.teamCode,
-      invite_code: team.teamCode,
-      invite_url: inviteUrl,
+      name: team.name,
+      share_link: `/join?code=${team.teamCode}`,
     };
   },
 
-  async convertTeamToSolo(targetTeamCode?: string, targetUserId?: string) {
-    let resolvedUserId = targetUserId;
-    let resolvedTeamCode = targetTeamCode;
-
-    if (!resolvedUserId && resolvedTeamCode) {
-      const [t] = await db.select().from(teams).where(eq(teams.teamCode, resolvedTeamCode));
-      if (t) resolvedUserId = t.leaderId;
+  async convertTeamToSolo(teamId?: string, userId?: string) {
+    if (!userId) {
+      throw new AppError(400, "user_id is required to convert to solo mode.");
     }
 
-    if (!resolvedTeamCode && resolvedUserId) {
+    // 1. If teamId is not provided, locate which team the user is currently in
+    let targetTeamCode = teamId;
+    if (!targetTeamCode) {
       const [membership] = await db
         .select()
         .from(teamMembers)
-        .where(eq(teamMembers.userId, resolvedUserId));
-      if (membership) {
-        resolvedTeamCode = membership.teamCode;
-      }
-    }
+        .where(eq(teamMembers.userId, userId));
 
-    if (!resolvedTeamCode || !resolvedUserId) {
-      throw new AppError(400, "Unable to resolve team code or user for solo conversion.");
+      if (!membership) {
+        throw new AppError(404, "Operative is not currently part of any squad.");
+      }
+      targetTeamCode = membership.teamCode;
     }
 
     const [team] = await db
       .select()
       .from(teams)
-      .where(eq(teams.teamCode, resolvedTeamCode));
+      .where(eq(teams.teamCode, targetTeamCode));
 
     if (!team) {
-      throw new AppError(404, "Team not found.");
+      throw new AppError(404, "Squad not found.");
     }
 
-    if (team.leaderId !== resolvedUserId) {
-      throw new AppError(
-        403,
-        "Only the team leader can convert the team to solo mode."
-      );
-    }
-
-    // Check members list: only allowed if there's only 1 member (the leader)
-    const membersList = await db
-      .select()
-      .from(teamMembers)
-      .where(eq(teamMembers.teamCode, resolvedTeamCode));
-
-    const otherMembers = membersList.filter((m) => m.userId !== resolvedUserId);
-    if (otherMembers.length > 0) {
-      throw new AppError(
-        400,
-        "Cannot convert team with active members to solo mode. Remove other members first."
-      );
-    }
-
-    // Convert any existing team bookings to individual bookings for the leader
+    // 2. Remove user from team members
     await db
-      .update(bookings)
-      .set({
-        type: "individual",
-        teamCode: null,
-      })
-      .where(eq(bookings.teamCode, resolvedTeamCode));
+      .delete(teamMembers)
+      .where(
+        and(
+          eq(teamMembers.teamCode, targetTeamCode),
+          eq(teamMembers.userId, userId)
+        )
+      );
 
-    // Delete team membership and the team record
-    await db.delete(teamMembers).where(eq(teamMembers.teamCode, resolvedTeamCode));
-    await db.delete(teams).where(eq(teams.teamCode, resolvedTeamCode));
+    // 3. Remove any active team bookings for this user/team
+    await db
+      .delete(bookings)
+      .where(
+        and(
+          eq(bookings.teamCode, targetTeamCode),
+          eq(bookings.userId, userId)
+        )
+      );
+
+    // 4. If the user was the squad leader, delete the entire team and disband other members
+    if (team.leaderId === userId) {
+      // Remove all remaining members
+      await db
+        .delete(teamMembers)
+        .where(eq(teamMembers.teamCode, targetTeamCode));
+
+      // Remove remaining team bookings
+      await db
+        .delete(bookings)
+        .where(eq(bookings.teamCode, targetTeamCode));
+
+      // Delete the squad
+      await db
+        .delete(teams)
+        .where(eq(teams.teamCode, targetTeamCode));
+    } else {
+      // Decrement team member count
+      const remainingMembers = await db
+        .select()
+        .from(teamMembers)
+        .where(eq(teamMembers.teamCode, targetTeamCode));
+
+      await db
+        .update(teams)
+        .set({ members: remainingMembers.length })
+        .where(eq(teams.teamCode, targetTeamCode));
+    }
 
     return {
-      converted: true,
-      teamCode: resolvedTeamCode,
-      message: "Team converted to solo mode successfully.",
+      message: "Operative successfully detached to Solo Operative mode.",
+      disbanded: team.leaderId === userId,
     };
   },
 };
-
-export const teamService = teamController;

@@ -1,9 +1,11 @@
+import { randomBytes } from "node:crypto";
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
 import { eq, and, inArray, lt, gt } from "drizzle-orm";
 import QRCode from "qrcode";
 
 import { HttpError as AppError } from "../errors";
+import { env } from "../env";
 import { sendEmail, MAILER_CONFIG } from "../services/mailer";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
 
@@ -29,28 +31,21 @@ export const slotController = {
         (b) => !b.side || (b.side !== "red" && b.side !== "blue"),
       ).length;
 
-      // 5v5 game: 5 spots per side
-      const redAvailable = Math.max(0, 5 - redOccupied);
-      const blueAvailable = Math.max(0, 5 - blueOccupied);
-      const redNeeded = redAvailable;
-      const blueNeeded = blueAvailable;
-      const totalAvailable = Math.max(0, redAvailable + blueAvailable - unassignedOccupied);
+      // Available spots calculation (total capacity 10, 5 per side)
+      const maxPerSide = 5;
+      const redAvailable = Math.max(0, maxPerSide - redOccupied);
+      const blueAvailable = Math.max(0, maxPerSide - blueOccupied);
+      const totalBooked = redOccupied + blueOccupied + unassignedOccupied;
+      const totalAvailable = Math.max(0, slot.capacity - totalBooked);
 
       return {
         ...slot,
-        capacity: totalAvailable,
-        red: {
-          total: 5,
-          occupied: redOccupied,
-          needed: redNeeded, // e.g., 2 logo ki kami
-          available: redAvailable,
-        },
-        blue: {
-          total: 5,
-          occupied: blueOccupied,
-          needed: blueNeeded, // e.g., 5 logo ki kami
-          available: blueAvailable,
-        },
+        totalBooked,
+        totalAvailable,
+        redOccupied,
+        redAvailable,
+        blueOccupied,
+        blueAvailable,
       };
     });
 
@@ -58,45 +53,56 @@ export const slotController = {
   },
 
   async getSlotById(slotId: string) {
-    const [slot] = await db
-      .select()
-      .from(slots)
-      .where(eq(slots.id, slotId));
-
+    const [slot] = await db.select().from(slots).where(eq(slots.id, slotId));
     if (!slot) {
       throw new AppError(404, "Slot not found.");
     }
 
     const activeBookings = await db
       .select({
+        slotId: bookings.slotId,
         side: bookings.side,
+        type: bookings.type,
       })
       .from(bookings)
-      .where(and(eq(bookings.slotId, slotId), inArray(bookings.status, ["reserved", "confirmed"])));
+      .where(
+        and(
+          eq(bookings.slotId, slotId),
+          inArray(bookings.status, ["reserved", "confirmed"]),
+        ),
+      );
 
     const redOccupied = activeBookings.filter((b) => b.side === "red").length;
     const blueOccupied = activeBookings.filter((b) => b.side === "blue").length;
+    const unassignedOccupied = activeBookings.filter(
+      (b) => !b.side || (b.side !== "red" && b.side !== "blue"),
+    ).length;
+
+    const maxPerSide = 5;
+    const redAvailable = Math.max(0, maxPerSide - redOccupied);
+    const blueAvailable = Math.max(0, maxPerSide - blueOccupied);
+    const totalBooked = redOccupied + blueOccupied + unassignedOccupied;
+    const totalAvailable = Math.max(0, slot.capacity - totalBooked);
 
     return {
       ...slot,
-      red: {
-        total: 5,
-        occupied: redOccupied,
-        needed: Math.max(0, 5 - redOccupied),
-        available: Math.max(0, 5 - redOccupied),
-      },
-      blue: {
-        total: 5,
-        occupied: blueOccupied,
-        needed: Math.max(0, 5 - blueOccupied),
-        available: Math.max(0, 5 - blueOccupied),
-      },
+      totalBooked,
+      totalAvailable,
+      redOccupied,
+      redAvailable,
+      blueOccupied,
+      blueAvailable,
     };
   },
 
   async createSlot(input: CreateSlotInput) {
     const startTime = new Date(input.startTime);
     const endTime = new Date(input.endTime);
+
+    if (endTime <= startTime) {
+      throw new AppError(400, "endTime must be after startTime.");
+    }
+
     const capacity = input.capacity;
 
     const overlapping = await db
@@ -192,6 +198,10 @@ export const slotController = {
 
     if (!targetSlot) {
       throw new AppError(404, "Slot not found.");
+    }
+
+    if (new Date(targetSlot.endTime) <= new Date()) {
+      throw new AppError(400, "Cannot book a slot that has already ended.");
     }
 
     const [targetUser] = await db
@@ -329,7 +339,7 @@ export const slotController = {
     const formatHour = (d: Date) =>
       d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
     const slotTimeStr = `${formatHour(slotStartDate)} - ${formatHour(slotEndDate)}`;
-    const passUrl = `${process.env.WEB_ORIGIN || "http://localhost:3000"}/profile`;
+    const passUrl = `${env.WEB_ORIGIN}/profile`;
 
     // Process bookings and tickets for all party members
     let leaderBooking: typeof bookings.$inferSelect | undefined;
@@ -346,7 +356,8 @@ export const slotController = {
         );
 
       let memberBooking: typeof bookings.$inferSelect;
-      const memberQrToken = `QR-${slot_id.slice(0, 4)}-${member.id.slice(0, 6)}-${Math.floor(100 + Math.random() * 900)}`;
+      // Cryptographically secure QR token
+      const memberQrToken = randomBytes(32).toString("hex");
 
       if (existing.length > 0) {
         const [updated] = await db
@@ -392,9 +403,8 @@ export const slotController = {
       }
     }
 
-    // Update slot capacity
-    const totalRemaining = Math.max(0, targetSlot.capacity - partySize);
-    await db.update(slots).set({ capacity: totalRemaining }).where(eq(slots.id, slot_id));
+    // Fixed capacity ceiling: do not decrement slots.capacity!
+    // Active bookings count determines remaining availability dynamically.
 
     // Asynchronous email dispatch to ALL party members
     void (async () => {
@@ -412,46 +422,51 @@ export const slotController = {
                 ),
               );
 
-            const token = memberBookingRecord?.qrToken || `QR-${slot_id.slice(0, 4)}-${member.id.slice(0, 6)}`;
+            const token = memberBookingRecord?.qrToken || randomBytes(32).toString("hex");
 
             // Build structured QR payload encoding verification info
             const qrPayload = JSON.stringify({
               token,
               name: member.name,
-              regNo: member.regNo || "N/A",
-              team: type === "team" ? (currentTeamName || team_code) : "Solo",
-              slot: `${slotDateStr} (${slotTimeStr})`,
-              side: chosenSide?.toUpperCase(),
+              regNo: member.regNo,
+              slotTime: slotTimeStr,
+              side: chosenSide,
+              type,
             });
 
-            // High-resolution scannable QR buffer
+            // Generate high-resolution QR Buffer
             const qrBuffer = await QRCode.toBuffer(qrPayload, {
-              width: 360,
-              margin: 1,
+              width: 320,
+              margin: 2,
               color: {
                 dark: "#000000",
                 light: "#FFFFFF",
               },
             });
 
+            const emailSubject =
+              type === "team"
+                ? `Combat Pass: Squad ${currentTeamName} - LaserTag 2026`
+                : "Combat Pass: Solo Operative - LaserTag 2026";
+
             await sendEmail({
               to: member.email,
-              subject: `LaserTag 2026: ${type === "team" ? "Team" : "Solo"} Battle Slot Confirmed [${chosenSide?.toUpperCase()} SQUAD]`,
+              subject: emailSubject,
               template: MAILER_CONFIG.BOOKING_CONFIRMATION,
               variables: {
-                name: member.name,
-                regNo: member.regNo || "N/A",
+                name: member.name || "Operative",
                 bookingId: memberBookingRecord?.id || "N/A",
-                bookingType: type === "team" ? `Team Battle (${chosenSide?.toUpperCase()} Squad)` : "Solo Mission",
-                teamCode: type === "team" ? (team_code ?? "N/A") : "N/A",
+                bookingType: type.toUpperCase(),
+                teamCode: currentTeamName || "N/A",
                 slotDate: slotDateStr,
                 slotTime: slotTimeStr,
-                passUrl,
                 qrToken: token,
+                side: (chosenSide || "red").toUpperCase(),
+                passUrl,
               },
               attachments: [
                 {
-                  filename: `arena-pass-${token}.png`,
+                  filename: "combat-pass-qr.png",
                   content: qrBuffer,
                   cid: "qrTicketCode",
                 },
@@ -467,15 +482,10 @@ export const slotController = {
           }),
         );
       } catch (emailErr) {
-        console.error("Failed to send booking confirmation emails:", emailErr);
+        console.error("Failed to deliver combat pass confirmation email:", emailErr);
       }
     })();
 
-    return leaderBooking || {
-      slotId: slot_id,
-      side: chosenSide,
-      status: "confirmed",
-      type,
-    };
+    return leaderBooking;
   },
 };

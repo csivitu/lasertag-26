@@ -1,30 +1,36 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-export async function apiFetch<T>(
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+  status?: number;
+}
+
+export async function apiFetch<T = unknown>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<{ success: boolean; data?: T; message?: string; error?: string }> {
-  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-  
-  const headers = new Headers(options.headers || {});
-  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
-    headers.set("Content-Type", "application/json");
-  }
-  // Admin dev fallback header if session cookie isn't attached
-  if (!headers.has("x-user-id")) {
-    headers.set("x-user-id", "11111111-1111-1111-1111-111111111111");
-  }
+): Promise<ApiResponse<T>> {
+  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
 
   try {
     const res = await fetch(url, {
       ...options,
+      credentials: "include",
       headers,
     });
 
     const text = await res.text();
-    let json: any = {};
+    let json: Record<string, unknown> = {};
     try {
-      json = JSON.parse(text);
+      json = JSON.parse(text) as Record<string, unknown>;
     } catch {
       json = { message: text, success: res.ok };
     }
@@ -32,19 +38,29 @@ export async function apiFetch<T>(
     if (!res.ok) {
       return {
         success: false,
-        error: json.error || json.message || `HTTP Error ${res.status}`,
+        status: res.status,
+        error:
+          typeof json.error === "string"
+            ? json.error
+            : typeof json.message === "string"
+            ? json.message
+            : `HTTP Error ${res.status}`,
       };
     }
 
     return {
-      success: json.success ?? true,
-      data: json.data ?? json,
-      message: json.message,
+      success: typeof json.success === "boolean" ? json.success : true,
+      status: res.status,
+      data: (json.data ?? json) as T,
+      message: typeof json.message === "string" ? json.message : undefined,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       success: false,
-      error: err.message || "Failed to communicate with API server.",
+      error:
+        err instanceof Error
+          ? err.message
+          : "Failed to communicate with API server.",
     };
   }
 }
