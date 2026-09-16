@@ -54,6 +54,21 @@ export const participantPaths = {
       },
     },
   },
+  "/slots/bookings/{booking_id}/resend-confirmation": {
+    post: {
+      summary: "Resend booking confirmation email(s)",
+      description:
+        "Retries confirmation email delivery for failed/bounced recipients. For teams, only members who have not yet received confirmation are emailed.",
+      tags: ["Slots"],
+      security: [],
+      parameters: [pathParam("booking_id", "bookings.id")],
+      responses: {
+        200: ok("Confirmation email delivery report"),
+        400: responses.badRequest,
+        404: responses.error("Booking or Slot not found"),
+      },
+    },
+  },
   "/teams": {
     get: {
       summary: "Get all teams",

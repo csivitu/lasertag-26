@@ -107,3 +107,14 @@ export const reserveSlotSchema = z.object({
 
 export type ReserveSlotInput = z.infer<typeof reserveSlotSchema>["params"] &
   z.infer<typeof reserveSlotSchema>["body"];
+
+export const resendBookingConfirmationSchema = z.object({
+  params: z.object({
+    booking_id: z.string().trim().min(1, "booking_id is required in path."),
+  }),
+  body: z
+    .object({
+      force: z.boolean().optional(),
+    })
+    .optional(),
+});

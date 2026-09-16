@@ -3,7 +3,10 @@ import { Router, type Request, type Response } from "express";
 import { slotController } from "../controllers/slot.controller";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { validateRequest } from "../middlewares/validate";
-import { reserveSlotSchema } from "../validations/slot.validation";
+import {
+  reserveSlotSchema,
+  resendBookingConfirmationSchema,
+} from "../validations/slot.validation";
 
 /**
  * Public & Mobile Workstation Slot Endpoints.
@@ -63,3 +66,22 @@ publicSlotsRouter.post(
     });
   }),
 );
+
+publicSlotsRouter.post(
+  "/bookings/:booking_id/resend-confirmation",
+  validateRequest(resendBookingConfirmationSchema),
+  asyncHandler(async (req: Request<{ booking_id: string }, unknown, { force?: boolean }>, res: Response): Promise<void> => {
+    const result = await slotController.resendConfirmation(
+      req.params.booking_id,
+      { forceResend: req.body?.force },
+    );
+    res.status(200).json({
+      success: true,
+      message: result.allSent
+        ? "Confirmation emails successfully delivered to all recipients."
+        : `Sent ${result.sentCount} of ${result.totalRecipients} emails. ${result.failedCount} recipient(s) failed.`,
+      data: result,
+    });
+  }),
+);
+

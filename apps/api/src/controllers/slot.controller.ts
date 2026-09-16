@@ -1,10 +1,9 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
 import { eq, and, inArray, lt, gt } from "drizzle-orm";
-import QRCode from "qrcode";
 
 import { HttpError as AppError } from "../errors";
-import { sendEmail, MAILER_CONFIG } from "../services/mailer";
+import { dispatchBookingConfirmation } from "../services/booking-email";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
 
 export const slotController = {
@@ -270,133 +269,28 @@ export const slotController = {
       })
       .where(eq(slots.id, slot_id));
 
-    // Format slot date and time for confirmation email
-    const slotStartDate = new Date(targetSlot.startTime);
-    const slotEndDate = new Date(targetSlot.endTime);
+    // If team, reset per-member delivery tracking flags for this fresh/updated booking
+    if (type === "team" && team_code) {
+      await db
+        .update(teamMembers)
+        .set({ confirmationEmailSent: false, emailSentAt: null })
+        .where(eq(teamMembers.teamCode, team_code));
+    }
 
-    const slotDateStr = slotStartDate.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-
-    const formatHour = (d: Date) =>
-      d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-
-    const slotTimeStr = `${formatHour(slotStartDate)} - ${formatHour(slotEndDate)}`;
-    const passUrl = `${process.env.WEB_ORIGIN || "http://localhost:3000"}/profile`;
-
-    // Asynchronous non-blocking dispatch: Send confirmation email w/ embedded QR Ticket
+    // Asynchronous non-blocking dispatch with in-flight retry and per-member tracking
+    const bookingId = activeBooking.id;
     void (async () => {
       try {
-        if (type === "team" && team_code) {
-          const teamUsers = await db
-            .select({
-              id: user.id,
-              name: user.name,
-              email: user.email,
-            })
-            .from(teamMembers)
-            .innerJoin(user, eq(teamMembers.userId, user.id))
-            .where(eq(teamMembers.teamCode, team_code));
-
-          const emailResults = await Promise.all(
-            teamUsers.map(async (member) => {
-              const memberQrToken = `QR-${activeBooking.id}-${member.id.slice(0, 6)}`;
-              await db
-                .update(user)
-                .set({ qrToken: memberQrToken })
-                .where(eq(user.id, member.id));
-
-              // Render high-res QR code PNG buffer
-              const memberQrBuffer = await QRCode.toBuffer(memberQrToken, {
-                width: 360,
-                margin: 1,
-                color: {
-                  dark: "#000000",
-                  light: "#FFFFFF",
-                },
-              });
-
-              return sendEmail({
-                to: member.email,
-                subject: `LaserTag 2026: Team Slot Confirmed (${team_code})`,
-                template: MAILER_CONFIG.BOOKING_CONFIRMATION,
-                variables: {
-                  name: member.name,
-                  bookingId: activeBooking.id,
-                  bookingType: "Team Battle",
-                  teamCode: team_code,
-                  slotDate: slotDateStr,
-                  slotTime: slotTimeStr,
-                  passUrl,
-                  qrToken: memberQrToken,
-                },
-                attachments: [
-                  {
-                    filename: `arena-pass-${memberQrToken}.png`,
-                    content: memberQrBuffer,
-                    cid: "qrTicketCode",
-                  },
-                ],
-              });
-            }),
-          );
-
-          const anySent = emailResults.some((messageId) => messageId !== null);
-          if (anySent && teamUsers.length > 0) {
-            await db
-              .update(bookings)
-              .set({ confirmationEmailSent: true })
-              .where(eq(bookings.id, activeBooking.id));
-          }
-        } else {
-          // Render high-res QR code PNG buffer for Solo operative
-          const qrBuffer = await QRCode.toBuffer(assignedQrToken, {
-            width: 360,
-            margin: 1,
-            color: {
-              dark: "#000000",
-              light: "#FFFFFF",
-            },
-          });
-
-          const messageId = await sendEmail({
-            to: targetUser.email,
-            subject: "LaserTag 2026: Battle Pass Slot Confirmed",
-            template: MAILER_CONFIG.BOOKING_CONFIRMATION,
-            variables: {
-              name: targetUser.name,
-              bookingId: activeBooking.id,
-              bookingType: "Solo Mission",
-              teamCode: "N/A",
-              slotDate: slotDateStr,
-              slotTime: slotTimeStr,
-              passUrl,
-              qrToken: assignedQrToken,
-            },
-            attachments: [
-              {
-                filename: `arena-pass-${assignedQrToken}.png`,
-                content: qrBuffer,
-                cid: "qrTicketCode",
-              },
-            ],
-          });
-
-          if (messageId) {
-            await db
-              .update(bookings)
-              .set({ confirmationEmailSent: true })
-              .where(eq(bookings.id, activeBooking.id));
-          }
-        }
+        await dispatchBookingConfirmation(bookingId);
       } catch (emailErr) {
         console.error("[Mailer] Background confirmation email dispatch error:", emailErr);
       }
     })();
 
     return activeBooking;
+  },
+
+  async resendConfirmation(bookingId: string, options?: { forceResend?: boolean }) {
+    return await dispatchBookingConfirmation(bookingId, options);
   },
 };
