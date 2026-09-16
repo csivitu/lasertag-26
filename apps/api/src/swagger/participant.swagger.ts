@@ -20,6 +20,20 @@ export const participantPaths = {
       summary: "List bookable slots",
       tags: ["Slots"],
       security: [],
+      parameters: [
+        {
+          in: "query",
+          name: "limit",
+          required: false,
+          schema: { type: "integer", minimum: 1, maximum: 500, default: 200 },
+        },
+        {
+          in: "query",
+          name: "offset",
+          required: false,
+          schema: { type: "integer", minimum: 0, default: 0 },
+        },
+      ],
       responses: { 200: ok("All slots") },
     },
   },
@@ -165,6 +179,18 @@ export const participantPaths = {
       tags: ["Users"],
       responses: {
         200: ok("User profile with active registration"),
+        401: responses.unauthorized,
+        404: responses.error("User not found"),
+      },
+    },
+  },
+  "/users/me/details": {
+    patch: {
+      summary: "Save onboarding details (name, phone, reg_number)",
+      tags: ["Users"],
+      responses: {
+        200: ok("Updated details"),
+        400: responses.badRequest,
         401: responses.unauthorized,
         404: responses.error("User not found"),
       },

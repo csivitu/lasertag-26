@@ -7,6 +7,7 @@ import {
   listSlots,
   updateSlot,
 } from "../controllers/admin-slots.controller";
+import { requireSuperAdmin } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate";
 import {
   bulkCreateSlotsSchema,
@@ -18,7 +19,8 @@ import {
 export const slotsRouter = Router();
 
 slotsRouter.get("/", listSlots);
-slotsRouter.post("/", validate(createSlotSchema), createSlot);
-slotsRouter.post("/bulk", validate(bulkCreateSlotsSchema), createSlots);
+// Super admin only: create + delete. Both roles can list, patch, verify/scan.
+slotsRouter.post("/", requireSuperAdmin, validate(createSlotSchema), createSlot);
+slotsRouter.post("/bulk", requireSuperAdmin, validate(bulkCreateSlotsSchema), createSlots);
 slotsRouter.patch("/:slot_id", validate(patchSlotSchema), updateSlot);
-slotsRouter.delete("/:slot_id", validate(slotIdSchema), deleteSlot);
+slotsRouter.delete("/:slot_id", requireSuperAdmin, validate(slotIdSchema), deleteSlot);
