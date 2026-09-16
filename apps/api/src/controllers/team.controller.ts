@@ -14,65 +14,106 @@ import type { CreateTeamInput } from "../validations/team.validation";
 export const teamController = {
   async getAllTeams() {
     const allTeams = await db.select().from(teams);
+    if (allTeams.length === 0) {
+      return [];
+    }
 
-    const teamsWithDetails = await Promise.all(
-      allTeams.map(async (t) => {
-        const [leader] = await db
+    const teamCodes = allTeams.map((t) => t.teamCode);
+    const leaderIds = Array.from(new Set(allTeams.map((t) => t.leaderId).filter(Boolean)));
+
+    // 1. Bulk fetch leaders in a single query
+    const leadersList = leaderIds.length > 0
+      ? await db
           .select({
             id: user.id,
             name: user.name,
             email: user.email,
           })
           .from(user)
-          .where(eq(user.id, t.leaderId));
+          .where(inArray(user.id, leaderIds))
+      : [];
 
-        const membersList = await db
-          .select({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          })
-          .from(teamMembers)
-          .innerJoin(user, eq(teamMembers.userId, user.id))
-          .where(eq(teamMembers.teamCode, t.teamCode));
+    const leaderMap = new Map<string, { id: string; name: string; email: string }>();
+    for (const l of leadersList) {
+      leaderMap.set(l.id, l);
+    }
 
-        const memberIds = [t.leaderId, ...membersList.map((m) => m.id)];
-
-        const teamBookings = await db
-          .select({
-            id: bookings.id,
-            type: bookings.type,
-            userId: bookings.userId,
-            slotId: bookings.slotId,
-            confirmationEmailSent: bookings.confirmationEmailSent,
-            startTime: slots.startTime,
-            endTime: slots.endTime,
-          })
-          .from(bookings)
-          .innerJoin(slots, eq(bookings.slotId, slots.id))
-          .where(
-            or(
-              eq(bookings.teamCode, t.teamCode),
-              inArray(bookings.userId, memberIds)
-            )
-          )
-          .orderBy(asc(slots.startTime));
-
-        return {
-          id: t.teamCode,
-          teamCode: t.teamCode,
-          name: t.name || t.teamCode,
-          leaderId: t.leaderId,
-          leader: leader || null,
-          memberCount: membersList.length,
-          maxMembers: 5,
-          members: membersList,
-          bookings: teamBookings,
-        };
+    // 2. Bulk fetch all members for all teams in a single query
+    const allMembersList = await db
+      .select({
+        teamCode: teamMembers.teamCode,
+        id: user.id,
+        name: user.name,
+        email: user.email,
       })
-    );
+      .from(teamMembers)
+      .innerJoin(user, eq(teamMembers.userId, user.id))
+      .where(inArray(teamMembers.teamCode, teamCodes));
 
-    return teamsWithDetails;
+    const membersByTeamCode = new Map<string, Array<{ id: string; name: string; email: string }>>();
+    const allMemberUserIds = new Set<string>(leaderIds);
+    for (const m of allMembersList) {
+      allMemberUserIds.add(m.id);
+      const list = membersByTeamCode.get(m.teamCode) || [];
+      list.push({ id: m.id, name: m.name, email: m.email });
+      membersByTeamCode.set(m.teamCode, list);
+    }
+
+    // 3. Bulk fetch bookings for all teamCodes and member userIds in a single query
+    const allMemberIdsArray = Array.from(allMemberUserIds);
+    const allBookings = await db
+      .select({
+        id: bookings.id,
+        type: bookings.type,
+        userId: bookings.userId,
+        teamCode: bookings.teamCode,
+        slotId: bookings.slotId,
+        confirmationEmailSent: bookings.confirmationEmailSent,
+        startTime: slots.startTime,
+        endTime: slots.endTime,
+      })
+      .from(bookings)
+      .innerJoin(slots, eq(bookings.slotId, slots.id))
+      .where(
+        allMemberIdsArray.length > 0
+          ? or(
+              inArray(bookings.teamCode, teamCodes),
+              inArray(bookings.userId, allMemberIdsArray)
+            )
+          : inArray(bookings.teamCode, teamCodes)
+      )
+      .orderBy(asc(slots.startTime));
+
+    // 4. Assemble in-memory with O(1) lookups
+    return allTeams.map((t) => {
+      const leader = leaderMap.get(t.leaderId) || null;
+      const membersList = membersByTeamCode.get(t.teamCode) || [];
+      const memberIdSet = new Set<string>([t.leaderId, ...membersList.map((m) => m.id)]);
+
+      const teamBookings = allBookings
+        .filter((b) => b.teamCode === t.teamCode || memberIdSet.has(b.userId))
+        .map((b) => ({
+          id: b.id,
+          type: b.type,
+          userId: b.userId,
+          slotId: b.slotId,
+          confirmationEmailSent: b.confirmationEmailSent,
+          startTime: b.startTime,
+          endTime: b.endTime,
+        }));
+
+      return {
+        id: t.teamCode,
+        teamCode: t.teamCode,
+        name: t.name || t.teamCode,
+        leaderId: t.leaderId,
+        leader,
+        memberCount: membersList.length,
+        maxMembers: 5,
+        members: membersList,
+        bookings: teamBookings,
+      };
+    });
   },
 
   async createTeam(input: CreateTeamInput) {

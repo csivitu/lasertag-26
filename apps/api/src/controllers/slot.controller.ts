@@ -1,6 +1,6 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
-import { eq, and, inArray, lt, gt } from "drizzle-orm";
+import { eq, and, inArray, lt, gt, sql, asc } from "drizzle-orm";
 import QRCode from "qrcode";
 
 import { HttpError as AppError } from "../errors";
@@ -9,7 +9,7 @@ import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.vali
 
 export const slotController = {
   async getAllSlots() {
-    const allSlots = await db.select().from(slots);
+    const allSlots = await db.select().from(slots).orderBy(asc(slots.startTime));
     return allSlots;
   },
 
@@ -121,158 +121,178 @@ export const slotController = {
   async reserveSlot(input: ReserveSlotInput) {
     const { slot_id, user_id, type, team_code } = input;
 
-    const [targetSlot] = await db
-      .select()
-      .from(slots)
-      .where(eq(slots.id, slot_id));
+    // Run verification, seat claiming, and booking insert inside an atomic transaction
+    const { activeBooking, targetUser, slotForEmail, assignedQrToken } = await db.transaction(
+      async (tx) => {
+        const [targetUser] = await tx
+          .select()
+          .from(user)
+          .where(eq(user.id, user_id));
 
-    if (!targetSlot) {
-      throw new AppError(404, "Slot not found.");
-    }
-
-    if (targetSlot.capacity <= 0) {
-      throw new AppError(400, "Selected slot is already fully booked.");
-    }
-
-    const [targetUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, user_id));
-
-    if (!targetUser) {
-      throw new AppError(404, "User not found.");
-    }
-
-    // 1. If Solo (individual), verify user is NOT currently in a team
-    if (type === "individual") {
-      const userInTeam = await db
-        .select()
-        .from(teamMembers)
-        .where(eq(teamMembers.userId, user_id));
-
-      if (userInTeam.length > 0) {
-        throw new AppError(
-          400,
-          "You are currently part of a team and cannot book an individual solo slot."
-        );
-      }
-    }
-
-    // 2. If Team, verify team exists and only the leader can reserve the slot
-    if (type === "team") {
-      if (!team_code) {
-        throw new AppError(400, "Team code is required for team slot reservations.");
-      }
-
-      const [team] = await db
-        .select()
-        .from(teams)
-        .where(eq(teams.teamCode, team_code));
-
-      if (!team) {
-        // If team was pending creation from client session, establish it now with user as leader
-        await db.insert(teams).values({
-          teamCode: team_code,
-          leaderId: user_id,
-          members: 1,
-        });
-
-        await db
-          .insert(teamMembers)
-          .values({
-            teamCode: team_code,
-            userId: user_id,
-          })
-          .onConflictDoNothing();
-      } else if (team.leaderId !== user_id) {
-        throw new AppError(403, "Only the team leader can reserve a slot for the team.");
-      }
-    }
-
-    // Check if user already has an active booking (to update slot rather than orphan bookings)
-    const existingActiveBookings = await db
-      .select()
-      .from(bookings)
-      .where(
-        and(
-          eq(bookings.userId, user_id),
-          inArray(bookings.status, ["reserved", "confirmed"])
-        )
-      );
-
-    let activeBooking;
-
-    if (existingActiveBookings.length > 0) {
-      const prevBooking = existingActiveBookings[0];
-      // If slot changed, restore 1 capacity to the old slot
-      if (prevBooking.slotId !== slot_id) {
-        const [prevSlot] = await db.select().from(slots).where(eq(slots.id, prevBooking.slotId));
-        if (prevSlot) {
-          await db
-            .update(slots)
-            .set({ capacity: prevSlot.capacity + 1 })
-            .where(eq(slots.id, prevBooking.slotId));
+        if (!targetUser) {
+          throw new AppError(404, "User not found.");
         }
-      }
 
-      const qrToken = prevBooking.qrToken || `QR-${prevBooking.id}`;
+        // 1. If Solo (individual), verify user is NOT currently in a team
+        if (type === "individual") {
+          const userInTeam = await tx
+            .select()
+            .from(teamMembers)
+            .where(eq(teamMembers.userId, user_id));
 
-      const [updatedBooking] = await db
-        .update(bookings)
-        .set({
-          slotId: slot_id,
-          type,
-          teamCode: type === "team" ? (team_code ?? null) : null,
-          status: "confirmed",
-          qrToken,
-          confirmedAt: new Date(),
-          confirmationEmailSent: false,
-        })
-        .where(eq(bookings.id, prevBooking.id))
-        .returning();
+          if (userInTeam.length > 0) {
+            throw new AppError(
+              400,
+              "You are currently part of a team and cannot book an individual solo slot.",
+            );
+          }
+        }
 
-      activeBooking = updatedBooking;
-    } else {
-      const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-      const qrToken = `QR-${bookingId}`;
+        // 2. If Team, verify team exists and only the leader can reserve the slot
+        if (type === "team") {
+          if (!team_code) {
+            throw new AppError(400, "Team code is required for team slot reservations.");
+          }
 
-      const [newBooking] = await db
-        .insert(bookings)
-        .values({
-          id: bookingId,
-          type,
-          status: "confirmed",
-          userId: user_id,
-          teamCode: type === "team" ? (team_code ?? null) : null,
-          slotId: slot_id,
-          qrToken,
-          confirmedAt: new Date(),
-          confirmationEmailSent: false,
-        })
-        .returning();
+          const [team] = await tx
+            .select()
+            .from(teams)
+            .where(eq(teams.teamCode, team_code));
 
-      activeBooking = newBooking;
-    }
+          if (!team) {
+            // If team was pending creation from client session, establish it now with user as leader
+            await tx.insert(teams).values({
+              teamCode: team_code,
+              leaderId: user_id,
+              members: 1,
+            });
 
-    const assignedQrToken = activeBooking.qrToken || `QR-${activeBooking.id}`;
+            await tx
+              .insert(teamMembers)
+              .values({
+                teamCode: team_code,
+                userId: user_id,
+              })
+              .onConflictDoNothing();
+          } else if (team.leaderId !== user_id) {
+            throw new AppError(403, "Only the team leader can reserve a slot for the team.");
+          }
+        }
 
-    // Ensure user record also holds the qrToken for instant scanner lookups
-    await db
-      .update(user)
-      .set({ qrToken: assignedQrToken })
-      .where(eq(user.id, user_id));
+        // Check if user already has an active booking (to update slot rather than orphan bookings)
+        const existingActiveBookings = await tx
+          .select()
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.userId, user_id),
+              inArray(bookings.status, ["reserved", "confirmed"]),
+            ),
+          );
 
-    // Decrement new slot capacity
-    await db
-      .update(slots)
-      .set({
-        capacity: Math.max(0, targetSlot.capacity - 1),
-      })
-      .where(eq(slots.id, slot_id));
+        const prevBooking = existingActiveBookings[0];
+        const isSameSlot = prevBooking && prevBooking.slotId === slot_id;
+
+        let slotForEmail;
+
+        if (isSameSlot) {
+          const [existingSlot] = await tx
+            .select()
+            .from(slots)
+            .where(eq(slots.id, slot_id));
+
+          if (!existingSlot) {
+            throw new AppError(404, "Slot not found.");
+          }
+          slotForEmail = existingSlot;
+        } else {
+          // Atomic conditional decrement: seat claimed ONLY if capacity > 0
+          const [claimedSlot] = await tx
+            .update(slots)
+            .set({ capacity: sql`${slots.capacity} - 1` })
+            .where(and(eq(slots.id, slot_id), gt(slots.capacity, 0)))
+            .returning();
+
+          if (!claimedSlot) {
+            const [existingSlot] = await tx
+              .select()
+              .from(slots)
+              .where(eq(slots.id, slot_id));
+
+            if (!existingSlot) {
+              throw new AppError(404, "Slot not found.");
+            }
+            throw new AppError(400, "Selected slot is already fully booked.");
+          }
+
+          slotForEmail = claimedSlot;
+
+          // If switching slots, restore 1 capacity to the old slot
+          if (prevBooking && prevBooking.slotId !== slot_id) {
+            await tx
+              .update(slots)
+              .set({ capacity: sql`${slots.capacity} + 1` })
+              .where(eq(slots.id, prevBooking.slotId));
+          }
+        }
+
+        let activeBooking;
+
+        if (prevBooking) {
+          const qrToken = prevBooking.qrToken || `QR-${prevBooking.id}`;
+
+          const [updatedBooking] = await tx
+            .update(bookings)
+            .set({
+              slotId: slot_id,
+              type,
+              teamCode: type === "team" ? (team_code ?? null) : null,
+              status: "confirmed",
+              qrToken,
+              confirmedAt: new Date(),
+              confirmationEmailSent: false,
+            })
+            .where(eq(bookings.id, prevBooking.id))
+            .returning();
+
+          activeBooking = updatedBooking;
+        } else {
+          const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const qrToken = `QR-${bookingId}`;
+
+          const [newBooking] = await tx
+            .insert(bookings)
+            .values({
+              id: bookingId,
+              type,
+              status: "confirmed",
+              userId: user_id,
+              teamCode: type === "team" ? (team_code ?? null) : null,
+              slotId: slot_id,
+              qrToken,
+              confirmedAt: new Date(),
+              confirmationEmailSent: false,
+            })
+            .returning();
+
+          activeBooking = newBooking;
+        }
+
+        const assignedQrToken = activeBooking.qrToken || `QR-${activeBooking.id}`;
+
+        // Ensure user record also holds the qrToken for instant scanner lookups
+        await tx
+          .update(user)
+          .set({ qrToken: assignedQrToken })
+          .where(eq(user.id, user_id));
+
+        return { activeBooking, targetUser, slotForEmail, assignedQrToken };
+      },
+    );
 
     // Format slot date and time for confirmation email
-    const slotStartDate = new Date(targetSlot.startTime);
-    const slotEndDate = new Date(targetSlot.endTime);
+    const slotStartDate = new Date(slotForEmail.startTime);
+    const slotEndDate = new Date(slotForEmail.endTime);
 
     const slotDateStr = slotStartDate.toLocaleDateString("en-US", {
       weekday: "long",
