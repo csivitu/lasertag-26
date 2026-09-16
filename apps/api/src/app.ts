@@ -30,6 +30,7 @@ export function createApp(env: Env): Express {
 
     const allowedOrigins = new Set([
         env.WEB_ORIGIN,
+        env.ADMIN_ORIGIN,
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",

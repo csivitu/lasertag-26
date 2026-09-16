@@ -29,6 +29,27 @@ export const auth = betterAuth({
             trustedProviders: ["google"],
         },
     },
+    databaseHooks: {
+        user: {
+            create: {
+                before: async (newUser) => {
+                    const adminEmails = (env.ADMIN_EMAILS || "")
+                        .split(",")
+                        .map((e) => e.trim().toLowerCase())
+                        .filter(Boolean);
+
+                    if (newUser.email && adminEmails.includes(newUser.email.toLowerCase())) {
+                        return {
+                            data: {
+                                ...newUser,
+                                role: "admin",
+                            },
+                        };
+                    }
+                },
+            },
+        },
+    },
     user: {
         additionalFields: {
             role: {
@@ -76,11 +97,15 @@ export const auth = betterAuth({
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: [
         env.WEB_ORIGIN,
+        env.ADMIN_ORIGIN,
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "http://127.0.0.1:3002",
+        ...(env.CORS_ORIGINS
+            ? env.CORS_ORIGINS.split(",").map((o: string) => o.trim()).filter(Boolean)
+            : []),
     ],
 });

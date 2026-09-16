@@ -1,21 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Search, QrCode, X, Calendar, Clock, Ticket, CheckCircle2, AlertCircle, ChevronRight, Shield } from "lucide-react";
+import { Users, Search, X, Calendar, Clock, Ticket, CheckCircle2, ChevronRight, Shield } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 
+interface TeamMember {
+  id?: string;
+  name?: string;
+  email?: string;
+}
+
+interface TeamBooking {
+  id?: string;
+  startTime?: string;
+  endTime?: string;
+  type?: string;
+}
+
+interface TeamItem {
+  id: string;
+  name?: string;
+  teamCode?: string;
+  checkedIn?: boolean;
+  status?: string;
+  leader?: {
+    id?: string;
+    name?: string;
+    email?: string;
+  };
+  members?: TeamMember[];
+  bookings?: TeamBooking[];
+}
+
 export default function TeamsPage() {
-  const [teams, setTeams] = useState<any[]>([]);
+  const [teams, setTeams] = useState<TeamItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState<any | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<TeamItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const fetchTeams = async () => {
     setLoading(true);
     setError(null);
-    const res = await apiFetch<any>("/teams");
+    const res = await apiFetch<TeamItem[] | { teams: TeamItem[] }>("/teams");
     if (res.success && res.data) {
       const list = Array.isArray(res.data)
         ? res.data
@@ -26,7 +54,7 @@ export default function TeamsPage() {
 
       // Keep selectedTeam synced if open
       if (selectedTeam) {
-        const updated = list.find((t: any) => t.id === selectedTeam.id || t.teamCode === selectedTeam.teamCode);
+        const updated = list.find((t: TeamItem) => t.id === selectedTeam.id || (t.teamCode && t.teamCode === selectedTeam.teamCode));
         if (updated) setSelectedTeam(updated);
       }
     } else {
@@ -46,7 +74,7 @@ export default function TeamsPage() {
 
   const handleToggleCheckin = async (teamId: string, currentStatus: boolean) => {
     setActionSuccess(null);
-    const res = await apiFetch<any>(`/teams/${teamId}/checkin`, {
+    const res = await apiFetch<TeamItem>(`/teams/${teamId}/checkin`, {
       method: "PATCH",
       body: JSON.stringify({ checkedIn: !currentStatus }),
     });
@@ -180,7 +208,7 @@ export default function TeamsPage() {
                       Roster ({team.members.length} Members):
                     </p>
                     <p className="text-xs text-[#A1A1AA] truncate font-mono">
-                      {team.members.map((m: any) => m.name || m.email).join(", ")}
+                      {team.members.map((m: TeamMember) => m.name || m.email).join(", ")}
                     </p>
                   </div>
                 )}
@@ -241,7 +269,7 @@ export default function TeamsPage() {
                   onClick={() =>
                     handleToggleCheckin(
                       selectedTeam.id,
-                      selectedTeam.checkedIn || selectedTeam.status === "CHECKED_IN"
+                      Boolean(selectedTeam.checkedIn || selectedTeam.status === "CHECKED_IN")
                     )
                   }
                   className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all ${
@@ -285,7 +313,7 @@ export default function TeamsPage() {
 
                 {selectedTeam.members && selectedTeam.members.length > 0 ? (
                   <div className="divide-y divide-[#27272A]">
-                    {selectedTeam.members.map((m: any, i: number) => (
+                    {selectedTeam.members.map((m: TeamMember, i: number) => (
                       <div key={m.id || i} className="py-2 flex items-center justify-between text-xs font-mono">
                         <div>
                           <p className="font-semibold text-[#FAFAFA]">
@@ -312,7 +340,7 @@ export default function TeamsPage() {
 
                 {selectedTeam.bookings && selectedTeam.bookings.length > 0 ? (
                   <div className="space-y-2.5">
-                    {selectedTeam.bookings.map((bkg: any, i: number) => {
+                    {selectedTeam.bookings.map((bkg: TeamBooking, i: number) => {
                       const startFormatted = bkg.startTime
                         ? new Date(bkg.startTime).toLocaleString("en-US", {
                             timeZone: "UTC",

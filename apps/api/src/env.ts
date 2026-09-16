@@ -46,6 +46,14 @@ const envSchema = z.object({
     emptyToUndefined,
     z.url().default("http://localhost:3000"),
   ),
+  ADMIN_ORIGIN: z.preprocess(
+    emptyToUndefined,
+    z.url().default("http://localhost:3002"),
+  ),
+  ADMIN_EMAILS: z.preprocess(
+    emptyToUndefined,
+    z.string().default("sujalmishra.0306@gmail.com"),
+  ),
   CORS_ORIGINS: z.preprocess(
     emptyToUndefined,
     z.string().optional(),
@@ -85,7 +93,8 @@ export type Env = z.infer<typeof envSchema>;
 /**
  * Validates process.env and exits with a readable report if anything is
  * missing. Called once from index.ts before the app is built, so a
- * misconfigured deploy fails at boot rather than on the first request.\n */
+ * misconfigured deploy fails at boot rather than on the first request.
+ */
 export function loadEnv(): Env {
   const parsed = envSchema.safeParse(process.env);
 
