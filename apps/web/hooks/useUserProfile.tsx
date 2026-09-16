@@ -107,18 +107,20 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         setProfile(json.data);
 
         // Safely synchronize storage only when changed
+        // DEPRECATED: team feature disabled — skip team storage sync (solo-only flow).
         if (typeof window !== "undefined") {
-          if (json.data.team) {
-            setItemIfChanged(localStorage, "lasertag_selected_mode", "team");
-            setItemIfChanged(sessionStorage, "lasertag_selected_mode", "team");
+          // if (json.data.team) {
+          //   setItemIfChanged(localStorage, "lasertag_selected_mode", "team");
+          //   setItemIfChanged(sessionStorage, "lasertag_selected_mode", "team");
 
-            const activeTeamStr = JSON.stringify({
-              teamCode: json.data.team.teamCode,
-              isLeader: json.data.team.isLeader,
-            });
-            setItemIfChanged(localStorage, "lasertag_active_team", activeTeamStr);
-            setItemIfChanged(sessionStorage, "lasertag_active_team", activeTeamStr);
-          } else if (json.data.activeRegistration?.type === "individual") {
+          //   const activeTeamStr = JSON.stringify({
+          //     teamCode: json.data.team.teamCode,
+          //     isLeader: json.data.team.isLeader,
+          //   });
+          //   setItemIfChanged(localStorage, "lasertag_active_team", activeTeamStr);
+          //   setItemIfChanged(sessionStorage, "lasertag_active_team", activeTeamStr);
+          // } else if (json.data.activeRegistration?.type === "individual") {
+          if (json.data.activeRegistration) {
             setItemIfChanged(localStorage, "lasertag_selected_mode", "solo");
             setItemIfChanged(sessionStorage, "lasertag_selected_mode", "solo");
           }

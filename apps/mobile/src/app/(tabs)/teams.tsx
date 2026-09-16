@@ -1,3 +1,4 @@
+// DEPRECATED: team feature disabled (solo-only flow) — screen kept for restore, unlinked from tabs.
 import { useEffect, useState } from "react";
 import {
   View,

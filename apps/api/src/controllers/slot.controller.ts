@@ -1,12 +1,26 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
 import { asc, eq, and, inArray, lt, gt } from "drizzle-orm";
-import QRCode from "qrcode";
 
-import { claimSlotSeat, releaseSlotSeat } from "../data/queries";
+import { claimSlotSeat, isIdentityAllowlisted, releaseSlotSeat } from "../data/queries";
 import { HttpError as AppError } from "../errors";
-import { sendEmail, MAILER_CONFIG } from "../services/mailer";
+import { sendBookingConfirmationEmail, sendSlotChangeEmail } from "../services/mailer/booking-mailer";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
+
+/** Max times one booking may move between slots. Same-slot re-books don't count. */
+const MAX_SLOT_CHANGES = 3;
+
+/** Allowlist lookup that fails closed (false) instead of 500ing the booking. */
+async function isAllowlistedSafe(targetUser: {
+  regNumber: string | null;
+  email: string;
+}): Promise<boolean> {
+  try {
+    return await isIdentityAllowlisted(targetUser.regNumber, targetUser.email);
+  } catch {
+    return false;
+  }
+}
 
 /** Postgres unique-violation, unwrapped through driver error nesting. */
 function isUniqueViolation(err: unknown): boolean {
@@ -164,6 +178,11 @@ export const slotController = {
       throw new AppError(404, "User not found.");
     }
 
+    // Paid-verification gate: only verified (paid) participants may take a
+    // FIRST slot. Changing an already-held slot stays open — that path is
+    // governed by the MAX_SLOT_CHANGES allowance below instead.
+    // The client also grey-outs booking, but this is the enforced check.
+
     // 1. If Solo (individual), verify user is NOT currently in a team
     if (type === "individual") {
       const userInTeam = await db
@@ -227,6 +246,26 @@ export const slotController = {
     // Same-slot re-books already hold a seat and skip the claim.
     const prevBooking = existingActiveBookings[0];
     const needsSeat = !prevBooking || prevBooking.slotId !== slot_id;
+
+    // First-time bookings require a verified (paid) participant. Slot
+    // CHANGES skip this: holders keep moving within their change allowance.
+    // The allowlist is checked live so freshly-verified users aren't stuck
+    // behind a stale paid flag. Allowlist failures fail closed to the 403
+    // below instead of 500ing the booking.
+    if (!prevBooking && !targetUser.paid && !(await isAllowlistedSafe(targetUser))) {
+      throw new AppError(
+        403,
+        "Slot booking is open only for verified participants. If you have registered but slot booking is not available, please contact us."
+      );
+    }
+
+    // Change-slot limit: a booking may move between slots at most
+    // MAX_SLOT_CHANGES times. Checked before claiming so a rejected change
+    // never consumes a seat. Re-booking the SAME slot is always allowed.
+    if (needsSeat && prevBooking && (prevBooking.slotChangeCount ?? 0) >= MAX_SLOT_CHANGES) {
+      throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+    }
+
     if (needsSeat) {
       const claimed = await claimSlotSeat(slot_id);
       if (!claimed) {
@@ -241,8 +280,14 @@ export const slotController = {
     const moveBookingToSlot = async (
       prev: typeof existingActiveBookings[number],
     ) => {
+      const changedSlot = prev.slotId !== slot_id;
+      // Enforced here too (not just pre-claim) so the race-recovery path
+      // can't push a booking past the allowance either.
+      if (changedSlot && prev.slotChangeCount >= MAX_SLOT_CHANGES) {
+        throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+      }
       // If slot changed, restore 1 capacity to the old slot (atomic).
-      if (prev.slotId !== slot_id) {
+      if (changedSlot) {
         await releaseSlotSeat(prev.slotId);
       }
 
@@ -258,6 +303,9 @@ export const slotController = {
           qrToken,
           confirmedAt: new Date(),
           confirmationEmailSent: false,
+          // Same booking keeps its id and QR across moves; only real moves
+          // consume from the change allowance.
+          slotChangeCount: changedSlot ? prev.slotChangeCount + 1 : prev.slotChangeCount,
         })
         .where(eq(bookings.id, prev.id))
         .returning();
@@ -367,115 +415,54 @@ export const slotController = {
     const slotTimeStr = `${formatHour(slotStartDate)} - ${formatHour(slotEndDate)}`;
     const passUrl = `${process.env.WEB_ORIGIN || "http://localhost:3000"}/profile`;
 
-    // Asynchronous non-blocking dispatch: Send confirmation email w/ embedded QR Ticket
-    void (async () => {
-      try {
-        if (type === "team" && team_code) {
-          const teamUsers = await db
-            .select({
-              id: user.id,
-              name: user.name,
-              email: user.email,
-            })
-            .from(teamMembers)
-            .innerJoin(user, eq(teamMembers.userId, user.id))
-            .where(eq(teamMembers.teamCode, team_code));
+    const emailParams = {
+      bookingId: activeBooking.id,
+      userId: user_id,
+      userName: targetUser.name,
+      userEmail: targetUser.email,
+      type,
+      teamCode: type === "team" ? (team_code ?? null) : null,
+      qrToken: assignedQrToken,
+      newSlot: { slotDate: slotDateStr, slotTime: slotTimeStr },
+      passUrl,
+    };
 
-          const emailResults = await Promise.all(
-            teamUsers.map(async (member) => {
-              const memberQrToken = `QR-${activeBooking.id}-${member.id.slice(0, 6)}`;
-              await db
-                .update(user)
-                .set({ qrToken: memberQrToken })
-                .where(eq(user.id, member.id));
+    // Asynchronous non-blocking dispatch: Send the right email based on
+    // whether this is a brand-new booking or a slot change.
+    const isSlotChange = prevBooking && prevBooking.slotId !== slot_id;
 
-              // Render high-res QR code PNG buffer
-              const memberQrBuffer = await QRCode.toBuffer(memberQrToken, {
-                width: 360,
-                margin: 1,
-                color: {
-                  dark: "#000000",
-                  light: "#FFFFFF",
-                },
-              });
+    if (isSlotChange) {
+      // Fetch the OLD slot row for the "rescheduled" email. prevBooking still
+      // holds the original slotId from before moveBookingToSlot overwrote it.
+      void (async () => {
+        try {
+          const [oldSlot] = await db
+            .select()
+            .from(slots)
+            .where(eq(slots.id, prevBooking.slotId));
 
-              return sendEmail({
-                to: member.email,
-                subject: `LaserTag 2026: Team Slot Confirmed (${team_code})`,
-                template: MAILER_CONFIG.BOOKING_CONFIRMATION,
-                variables: {
-                  name: member.name,
-                  bookingId: activeBooking.id,
-                  bookingType: "Team Battle",
-                  teamCode: team_code,
-                  slotDate: slotDateStr,
-                  slotTime: slotTimeStr,
-                  passUrl,
-                  qrToken: memberQrToken,
-                },
-                attachments: [
-                  {
-                    filename: `arena-pass-${memberQrToken}.png`,
-                    content: memberQrBuffer,
-                    cid: "qrTicketCode",
-                  },
-                ],
-              });
-            }),
-          );
-
-          const anySent = emailResults.some((messageId) => messageId !== null);
-          if (anySent && teamUsers.length > 0) {
-            await db
-              .update(bookings)
-              .set({ confirmationEmailSent: true })
-              .where(eq(bookings.id, activeBooking.id));
+          let oldSlotDateStr = "N/A";
+          let oldSlotTimeStr = "N/A";
+          if (oldSlot) {
+            const os = new Date(oldSlot.startTime);
+            const oe = new Date(oldSlot.endTime);
+            oldSlotDateStr = os.toLocaleDateString("en-US", {
+              weekday: "long", year: "numeric", month: "short", day: "numeric", timeZone: IST,
+            });
+            oldSlotTimeStr = `${formatHour(os)} - ${formatHour(oe)}`;
           }
-        } else {
-          // Render high-res QR code PNG buffer for Solo operative
-          const qrBuffer = await QRCode.toBuffer(assignedQrToken, {
-            width: 360,
-            margin: 1,
-            color: {
-              dark: "#000000",
-              light: "#FFFFFF",
-            },
-          });
 
-          const messageId = await sendEmail({
-            to: targetUser.email,
-            subject: "LaserTag 2026: Battle Pass Slot Confirmed",
-            template: MAILER_CONFIG.BOOKING_CONFIRMATION,
-            variables: {
-              name: targetUser.name,
-              bookingId: activeBooking.id,
-              bookingType: "Solo Mission",
-              teamCode: "N/A",
-              slotDate: slotDateStr,
-              slotTime: slotTimeStr,
-              passUrl,
-              qrToken: assignedQrToken,
-            },
-            attachments: [
-              {
-                filename: `arena-pass-${assignedQrToken}.png`,
-                content: qrBuffer,
-                cid: "qrTicketCode",
-              },
-            ],
+          await sendSlotChangeEmail({
+            ...emailParams,
+            oldSlot: { slotDate: oldSlotDateStr, slotTime: oldSlotTimeStr },
           });
-
-          if (messageId) {
-            await db
-              .update(bookings)
-              .set({ confirmationEmailSent: true })
-              .where(eq(bookings.id, activeBooking.id));
-          }
+        } catch (emailErr) {
+          console.error("[Mailer] Background slot-change email dispatch error:", emailErr);
         }
-      } catch (emailErr) {
-        console.error("[Mailer] Background confirmation email dispatch error:", emailErr);
-      }
-    })();
+      })();
+    } else {
+      void sendBookingConfirmationEmail(emailParams);
+    }
 
     return activeBooking;
   },

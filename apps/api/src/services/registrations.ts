@@ -31,6 +31,9 @@ export type RegistrationFilters = {
   name?: string;
   phone?: string;
   email?: string;
+  q?: string;
+  type?: "individual" | "team";
+  limit?: number;
 };
 /** The flat shape returned by the bookings -> user join. */
 export type RegistrationRow = {

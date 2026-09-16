@@ -8,10 +8,11 @@ import { PixelButton } from "../hero/PixelButton";
 import { useSlots } from "../../hooks/useSlots";
 import { DateSwitcher } from "./DateSwitcher";
 import { SlotGrid } from "./SlotGrid";
-import { useSession, apiBaseUrl } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { AuthModal } from "../auth/AuthModal";
 import { BookingConfirmationModal } from "./BookingConfirmationModal";
-import { ModeRequiredModal } from "../mode-popup/ModeRequiredModal";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { DetailsRequiredModal } from "./DetailsRequiredModal";
 
 interface SlotBookingProps {
   activeDay?: string;
@@ -47,7 +48,8 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
   const [reserveError, setReserveError] = useState<string | null>(null);
 
   // Combat mode state
-  const [selectedMode, setSelectedMode] = useState<"solo" | "team" | null>(null);
+  // DEPRECATED: team feature disabled — solo-only flow, sign-in goes straight to booking.
+  const [selectedMode, setSelectedMode] = useState<"solo" | "team" | null>("solo");
   const [activeTeam, setActiveTeam] = useState<{
     teamCode: string;
     teamName?: string;
@@ -57,9 +59,28 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
   // Confirmation modal state
   const [confirmationOpen, setConfirmationOpen] = useState(false);
 
+  // Operative verification state (DB-driven): details must be on the row,
+  // and only paid (verified) participants may book.
+  const { profile, isLoading: profileLoading, refetch: refetchProfile } = useUserProfile();
+  const profileReady = !profileLoading;
+  const needsDetails =
+    !!session?.user &&
+    profileReady &&
+    (!profile?.regNumber?.trim() || !profile?.phone?.trim());
+  const isPaid = profile?.paid === true;
+  // Slot holders keep changing slots within their change allowance — the
+  // paid block only gates FIRST bookings.
+  const hasBooking = !!profile?.activeRegistration;
+  const canBook = !!session?.user && profileReady && !needsDetails && (isPaid || hasBooking);
+
   // Server profile wins over local state, so a stale browser cache can
   // never disagree with the DB (e.g. ghost team blocking solo booking).
+  // DEPRECATED: team feature disabled — always resolve to solo.
   const refreshMode = useCallback(() => {
+    setSelectedMode("solo");
+    setActiveTeam(null);
+    return true;
+    /* TEAM_FEATURE_DISABLED — team-aware refresh, uncomment to restore.
     const readLocal = (): boolean => {
       try {
         const mode =
@@ -118,7 +139,8 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     } else {
       readLocal();
     }
-  }, [session]);
+    END TEAM_FEATURE_DISABLED */
+  }, []);
 
   useEffect(() => {
     refreshMode();
@@ -163,8 +185,23 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       return;
     }
 
-    if (!selectedMode) {
-      router.push("/select-mode");
+    // DEPRECATED: team/select-mode gate disabled — solo-only flow goes straight to booking.
+    // if (!selectedMode) {
+    //   router.push("/select-mode");
+    //   return;
+    // }
+
+    // Verification gates: details popup handles itself; unpaid operatives
+    // get the contact notice instead of a booking.
+    if (needsDetails) {
+      return;
+    }
+    if (!canBook) {
+      setReserveError(
+        profileReady && !isPaid && !hasBooking
+          ? "Slot booking is open only for verified participants. If you have registered but slot booking is not available, please contact us."
+          : "Verifying operative status, please wait..."
+      );
       return;
     }
 
@@ -183,8 +220,13 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     setIsReserving(true);
     setReserveError(null);
 
-    const type = selectedMode === "team" ? "team" : "individual";
-    const teamCode = selectedMode === "team" ? activeTeam?.teamCode : undefined;
+    // DEPRECATED: team booking disabled — solo-only ("individual") flow.
+    const type = "individual" as const;
+    const teamCode = undefined;
+    // const type = selectedMode === "team" ? "team" : "individual";
+    // const teamCode = selectedMode === "team" ? activeTeam?.teamCode : undefined;
+    void selectedMode;
+    void activeTeam;
 
     try {
       await reserveSlot(booking.id, {
@@ -209,29 +251,35 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       // Transition to player pass profile
       router.push("/profile");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to reserve slot";
+      const raw = err instanceof Error ? err.message : "Failed to reserve slot";
+      // Lost the race for the last seat(s) — counts are already refreshed,
+      // so say so plainly instead of surfacing the raw DB message.
+      const msg = /slot is full|fully booked/i.test(raw)
+        ? "THAT SLOT JUST FILLED — PLEASE PICK ANOTHER SLOT."
+        : raw;
       setReserveError(msg);
     } finally {
       setIsReserving(false);
     }
   };
 
+  // DEPRECATED: team/select-mode gate disabled — solo-only flow, always show booking grid.
   // If operative has not established combat mode yet, show the mode required modal
-  if (!selectedMode) {
-    return (
-      <section className="slot-booking-screen relative flex min-h-screen flex-col items-center justify-between pb-8 bg-[var(--color-ink)] select-none">
-        <Starfield />
-        <HeroHeader />
-        <ModeRequiredModal
-          isOpen={true}
-          title="COMBAT PROTOCOL REQUIRED"
-          description="OPERATIVE, ACCESS TO ARENA TIME SLOTS REQUIRES AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST."
-          redirectUrl="/select-mode"
-          buttonText="SELECT COMBAT MODE →"
-        />
-      </section>
-    );
-  }
+  // if (!selectedMode) {
+  //   return (
+  //     <section className="slot-booking-screen relative flex min-h-screen flex-col items-center justify-between pb-8 bg-[var(--color-ink)] select-none">
+  //       <Starfield />
+  //       <HeroHeader />
+  //       <ModeRequiredModal
+  //         isOpen={true}
+  //         title="COMBAT PROTOCOL REQUIRED"
+  //         description="OPERATIVE, ACCESS TO ARENA TIME SLOTS REQUIRES AN ACTIVE COMBAT PROTOCOL. PLEASE SELECT SOLO RECON, CREATE A SQUAD, OR JOIN AN EXISTING SQUAD FIRST."
+  //         redirectUrl="/select-mode"
+  //         buttonText="SELECT COMBAT MODE →"
+  //       />
+  //     </section>
+  //   );
+  // }
 
   return (
     <section className="slot-booking-screen relative flex min-h-screen flex-col items-center justify-between pb-8 bg-[var(--color-ink)] select-none">
@@ -271,6 +319,18 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         </div>
       )}
 
+      {/* Unpaid notice — first bookings stay greyed out until verified */}
+      {profileReady && !needsDetails && !isPaid && !hasBooking && session?.user && (
+        <div className="relative z-20 mx-auto max-w-md px-4 py-3 bg-[#0c0c14]/90 border-2 border-[#FEDC02] text-center my-2 rounded">
+          <p className="font-pixel text-xs text-[#FEDC02] uppercase tracking-wider mb-1">
+            Slot booking not available
+          </p>
+          <p className="font-pixel text-[10px] text-white/70 leading-relaxed">
+            IF YOU HAVE REGISTERED BUT SLOT BOOKING IS NOT AVAILABLE, PLEASE CONTACT US.
+          </p>
+        </div>
+      )}
+
       {/* ── Date switcher (hidden when only one date has slots) ── */}
       {(isLoading || dates.length > 1) && (
         <div className="relative z-10 w-full">
@@ -288,8 +348,12 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
           />
         </div>
       )}
-      {/* ── Slot grid ── */}
-      <div className="slot-grid-shell relative z-10 w-full min-h-0">
+      {/* ── Slot grid (greyed out until verified) ── */}
+      <div
+        className={`slot-grid-shell relative z-10 w-full min-h-0 ${
+          !canBook ? "pointer-events-none opacity-40 saturate-50" : ""
+        }`}
+      >
         <SlotGrid
           activeDay={selectedDay}
           currentPage={selectedPage}
@@ -315,10 +379,12 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         <PixelButton
           type="button"
           onClick={handleProceedToConfirm}
-          disabled={isReserving || selectedSlot === undefined}
+          disabled={isReserving || selectedSlot === undefined || !canBook}
           label={
             isReserving
               ? "SECURING SLOT..."
+              : !canBook && profileReady
+              ? "BOOKING LOCKED"
               : "CONFIRM RESERVATION"
           }
           interaction="hero"
@@ -351,14 +417,27 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
             time: booking.time,
           }}
           modeInfo={{
-            type: selectedMode === "team" ? "team" : "individual",
-            teamName: activeTeam?.teamName,
-            teamCode: activeTeam?.teamCode,
+            // DEPRECATED: team booking disabled — solo-only.
+            type: "individual",
+            teamName: undefined,
+            teamCode: undefined,
+            // type: selectedMode === "team" ? "team" : "individual",
+            // teamName: activeTeam?.teamName,
+            // teamCode: activeTeam?.teamCode,
           }}
           userInfo={{
             name: session?.user?.name,
             email: session?.user?.email,
           }}
+        />
+      )}
+
+      {/* Persistent details gate — stays until reg number + phone are saved */}
+      {needsDetails && (
+        <DetailsRequiredModal
+          regNumber={profile?.regNumber}
+          phone={profile?.phone}
+          onSaved={() => refetchProfile()}
         />
       )}
     </section>

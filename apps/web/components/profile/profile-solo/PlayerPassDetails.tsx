@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { PassDetailItem } from "../shared/PassDetailItem";
+import { EditablePlayerName } from "./EditablePlayerName";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useSession } from "@/lib/auth-client";
 import { formatPassDate, formatPassTime } from "@/lib/formatPassDateTime";
@@ -48,11 +49,7 @@ export function PlayerPassDetails() {
         </div>
 
         {/* Row 1 Col 1: PLAYER */}
-        <PassDetailItem
-          icon="/profile/profile-solo/playericon.svg"
-          label="PLAYER"
-          value={playerName}
-        />
+        <EditablePlayerName value={playerName} />
 
         {/* Row 1 Col 2: DATE */}
         <div className="md:pl-4">
@@ -79,6 +76,7 @@ export function PlayerPassDetails() {
           icon="/profile/profile-solo/email.svg"
           label="EMAIL ID"
           value={playerEmail}
+          wrap
         />
 
         {/* Row 2 Col 2: TIME SLOT */}

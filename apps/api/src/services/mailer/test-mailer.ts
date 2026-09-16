@@ -1,7 +1,7 @@
 import { sendEmail } from "./index";
 import { MAILER_CONFIG } from "./config";
 
-const recipient = process.argv[2] || "shriramkabra28@yahoo.com";
+const recipient = process.argv[2] || "test@example.com";
 
 console.log(`Sending test booking confirmation to: ${recipient}...`);
 
@@ -10,7 +10,7 @@ const messageId = await sendEmail({
   subject: "LaserTag 2026: Battle Pass Slot Confirmed (Test)",
   template: MAILER_CONFIG.BOOKING_CONFIRMATION,
   variables: {
-    name: "Operative Shriram",
+    name: "Operative CSI",
     bookingId: "BKG-TEST-1234",
     bookingType: "Team Battle",
     teamCode: "TEAM-99",

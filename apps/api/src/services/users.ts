@@ -6,6 +6,8 @@ import {
   findUserById,
   findActiveRegistrationWithSlotForUser,
   findTeamForUser,
+  isIdentityAllowlisted,
+  markUserPaid,
 } from "../data/queries";
 import type { UpdateMyDetailsInput } from "../validations/users.validation";
 
@@ -57,6 +59,23 @@ export const userService = {
     const user = await findUserById(userId);
     if (!user) {
       throw new NotFoundError("User not found");
+    }
+
+    // Self-healing verification: someone declared verified by reg number or
+    // email (allowlist) flips to paid on read, so every consumer of the paid
+    // flag — booking gate, check-in, client grey-out — just works.
+    // Never let this break profile loads (e.g. allowlist table not yet
+    // migrated): fail closed to unpaid, the popup/grey-out still guide right.
+    let paid = user.paid;
+    if (!paid) {
+      try {
+        if (await isIdentityAllowlisted(user.regNumber, user.email)) {
+          await markUserPaid(userId);
+          paid = true;
+        }
+      } catch {
+        // fall through as unverified
+      }
     }
 
     const [activeReg, team] = await Promise.all([
@@ -115,7 +134,7 @@ export const userService = {
       email: user.email,
       phone: user.phNumber ?? null,
       regNumber: user.regNumber ?? null,
-      paid: user.paid,
+      paid,
       isCheckedIn: user.isCheckedIn,
       qrToken: user.qrToken ?? null,
       team,

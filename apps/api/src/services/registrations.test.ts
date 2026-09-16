@@ -113,6 +113,7 @@ const mockReservedBooking = {
   teamCode: null,
   qrToken: null,
   confirmedAt: null,
+  slotChangeCount: 0,
   cancelledAt: null,
   confirmationEmailSent: false,
   createdAt: new Date(),
