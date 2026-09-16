@@ -90,6 +90,7 @@ export const reserveSlotSchema = z.object({
         message: 'type must be either "individual" or "team".',
       }),
       team_code: z.string().optional(),
+      side: z.enum(["red", "blue"]).optional(),
     })
     .refine(
       (data) => {

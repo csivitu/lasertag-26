@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
-import { useSession } from "@/lib/auth-client";
+import { useSession, apiBaseUrl } from "@/lib/auth-client";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface SoloFormProps {
   onSuccess?: () => void;
@@ -13,6 +14,7 @@ interface SoloFormProps {
 export function SoloForm({ onSuccess }: SoloFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const { profile, refetch } = useUserProfile();
 
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
@@ -22,7 +24,12 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (session?.user) {
+    if (profile) {
+      if (profile.name && !fullName) setFullName(profile.name);
+      if (profile.regNo && !registrationNumber) setRegistrationNumber(profile.regNo);
+      if (profile.email && !emailId) setEmailId(profile.email);
+      if (profile.phone && !phoneNumber) setPhoneNumber(profile.phone);
+    } else if (session?.user) {
       if (session.user.name && !fullName) {
         setFullName(session.user.name);
       }
@@ -30,7 +37,7 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
         setEmailId(session.user.email);
       }
     }
-  }, [session, fullName, emailId]);
+  }, [session, profile, fullName, registrationNumber, emailId, phoneNumber]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,23 +56,24 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
     setStatus("submitting");
 
     try {
-      // Store registration data in localStorage and sessionStorage for the subsequent slot booking step
-      const soloPayload = {
-        fullName: fullName.trim(),
-        registrationNumber: registrationNumber.trim(),
-        email: emailId.trim(),
-        phoneNumber: phoneNumber.trim(),
-        type: "individual",
-      };
+      // Save details directly to server/database (Zero localStorage persistence)
+      const res = await fetch(`${apiBaseUrl}/users/me`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: fullName.trim(),
+          regNo: registrationNumber.trim(),
+          phone: phoneNumber.trim(),
+        }),
+      });
 
-      // Clear any prior team state so user isn't mistakenly treated as a team reservation
-      localStorage.removeItem("lasertag_active_team");
-      sessionStorage.removeItem("lasertag_active_team");
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || errJson.message || "Failed to update profile.");
+      }
 
-      localStorage.setItem("lasertag_selected_mode", "solo");
-      sessionStorage.setItem("lasertag_selected_mode", "solo");
-      localStorage.setItem("lasertag_onboarding_solo", JSON.stringify(soloPayload));
-      sessionStorage.setItem("lasertag_onboarding_solo", JSON.stringify(soloPayload));
+      await refetch();
 
       setStatus("success");
       setTimeout(() => {
@@ -100,13 +108,11 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
           Profile recorded! Proceeding to slot booking arena...
         </p>
       )}
-      <div style={{ marginTop: "4px" }}>
-        <PixelButton
-          type="submit"
-          label={status === "submitting" ? "RECORDING..." : "CONFIRM PROFILE"}
-          disabled={status === "submitting"}
-        />
-      </div>
+      <PixelButton
+        type="submit"
+        disabled={status === "submitting"}
+        label={status === "submitting" ? "CONNECTING..." : "CONFIRM & PROCEED"}
+      />
     </form>
   );
 }

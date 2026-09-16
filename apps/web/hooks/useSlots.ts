@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiBaseUrl } from "@/lib/auth-client";
 
+export interface SlotSideInfo {
+  total: number;
+  occupied: number;
+  needed: number;
+  available: number;
+}
+
 export interface Slot {
   id: string;
   day: string;
@@ -13,6 +20,8 @@ export interface Slot {
   maxCapacity: number;
   startTime: string;
   endTime: string;
+  red: SlotSideInfo;
+  blue: SlotSideInfo;
 }
 
 interface RawApiSlot {
@@ -20,6 +29,8 @@ interface RawApiSlot {
   startTime: string;
   endTime: string;
   capacity: number;
+  red?: SlotSideInfo;
+  blue?: SlotSideInfo;
 }
 
 const SLOTS_PER_PAGE = 24;
@@ -80,6 +91,8 @@ export function transformApiSlots(apiSlots: RawApiSlot[]): Slot[] {
         maxCapacity: 10,
         startTime: slot.startTime,
         endTime: slot.endTime,
+        red: slot.red || { total: 5, occupied: 0, needed: 5, available: 5 },
+        blue: slot.blue || { total: 5, occupied: 0, needed: 5, available: 5 },
       });
     });
   }
@@ -133,6 +146,7 @@ export function useSlots() {
       userId?: string;
       type?: "individual" | "team";
       teamCode?: string;
+      side?: "red" | "blue";
     }
   ) => {
     setIsLoading(true);
@@ -147,26 +161,33 @@ export function useSlots() {
             user_id: options.userId,
             type: options.type,
             team_code: options.teamCode,
+            side: options.side,
           }),
         });
 
         if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
+          const body = await res.json().catch(() => ({}));
           throw new Error(
-            errBody.error ||
-              errBody.message ||
-              "Failed to reserve slot in database"
+            body.error ||
+              body.message ||
+              `Failed to reserve slot (status ${res.status})`
           );
         }
+
+        const json = await res.json();
+        return json.data;
       }
 
-      // Optimistically decrement capacity locally
-      setSlots((currentSlots) =>
-        currentSlots.map((slot) =>
-          slot.id === slotId && slot.capacity > 0
-            ? { ...slot, capacity: slot.capacity - 1 }
-            : slot
-        )
+      // Fallback optimistic decrement
+      setSlots((prev) =>
+        prev.map((slot) => {
+          if (slot.id !== slotId) return slot;
+          if (slot.capacity <= 0) return slot;
+          return {
+            ...slot,
+            capacity: slot.capacity - 1,
+          };
+        })
       );
     } catch (err: unknown) {
       const message =
@@ -178,5 +199,11 @@ export function useSlots() {
     }
   };
 
-  return { slots, isLoading, error, reserveSlot, refetch: fetchSlots };
+  return {
+    slots,
+    isLoading,
+    error,
+    refetch: fetchSlots,
+    reserveSlot,
+  };
 }

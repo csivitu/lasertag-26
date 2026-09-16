@@ -86,11 +86,8 @@ export const teamQueries: TeamsDeps = {
   // the leader's booking instead: one row, and semantically "the team's slot".
   findTeamSlot: async (teamCode, leaderId) => {
     const [row] = await db
-      .select({ slot: slots })
-      .from(bookings)
-      .innerJoin(slots, eq(bookings.slotId, slots.id))
-      .where(and(eq(bookings.teamCode, teamCode), eq(bookings.userId, leaderId)))
-      .limit(1);
+      .select({ slot: slots })      .from(bookings)
+      .innerJoin(slots, eq(bookings.slotId, slots.id))      .where(and(eq(bookings.teamCode, teamCode), eq(bookings.userId, leaderId)))      .limit(1);
     return row?.slot;
   },
 };
@@ -201,7 +198,7 @@ export async function findActiveRegistrationForUser(userId: string) {
 }
 
 export async function findActiveRegistrationWithSlotForUser(userId: string) {
-  const [row] = await db
+  const [directBooking] = await db
     .select({
       booking: bookings,
       slot: slots,
@@ -210,7 +207,32 @@ export async function findActiveRegistrationWithSlotForUser(userId: string) {
     .innerJoin(slots, eq(bookings.slotId, slots.id))
     .where(and(eq(bookings.userId, userId), ne(bookings.status, "cancelled")));
 
-  return row;
+  if (directBooking) {
+    return directBooking;
+  }
+
+  // Check if user belongs to a team that has a booking
+  const [membership] = await db
+    .select()
+    .from(teamMembers)
+    .where(eq(teamMembers.userId, userId));
+
+  if (membership?.teamCode) {
+    const [teamBooking] = await db
+      .select({
+        booking: bookings,
+        slot: slots,
+      })
+      .from(bookings)
+      .innerJoin(slots, eq(bookings.slotId, slots.id))
+      .where(and(eq(bookings.teamCode, membership.teamCode), ne(bookings.status, "cancelled")));
+
+    if (teamBooking) {
+      return teamBooking;
+    }
+  }
+
+  return undefined;
 }
 
 export async function createSoloRegistration(input: {
@@ -324,6 +346,7 @@ export async function findTeamForUser(userId: string) {
     .select({
       id: user.id,
       name: user.name,
+      regNo: user.regNo,
       email: user.email,
       phone: user.phNumber,
     })

@@ -122,6 +122,16 @@ export const participantPaths = {
       },
     },
   },
+  "/verification/waiting-queue": {
+    get: {
+      summary: "Get live verified waiting queue",
+      tags: ["Verification"],
+      security: [],
+      responses: {
+        200: ok("List of checked-in participants and teams in the queue"),
+      },
+    },
+  },
   "/verification/{registration_id}": {
     get: {
       summary: "Verify a registration",
@@ -146,6 +156,44 @@ export const participantPaths = {
         401: responses.unauthorized,
         403: responses.forbidden,
         404: responses.error("User not found"),
+      },
+    },
+  },
+  "/verification/checkin": {
+    post: {
+      summary: "Check a participant in (alias)",
+      description: "Admin only — requires a signed-in admin session cookie.",
+      tags: ["Verification"],
+      responses: {
+        200: ok("Checked in, or already checked in"),
+        401: responses.unauthorized,
+        403: responses.forbidden,
+        404: responses.error("User not found"),
+      },
+    },
+  },
+  "/users/me": {
+    patch: {
+      summary: "Update current user profile (name, regNo, phone)",
+      tags: ["Users"],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                regNo: { type: "string" },
+                phone: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        200: ok("Profile updated"),
+        401: responses.unauthorized,
       },
     },
   },

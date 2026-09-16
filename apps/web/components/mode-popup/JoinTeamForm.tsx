@@ -1,41 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
-import { INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
 import { useSession, apiBaseUrl } from "@/lib/auth-client";
-
-const labelStyle: CSSProperties = {
-  fontFamily: "var(--ft-pixel), monospace",
-  fontSize: "12px",
-  color: "#ffffff",
-  letterSpacing: "0.1em",
-  marginBottom: "8px",
-  display: "block",
-  lineHeight: 1,
-};
-
-const inputWrapStyle: CSSProperties = {
-  position: "relative",
-  background: borderBg(INPUT_BORDER_SVG),
-};
-
-const inputStyle: CSSProperties = {
-  display: "block",
-  width: "100%",
-  background: "transparent",
-  color: "#ffffff",
-  fontFamily: "var(--ft-body), sans-serif",
-  fontWeight: 400,
-  fontSize: "16px",
-  padding: "10px 14px",
-  outline: "none",
-  border: "none",
-  lineHeight: 1.4,
-};
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 interface JoinTeamFormProps {
   onSuccess?: () => void;
@@ -44,16 +14,23 @@ interface JoinTeamFormProps {
 export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const { profile, refetch } = useUserProfile();
+
+  const [teamCode, setTeamCode] = useState("");
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [teamCode, setTeamCode] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (session?.user) {
+    if (profile) {
+      if (profile.name && !fullName) setFullName(profile.name);
+      if (profile.regNo && !registrationNumber) setRegistrationNumber(profile.regNo);
+      if (profile.email && !emailId) setEmailId(profile.email);
+      if (profile.phone && !phoneNumber) setPhoneNumber(profile.phone);
+    } else if (session?.user) {
       if (session.user.name && !fullName) {
         setFullName(session.user.name);
       }
@@ -61,25 +38,26 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
         setEmailId(session.user.email);
       }
     }
-  }, [session, fullName, emailId]);
+  }, [session, profile, fullName, registrationNumber, emailId, phoneNumber]);
+
+  function handleCodeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (val.length <= 8) {
+      setTeamCode(val);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
-    if (!session?.user?.id) {
-      setError("Please sign in before joining a team.");
+    if (!teamCode.trim()) {
+      setError("Please enter the squad combat code.");
       return;
     }
 
-    if (
-      !fullName.trim() ||
-      !registrationNumber.trim() ||
-      !emailId.trim() ||
-      !phoneNumber.trim() ||
-      !teamCode.trim()
-    ) {
-      setError("Please fill in all fields and enter a team code.");
+    if (!fullName.trim() || !registrationNumber.trim() || !emailId.trim() || !phoneNumber.trim()) {
+      setError("Please complete all personal operative fields.");
       return;
     }
 
@@ -88,46 +66,30 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       return;
     }
 
-    const cleanCode = teamCode.trim().toUpperCase();
-
-    if (!/^[A-Z]{6}$/.test(cleanCode)) {
-      setError("Team codes contain exactly 6 letters.");
-      return;
-    }
-
     setStatus("submitting");
 
     try {
-      const res = await fetch(`${apiBaseUrl}/teams/${cleanCode}/join`, {
+      // Save operative details directly to server and join team (Zero localStorage)
+      const res = await fetch(`${apiBaseUrl}/teams/${teamCode.trim().toUpperCase()}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          user_id: session.user.id,
+          fullName: fullName.trim(),
+          regNo: registrationNumber.trim(),
+          phone: phoneNumber.trim(),
         }),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || data.message || "Failed to join team in arena database");
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || errJson.message || "Failed to join squad. Please verify code.");
       }
 
-      const teamPayload = {
-        teamCode: cleanCode,
-        isLeader: false,
-      };
-
-      // Clear any previous solo artifacts to cleanly switch to team mode
-      localStorage.removeItem("lasertag_onboarding_solo");
-      sessionStorage.removeItem("lasertag_onboarding_solo");
-
-      localStorage.setItem("lasertag_selected_mode", "team");
-      sessionStorage.setItem("lasertag_selected_mode", "team");
-      localStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
-      sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
+      await refetch();
 
       setStatus("success");
-      window.setTimeout(() => {
+      setTimeout(() => {
         if (onSuccess) {
           onSuccess();
         } else {
@@ -136,59 +98,95 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       }, 700);
     } catch (err: unknown) {
       setStatus("idle");
-      const msg = err instanceof Error ? err.message : "Failed to join team";
-      setError(msg);
+      const message = err instanceof Error ? err.message : "Squad join operation failed.";
+      setError(message);
     }
   }
 
   return (
     <form className="mode-popup-form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-      <BaseFields
-        fullName={fullName}
-        registrationNumber={registrationNumber}
-        emailId={emailId}
-        phoneNumber={phoneNumber}
-        onFullNameChange={setFullName}
-        onRegistrationNumberChange={setRegistrationNumber}
-        onEmailIdChange={setEmailId}
-        onPhoneNumberChange={setPhoneNumber}
-      />
-
-      {/* Team Code (full width) */}
-      <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        <label className="mode-popup-label" htmlFor="popup-join-code" style={labelStyle}>
-          TEAM CODE
+      {/* Team Code Input */}
+      <div className="mode-popup-field">
+        <label htmlFor="join-code" className="mode-popup-label">
+          SQUAD COMBAT CODE
         </label>
-        <div className="mode-popup-input-wrap" style={inputWrapStyle}>
+        <div className="mode-popup-input-wrapper">
           <input
-            id="popup-join-code"
+            id="join-code"
             type="text"
-            value={teamCode}
-            onChange={(e) => setTeamCode(e.target.value)}
-            placeholder="ABCDEF"
-            maxLength={6}
             className="mode-popup-input"
-            style={{ ...inputStyle, letterSpacing: "0.12em", textTransform: "uppercase" }}
+            value={teamCode}
+            onChange={handleCodeChange}
+            placeholder="e.g. 7K2M9X"
             autoComplete="off"
+            style={{
+              letterSpacing: "0.2em",
+              fontFamily: "var(--ft-pixel), monospace",
+              color: "#00F0FF",
+              fontWeight: "bold",
+            }}
           />
         </div>
+        <p
+          style={{
+            margin: "4px 0 0",
+            fontSize: "9px",
+            color: "rgba(255,255,255,0.45)",
+            fontFamily: "var(--ft-pixel), monospace",
+          }}
+        >
+          Enter the 6-8 digit alphanumeric code provided by your squad leader.
+        </p>
       </div>
 
-      {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
-      {status === "success" && (
-        <p className="mode-popup-form-success" role="status">
-          Joined team {teamCode.trim().toUpperCase()}! Loading operative pass...
+      {/* Operative Credentials */}
+      <div
+        style={{
+          borderTop: "1px dashed rgba(0, 240, 255, 0.3)",
+          paddingTop: "12px",
+          marginTop: "4px",
+        }}
+      >
+        <p
+          style={{
+            margin: "0 0 10px",
+            fontFamily: "var(--ft-pixel), monospace",
+            fontSize: "10px",
+            color: "#00F0FF",
+            letterSpacing: "0.05em",
+          }}
+        >
+          OPERATIVE CREDENTIALS:
+        </p>
+        <BaseFields
+          fullName={fullName}
+          registrationNumber={registrationNumber}
+          emailId={emailId}
+          phoneNumber={phoneNumber}
+          onFullNameChange={setFullName}
+          onRegistrationNumberChange={setRegistrationNumber}
+          onEmailIdChange={setEmailId}
+          onPhoneNumberChange={setPhoneNumber}
+        />
+      </div>
+
+      {error && (
+        <p className="mode-popup-form-error" role="alert">
+          {error}
         </p>
       )}
 
-      <div style={{ marginTop: "4px" }}>
-        <PixelButton
-          type="submit"
-          label={status === "submitting" ? "JOINING..." : status === "success" ? "JOINED" : "JOIN TEAM"}
-          interaction="simple"
-          disabled={status === "submitting" || status === "success"}
-        />
-      </div>
+      {status === "success" && (
+        <p className="mode-popup-form-success" role="status">
+          Squad joined successfully! Redirecting to operative profile...
+        </p>
+      )}
+
+      <PixelButton
+        type="submit"
+        disabled={status === "submitting"}
+        label={status === "submitting" ? "CONNECTING SQUAD..." : "JOIN SQUAD"}
+      />
     </form>
   );
 }

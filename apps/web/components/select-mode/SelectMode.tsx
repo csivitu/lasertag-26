@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ModePopup, type PopupMode } from "../mode-popup/ModePopup";
 import { SelectModeDesktop } from "./SelectModeDesktop";
 import { SelectModeMobile } from "./SelectModeMobile";
@@ -9,6 +10,7 @@ import { AuthModal } from "../auth/AuthModal";
 import { useSession, apiBaseUrl } from "@/lib/auth-client";
 
 export function SelectMode() {
+  const router = useRouter();
   const { data: session } = useSession();
   const [selectedMode, setSelectedMode] = useState<PopupMode>("solo");
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -29,28 +31,17 @@ export function SelectMode() {
 
   const refreshActiveStatus = useCallback(() => {
     try {
-      const mode =
-        localStorage.getItem("lasertag_selected_mode") ||
-        sessionStorage.getItem("lasertag_selected_mode");
-      const teamStr =
-        localStorage.getItem("lasertag_active_team") ||
-        sessionStorage.getItem("lasertag_active_team");
-      const soloStr =
-        localStorage.getItem("lasertag_onboarding_solo") ||
-        sessionStorage.getItem("lasertag_onboarding_solo");
-      const slotStr =
-        localStorage.getItem("lasertag_confirmed_slot") ||
-        sessionStorage.getItem("lasertag_confirmed_slot");
+      const mode = sessionStorage.getItem("lasertag_selected_mode");
+      const teamStr = sessionStorage.getItem("lasertag_active_team");
+      const soloStr = sessionStorage.getItem("lasertag_onboarding_solo");
+      const slotStr = sessionStorage.getItem("lasertag_confirmed_slot");
 
       if (slotStr) {
         try {
           const parsedSlot = JSON.parse(slotStr);
           if (parsedSlot?.day && parsedSlot?.time) {
-            const rawDay = String(parsedSlot.day);
-            const match = rawDay.match(/\b(18|19|20)\b/);
-            const dayNum = match ? match[1] : "18";
             setSlotInfo({
-              dateStr: `${dayNum}th Sep 2026`,
+              dateStr: `${parsedSlot.day}th Sep 2026`,
               timeStr: parsedSlot.time,
             });
           }
@@ -60,15 +51,11 @@ export function SelectMode() {
       }
 
       if (teamStr) {
-        try {
-          const parsedTeam = JSON.parse(teamStr);
-          if (parsedTeam?.teamCode) {
-            setActiveMode("team");
-            setActiveTeam(parsedTeam);
-            return;
-          }
-        } catch {
-          // ignore
+        const teamObj = JSON.parse(teamStr);
+        if (teamObj.teamCode) {
+          setActiveMode("team");
+          setActiveTeam(teamObj);
+          return;
         }
       }
 
@@ -138,6 +125,11 @@ export function SelectMode() {
     setIsPopupOpen(false);
     setIsChangingMode(false);
     refreshActiveStatus();
+    if (selectedMode === "solo") {
+      router.push("/slot-booking");
+    } else {
+      router.push("/profile");
+    }
   }
 
   // If user has an active mode and is NOT deliberately changing it, show Active Combat Details

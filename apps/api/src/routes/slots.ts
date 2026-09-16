@@ -49,12 +49,13 @@ publicSlotsRouter.delete(
 publicSlotsRouter.post(
   "/:slot_id/reserve",
   validateRequest(reserveSlotSchema),
-  asyncHandler(async (req: Request<{ slot_id: string }, unknown, { user_id: string; type: "individual" | "team"; team_code?: string }>, res: Response): Promise<void> => {
+  asyncHandler(async (req: Request<{ slot_id: string }, unknown, { user_id: string; type: "individual" | "team"; team_code?: string; side?: "red" | "blue" }>, res: Response): Promise<void> => {
     const newBooking = await slotController.reserveSlot({
       slot_id: req.params.slot_id,
       user_id: req.body.user_id,
       type: req.body.type,
       team_code: req.body.team_code,
+      side: req.body.side,
     });
     res.status(201).json({
       success: true,

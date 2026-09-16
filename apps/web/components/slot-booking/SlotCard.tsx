@@ -7,6 +7,8 @@ export interface SlotCardProps {
   onClick?: () => void;
   isSelected?: boolean;
   isDisabled?: boolean;
+  redNeeded?: number;
+  blueNeeded?: number;
 }
 
 const svgBg = (url: string) =>
@@ -45,6 +47,8 @@ export function SlotCard({
   onClick,
   isSelected = false,
   isDisabled = false,
+  redNeeded,
+  blueNeeded,
 }: SlotCardProps) {
   const { bg, timeColor, labelColor } = stateConfig[state];
 
@@ -67,15 +71,27 @@ export function SlotCard({
         {time}
       </span>
 
-      {/* Seat count — Press Start 2P, smaller */}
-      <span
-        className="slot-card-label"
-        style={{
-          color: labelColor,
-        }}
-      >
-        {seatsLabel}
-      </span>
+      {/* Seat count & 5v5 vacancy info */}
+      <div className="flex flex-col items-center justify-center leading-tight gap-0.5">
+        <span
+          className="slot-card-label"
+          style={{
+            color: labelColor,
+          }}
+        >
+          {seatsLabel}
+        </span>
+        {redNeeded !== undefined && blueNeeded !== undefined && state !== "full" && (
+          <span
+            className="text-[6.5px] sm:text-[7.5px] font-mono tracking-tighter opacity-90"
+            style={{
+              color: timeColor === "#ffffff" ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.75)",
+            }}
+          >
+            R:{redNeeded} / B:{blueNeeded} NEEDED
+          </span>
+        )}
+      </div>
     </button>
   );
 }

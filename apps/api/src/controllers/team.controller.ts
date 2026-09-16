@@ -9,6 +9,7 @@ import {
 import { eq, and, or, inArray, asc } from "drizzle-orm";
 
 import { HttpError as AppError } from "../errors";
+import { sendEmail, MAILER_CONFIG } from "../services/mailer";
 import type { CreateTeamInput } from "../validations/team.validation";
 
 export const teamController = {
@@ -299,6 +300,95 @@ export const teamController = {
       .where(eq(teams.teamCode, teamId))
       .returning();
 
+    // Fetch team leader info
+    const [leaderUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, team.leaderId));
+
+    // Check if squad already has a confirmed slot booking
+    const activeTeamBookings = await db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.teamCode, teamId),
+          inArray(bookings.status, ["reserved", "confirmed"])
+        )
+      );
+
+    let slotStatusStr = "Pending: Your squad leader will reserve the arena slot.";
+
+    if (activeTeamBookings.length > 0) {
+      const refBooking = activeTeamBookings[0];
+      const [targetSlot] = await db
+        .select()
+        .from(slots)
+        .where(eq(slots.id, refBooking.slotId));
+
+      if (targetSlot) {
+        const slotStartDate = new Date(targetSlot.startTime);
+        const slotEndDate = new Date(targetSlot.endTime);
+        const slotDateStr = slotStartDate.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        });
+        const formatHour = (d: Date) =>
+          d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+        const slotTimeStr = `${formatHour(slotStartDate)} - ${formatHour(slotEndDate)}`;
+        slotStatusStr = `${slotDateStr} (${slotTimeStr}) [${(refBooking.side || "RED").toUpperCase()} SQUAD]`;
+
+        // Automatically assign this newly joined member to the team's booked slot
+        const memberQrToken = `QR-${refBooking.slotId.slice(0, 4)}-${userId.slice(0, 6)}-${Math.floor(100 + Math.random() * 900)}`;
+        const bookingId = `BKG-${Date.now()}-${userId.slice(0, 6)}`;
+
+        await db.insert(bookings).values({
+          id: bookingId,
+          type: "team",
+          status: "confirmed",
+          userId,
+          teamCode: teamId,
+          slotId: refBooking.slotId,
+          side: refBooking.side,
+          qrToken: memberQrToken,
+          confirmedAt: new Date(),
+          confirmationEmailSent: false,
+        });
+
+        await db.update(user).set({ qrToken: memberQrToken }).where(eq(user.id, userId));
+
+        if (targetSlot.capacity > 0) {
+          await db
+            .update(slots)
+            .set({ capacity: Math.max(0, targetSlot.capacity - 1) })
+            .where(eq(slots.id, refBooking.slotId));
+        }
+      }
+    }
+
+    // Asynchronously send team join confirmation email
+    void (async () => {
+      try {
+        await sendEmail({
+          to: foundUser.email,
+          subject: `LaserTag 2026: Squad Enlistment Confirmed [${team.name || team.teamCode}]`,
+          template: MAILER_CONFIG.TEAM_JOIN,
+          variables: {
+            name: foundUser.name,
+            teamName: team.name || team.teamCode,
+            teamCode: team.teamCode,
+            leaderName: leaderUser?.name || "Squad Leader",
+            memberCount: currentTeamMembers.length + 1,
+            slotStatus: slotStatusStr,
+            passUrl: `${process.env.WEB_ORIGIN || "http://localhost:3000"}/profile`,
+          },
+        });
+      } catch (mailErr) {
+        console.error("[Mailer] Failed to send team join email:", mailErr);
+      }
+    })();
+
     return {
       team: updatedTeam,
       joined_user: {
@@ -362,30 +452,52 @@ export const teamController = {
     };
   },
 
-  async convertTeamToSolo(teamCode: string, userId: string) {
+  async convertTeamToSolo(targetTeamCode?: string, targetUserId?: string) {
+    let resolvedUserId = targetUserId;
+    let resolvedTeamCode = targetTeamCode;
+
+    if (!resolvedUserId && resolvedTeamCode) {
+      const [t] = await db.select().from(teams).where(eq(teams.teamCode, resolvedTeamCode));
+      if (t) resolvedUserId = t.leaderId;
+    }
+
+    if (!resolvedTeamCode && resolvedUserId) {
+      const [membership] = await db
+        .select()
+        .from(teamMembers)
+        .where(eq(teamMembers.userId, resolvedUserId));
+      if (membership) {
+        resolvedTeamCode = membership.teamCode;
+      }
+    }
+
+    if (!resolvedTeamCode || !resolvedUserId) {
+      throw new AppError(400, "Unable to resolve team code or user for solo conversion.");
+    }
+
     const [team] = await db
       .select()
       .from(teams)
-      .where(eq(teams.teamCode, teamCode));
+      .where(eq(teams.teamCode, resolvedTeamCode));
 
     if (!team) {
       throw new AppError(404, "Team not found.");
     }
 
-    if (team.leaderId !== userId) {
+    if (team.leaderId !== resolvedUserId) {
       throw new AppError(
         403,
         "Only the team leader can convert the team to solo mode."
       );
     }
 
-    // Check members list
+    // Check members list: only allowed if there's only 1 member (the leader)
     const membersList = await db
       .select()
       .from(teamMembers)
-      .where(eq(teamMembers.teamCode, teamCode));
+      .where(eq(teamMembers.teamCode, resolvedTeamCode));
 
-    const otherMembers = membersList.filter((m) => m.userId !== userId);
+    const otherMembers = membersList.filter((m) => m.userId !== resolvedUserId);
     if (otherMembers.length > 0) {
       throw new AppError(
         400,
@@ -400,15 +512,15 @@ export const teamController = {
         type: "individual",
         teamCode: null,
       })
-      .where(eq(bookings.teamCode, teamCode));
+      .where(eq(bookings.teamCode, resolvedTeamCode));
 
     // Delete team membership and the team record
-    await db.delete(teamMembers).where(eq(teamMembers.teamCode, teamCode));
-    await db.delete(teams).where(eq(teams.teamCode, teamCode));
+    await db.delete(teamMembers).where(eq(teamMembers.teamCode, resolvedTeamCode));
+    await db.delete(teams).where(eq(teams.teamCode, resolvedTeamCode));
 
     return {
       converted: true,
-      teamCode,
+      teamCode: resolvedTeamCode,
       message: "Team converted to solo mode successfully.",
     };
   },

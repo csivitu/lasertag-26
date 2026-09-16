@@ -92,10 +92,15 @@ publicTeamsRouter.post(
 publicTeamsRouter.post(
   "/:team_id/convert-to-solo",
   validateRequest(convertToSoloSchema),
-  asyncHandler(async (req: Request<{ team_id: string }, unknown, { user_id: string }>, res: Response): Promise<void> => {
+  asyncHandler(async (req: Request<{ team_id: string }, unknown, { user_id?: string }>, res: Response): Promise<void> => {
+    const sessionUserId =
+      (req as unknown as { session?: { user?: { id?: string } } }).session?.user?.id ||
+      (req as unknown as { user?: { id?: string } }).user?.id ||
+      req.body?.user_id;
+
     const result = await teamController.convertTeamToSolo(
       req.params.team_id,
-      req.body.user_id
+      sessionUserId
     );
     res.status(200).json({
       success: true,

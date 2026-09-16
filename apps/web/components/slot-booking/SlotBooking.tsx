@@ -52,23 +52,18 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     teamCode: string;
     teamName?: string;
     isLeader?: boolean;
+    memberCount?: number;
   } | null>(null);
 
   // Confirmation modal state
   const [confirmationOpen, setConfirmationOpen] = useState(false);
 
-  // Synchronize player combat mode from local state or server profile
+  // Synchronize player combat mode directly from session or server profile (Zero localStorage)
   const refreshMode = useCallback(() => {
     try {
-      const mode =
-        sessionStorage.getItem("lasertag_selected_mode") ||
-        localStorage.getItem("lasertag_selected_mode");
-      const teamStr =
-        sessionStorage.getItem("lasertag_active_team") ||
-        localStorage.getItem("lasertag_active_team");
-      const soloStr =
-        sessionStorage.getItem("lasertag_onboarding_solo") ||
-        localStorage.getItem("lasertag_onboarding_solo");
+      const mode = sessionStorage.getItem("lasertag_selected_mode");
+      const teamStr = sessionStorage.getItem("lasertag_active_team");
+      const soloStr = sessionStorage.getItem("lasertag_onboarding_solo");
 
       if (teamStr) {
         const parsed = JSON.parse(teamStr);
@@ -97,7 +92,11 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
             setActiveTeam({
               teamCode: data.data.team.teamCode || data.data.team.id,
               teamName: data.data.team.name,
-              isLeader: data.data.team.leaderId === session.user.id,
+              isLeader: Boolean(
+                data.data.team.isLeader ??
+                (data.data.team.leaderId === session.user.id)
+              ),
+              memberCount: data.data.team.memberCount || data.data.team.members?.length || 1,
             });
           } else if (data?.data?.activeRegistration) {
             setSelectedMode("solo");
@@ -154,6 +153,9 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       slot.index === selectedSlot
   );
 
+  const isNonLeaderTeamMember = selectedMode === "team" && activeTeam?.isLeader === false;
+  const isLeaderAlone = selectedMode === "team" && activeTeam?.isLeader === true && (activeTeam?.memberCount ?? 1) < 2;
+
   const handleProceedToConfirm = () => {
     if (!session?.user) {
       setAuthOpen(true);
@@ -162,6 +164,16 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
 
     if (!selectedMode) {
       router.push("/register");
+      return;
+    }
+
+    if (isNonLeaderTeamMember) {
+      setReserveError("Only team leader can book slot.");
+      return;
+    }
+
+    if (isLeaderAlone) {
+      setReserveError("At least 1 teammate must join before you can book a slot.");
       return;
     }
 
@@ -174,7 +186,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
     setConfirmationOpen(true);
   };
 
-  const executeReserve = async () => {
+  const executeReserve = async (selectedSide: "red" | "blue") => {
     if (!booking || !session?.user) return;
 
     setIsReserving(true);
@@ -188,9 +200,10 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         userId: session.user.id,
         type,
         teamCode,
+        side: selectedSide,
       });
 
-      // Save confirmed slot summary in sessionStorage and localStorage for immediate pass display
+      // Save confirmed slot summary in sessionStorage for immediate pass display
       const confirmedPayload = {
         slotId: booking.id,
         day: booking.day,
@@ -198,9 +211,9 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         time: booking.time,
         startTime: booking.startTime,
         endTime: booking.endTime,
+        side: selectedSide,
       };
       sessionStorage.setItem("lasertag_confirmed_slot", JSON.stringify(confirmedPayload));
-      localStorage.setItem("lasertag_confirmed_slot", JSON.stringify(confirmedPayload));
 
       setConfirmationOpen(false);
       // Transition to player pass profile
@@ -243,7 +256,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         <h1 className="slot-title m-0">SLOT BOOKING</h1>
       </div>
 
-      {/* ── Active Combat Mode Status Bar (No change mode here) ── */}
+      {/* ── Active Combat Mode Status Bar ── */}
       <div className="relative z-20 w-full max-w-xl px-4 my-1">
         <div className="bg-[#0b0c14]/90 border border-white/20 rounded-lg py-1.5 px-4 flex items-center justify-center font-mono text-xs text-white/80">
           <div className="flex items-center gap-2 truncate">
@@ -251,7 +264,9 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
             <span className="text-white/60">DEPLOYMENT:</span>
             <span className="text-[#FEDC02] font-bold truncate">
               {selectedMode === "team"
-                ? `SQUAD ${activeTeam?.teamName ? `"${activeTeam.teamName}" ` : ""}[${activeTeam?.teamCode || ""}]`
+                ? `SQUAD ${activeTeam?.teamName ? `\"${activeTeam.teamName}\" ` : ""}[${activeTeam?.teamCode || ""}] ${
+                    activeTeam?.isLeader ? "(LEADER)" : "(MEMBER)"
+                  } • ${activeTeam?.memberCount || 1}/5 OPERATIVES`
                 : "SOLO RECON MISSION"}
             </span>
           </div>
@@ -264,16 +279,30 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
           <span className="slot-current-label">CURRENT BOOKING:</span>
           <span className="slot-current-val">
             {booking
-              ? `${booking.day}${getOrdinalSuffix(booking.day)} ${booking.month.toUpperCase()} ${booking.time}`
+              ? `${booking.day}${getOrdinalSuffix(booking.day)} ${booking.month.toUpperCase()} ${booking.time} [RED: ${booking.red?.needed ?? 5} / BLUE: ${booking.blue?.needed ?? 5} NEEDED]`
               : "SELECT A TIME SLOT"}
           </span>
         </div>
       </div>
 
-      {/* Error message */}
+      {/* Error / Warning Notice Banner */}
       {reserveError && !confirmationOpen && (
-        <div className="relative z-20 mx-auto max-w-md px-4 py-2 bg-red-900/80 border border-red-500 text-red-200 text-xs font-pixel rounded text-center my-2">
+        <div className="relative z-20 mx-auto max-w-md px-4 py-2 bg-red-900/90 border border-red-500 text-red-100 text-xs font-pixel rounded text-center my-2 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce">
           {reserveError}
+        </div>
+      )}
+
+      {/* Non-leader informative notice banner */}
+      {isNonLeaderTeamMember && (
+        <div className="relative z-20 mx-auto max-w-md px-3 py-1.5 bg-[#171726] border border-gray-500 text-gray-300 text-[11px] font-mono rounded text-center my-1">
+          🔒 You are viewing this slot schedule as a squad operative. Only the squad leader can confirm slot reservations.
+        </div>
+      )}
+
+      {/* Leader alone informative notice banner */}
+      {isLeaderAlone && (
+        <div className="relative z-20 mx-auto max-w-md px-3 py-1.5 bg-[#26170d] border border-amber-600 text-amber-200 text-[11px] font-mono rounded text-center my-1">
+          ⚠️ At least 1 teammate must join your squad before you can book an arena slot.
         </div>
       )}
 
@@ -316,20 +345,38 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       </div>
 
       {/* ── Bottom Section: Action Button ── */}
-      <div className="relative z-10 flex flex-col items-center gap-3 mt-4 w-full max-w-[280px] sm:max-w-[320px]">
-        <PixelButton
-          type="button"
-          onClick={handleProceedToConfirm}
-          disabled={isReserving || selectedSlot === undefined}
-          label={
-            isReserving
-              ? "SECURING SLOT..."
-              : "CONFIRM RESERVATION"
-          }
-          interaction="hero"
-          className="w-full"
-          labelClassName="text-[clamp(11px,1.2vw,14px)] cursor-pointer"
-        />
+      <div className="relative z-10 flex flex-col items-center gap-3 mt-4 w-full max-w-[300px] sm:max-w-[340px]">
+        {isNonLeaderTeamMember ? (
+          <button
+            type="button"
+            onClick={() => setReserveError("only leader can book slot")}
+            className="w-full py-3.5 px-4 bg-[#202028] text-gray-400 border-2 border-gray-600 font-pixel text-xs rounded uppercase tracking-wider cursor-not-allowed transition-all opacity-60 hover:opacity-80"
+          >
+            CONFIRM BOOKING (ONLY LEADER CAN BOOK)
+          </button>
+        ) : isLeaderAlone ? (
+          <button
+            type="button"
+            onClick={() => setReserveError("At least 1 teammate must join before you can book slot.")}
+            className="w-full py-3.5 px-4 bg-[#2d1b10] text-amber-300 border-2 border-amber-700 font-pixel text-xs rounded uppercase tracking-wider cursor-not-allowed opacity-80 hover:opacity-90"
+          >
+            WAITING FOR SQUAD (1/5 JOINED)
+          </button>
+        ) : (
+          <PixelButton
+            type="button"
+            onClick={handleProceedToConfirm}
+            disabled={isReserving || selectedSlot === undefined}
+            label={
+              isReserving
+                ? "SECURING SLOT..."
+                : "CONFIRM RESERVATION"
+            }
+            interaction="hero"
+            className="w-full"
+            labelClassName="text-[clamp(11px,1.2vw,14px)] cursor-pointer"
+          />
+        )}
       </div>
 
       {/* Auth Modal */}
@@ -354,11 +401,14 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
             day: booking.day,
             month: booking.month,
             time: booking.time,
+            red: booking.red || { total: 5, occupied: 0, needed: 5, available: 5 },
+            blue: booking.blue || { total: 5, occupied: 0, needed: 5, available: 5 },
           }}
           modeInfo={{
             type: selectedMode === "team" ? "team" : "individual",
             teamName: activeTeam?.teamName,
             teamCode: activeTeam?.teamCode,
+            memberCount: activeTeam?.memberCount,
           }}
           userInfo={{
             name: session?.user?.name,

@@ -19,6 +19,29 @@ export const getUserProfile = async (
   });
 };
 
+export const updateUserProfile = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  if (!req.user) {
+    throw new UnauthorizedError("Authentication required");
+  }
+
+  const { name, regNo, phone } = req.body;
+  const updated = await userService.updateUserProfile(req.user.id, {
+    name,
+    regNo,
+    phone,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully.",
+    data: updated,
+  });
+};
+
 export const usersController = {
   getUserProfile,
+  updateUserProfile,
 };

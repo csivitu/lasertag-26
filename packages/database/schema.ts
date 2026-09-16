@@ -98,6 +98,9 @@ export const bookings = pgTable(
       .notNull()
       .references(() => slots.id, { onDelete: 'cascade' }),
 
+    // Side selection for 5v5 game: 'red' | 'blue' | null
+    side: text('side'),
+
     // Arena Pass, Verification & Check-in
     qrToken: text('qr_token'),
     isCheckedIn: boolean('is_checked_in').notNull().default(false),

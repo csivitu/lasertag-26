@@ -31,16 +31,46 @@ export const auth = betterAuth({
     },
     user: {
         additionalFields: {
-            // `role` already exists on the `user` table (auth-schema.ts); this
-            // just tells better-auth to select it into the session payload.\n            // `input: false` is not optional — without it a client can pass
-            // {"role":"admin"} to sign-up/update-user and self-grant admin.
             role: {
                 type: "string",
                 required: false,
                 defaultValue: "user",
                 input: false,
             },
+            regNo: {
+                type: "string",
+                required: false,
+                input: false,
+            },
+            phNumber: {
+                type: "string",
+                required: false,
+                input: false,
+            },
+            qrToken: {
+                type: "string",
+                required: false,
+                input: false,
+            },
+            isCheckedIn: {
+                type: "boolean",
+                required: false,
+                defaultValue: false,
+                input: false,
+            },
+            paid: {
+                type: "boolean",
+                required: false,
+                defaultValue: false,
+                input: false,
+            },
         },
+    },
+    onAPIError: {
+        onError: (error) => {
+            console.error("[Better-Auth API Error]:", error);
+        },
+        errorURL: `${env.WEB_ORIGIN || "http://localhost:3000"}/auth-error`,
     },
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
