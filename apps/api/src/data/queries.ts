@@ -292,14 +292,14 @@ export async function findRegistrationForScan(identifier: string) {
   return row;
 }
 
-export async function markUserCheckedIn(userId: string) {
+export async function markUserCheckedIn(bookingId: string) {
   const [updated] = await db
-    .update(user)
+    .update(bookings)
     .set({
       isCheckedIn: true,
       checkedInAt: new Date(),
     })
-    .where(eq(user.id, userId))
+    .where(eq(bookings.id, bookingId))
     .returning();
 
   return updated;
