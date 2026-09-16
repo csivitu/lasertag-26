@@ -15,6 +15,13 @@
       "when": 1789567157344,
       "tag": "0001_windy_sabretooth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789592415910,
+      "tag": "0002_sad_warbound",
+      "breakpoints": true
     }
   ]
 }
