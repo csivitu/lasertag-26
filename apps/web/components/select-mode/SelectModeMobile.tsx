@@ -22,7 +22,7 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
       {/* Top Retro Navigation Header */}
       <HeroHeader />
 
-      {/* Main Content Layout — vertically centered, gaps breathe with width */}
+      {/* Main Content Layout */}
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-[clamp(1.5rem,6vw,3rem)] px-[clamp(1rem,5vw,2rem)] py-8">
         
         {/* Title */}
@@ -62,7 +62,7 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
               className="absolute bottom-8 left-3 w-[40px] h-auto z-20"
             />
 
-            {/* Content Container — centered like the team stack */}
+            {/* Content Container */}
             <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full">
               {/* Avatar */}
               <div className="h-28 flex items-end justify-center mb-3 transition-transform duration-300 group-hover:-translate-y-1">
@@ -148,10 +148,9 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
               className="absolute bottom-6 left-4 w-[40px] h-auto z-20"
             />
 
-            {/* Content Container — centered so the taller team stack
-                doesn't read top-aligned next to solo */}
+            {/* Content Container */}
             <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full">
-              {/* Team Avatars — three in a peak like desktop: outer low, middle high */}
+              {/* Team Avatars */}
               <div className="flex flex-row items-end justify-center gap-0 h-24 mb-3 transition-transform duration-300 group-hover:-translate-y-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/select-mode/select-mode-team/blue-guy.svg" alt="" className="h-[85%] w-auto -mr-4" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
@@ -52,16 +52,18 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
 
+  const prefilled = useRef(false);
+
   useEffect(() => {
-    if (session?.user) {
-      if (session.user.name && !fullName) {
-        setFullName(session.user.name);
-      }
-      if (session.user.email && !emailId) {
-        setEmailId(session.user.email);
-      }
+    if (prefilled.current || !session?.user) return;
+    prefilled.current = true;
+    if (session.user.name) {
+      setFullName(session.user.name);
     }
-  }, [session, fullName, emailId]);
+    if (session.user.email) {
+      setEmailId(session.user.email);
+    }
+  }, [session]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -80,6 +82,11 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       !teamCode.trim()
     ) {
       setError("Please fill in all fields and enter a team code.");
+      return;
+    }
+
+    if (phoneNumber.trim().length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -152,6 +159,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
         onRegistrationNumberChange={setRegistrationNumber}
         onEmailIdChange={setEmailId}
         onPhoneNumberChange={setPhoneNumber}
+        emailLocked={Boolean(session?.user?.email)}
       />
 
       {/* Team Code (full width) */}
@@ -181,11 +189,12 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
         </p>
       )}
 
-      <div style={{ marginTop: "4px" }}>
+      <div style={{ marginTop: "4px", display: "flex", justifyContent: "center" }}>
         <PixelButton
           type="submit"
           label={status === "submitting" ? "JOINING..." : status === "success" ? "JOINED" : "JOIN TEAM"}
           interaction="simple"
+          labelClassName="text-[12px] lg:text-[14px]"
           disabled={status === "submitting" || status === "success"}
         />
       </div>

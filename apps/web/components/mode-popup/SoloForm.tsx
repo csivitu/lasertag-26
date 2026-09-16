@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
@@ -20,17 +20,18 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
+  const prefilled = useRef(false);
 
   useEffect(() => {
-    if (session?.user) {
-      if (session.user.name && !fullName) {
-        setFullName(session.user.name);
-      }
-      if (session.user.email && !emailId) {
-        setEmailId(session.user.email);
-      }
+    if (prefilled.current || !session?.user) return;
+    prefilled.current = true;
+    if (session.user.name) {
+      setFullName(session.user.name);
     }
-  }, [session, fullName, emailId]);
+    if (session.user.email) {
+      setEmailId(session.user.email);
+    }
+  }, [session]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,6 +39,11 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
 
     if (!fullName.trim() || !registrationNumber.trim() || !emailId.trim() || !phoneNumber.trim()) {
       setError("Please fill in all fields before submitting.");
+      return;
+    }
+
+    if (phoneNumber.trim().length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -93,6 +99,7 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
         onRegistrationNumberChange={setRegistrationNumber}
         onEmailIdChange={setEmailId}
         onPhoneNumberChange={setPhoneNumber}
+        emailLocked={Boolean(session?.user?.email)}
       />
       {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
       {status === "success" && (
@@ -100,10 +107,11 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
           Profile recorded! Proceeding to slot booking arena...
         </p>
       )}
-      <div style={{ marginTop: "4px" }}>
+      <div style={{ marginTop: "4px", display: "flex", justifyContent: "center" }}>
         <PixelButton
           type="submit"
           label={status === "submitting" ? "RECORDING..." : "CONFIRM PROFILE"}
+          labelClassName="text-[12px] lg:text-[14px]"
           disabled={status === "submitting"}
         />
       </div>

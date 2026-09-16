@@ -35,8 +35,7 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
           /> 
         </div> 
  
-        {/* Selection Row — panels share space fluidly instead of fixed
-            450px each (which overflowed below ~1280px and squeezed solo) */}
+        {/* Selection Row */}
         <div className="flex flex-row items-center justify-center gap-6 w-full max-w-6xl xl:gap-12"> 
            
           {/* SOLO PANEL */} 
@@ -137,8 +136,7 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
  
             {/* Content Container */} 
             <div className="relative z-10 flex flex-col items-center gap-6 mt-4"> 
-              {/* Team Avatars — three in a peak: outer two low, middle high.
-                  Same row box as solo (h-40 mb-2) so both cards align. */}
+              {/* Team Avatars */}
               <div className="flex flex-row items-end justify-center gap-0 h-40 mb-2 transition-transform duration-300 group-hover:-translate-y-2"> 
                 <img src="/select-mode/select-mode-team/blue-guy.svg" alt="" className="h-[85%] w-auto -mr-7" /> 
                 <img src="/select-mode/select-mode-team/yellow-guy.svg" alt="" className="h-[85%] w-auto z-10 -translate-y-4" /> 
@@ -154,7 +152,7 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
                 /> 
               </div> 
  
-              {/* MAX 5 PLAYERS — same shared label as solo */}
+              {/* MAX 5 PLAYERS */}
               <PlayerCountLabel text="MAX 5 PLAYERS" />
 
               {/* Create/Join Team Buttons */}

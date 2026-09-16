@@ -1,6 +1,4 @@
-// Shared player-count label: blue profile icon + Oxanium semibold label.
-// Used by both solo ("1 PLAYER") and team ("MAX 5 PLAYERS") cards,
-// on desktop (md) and mobile (sm).
+// Shared player-count label used by the solo and team cards.
 export function PlayerCountLabel({
   text,
   size = "md",

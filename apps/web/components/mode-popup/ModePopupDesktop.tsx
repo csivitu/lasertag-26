@@ -46,10 +46,10 @@ const overlayStyle: CSSProperties = {
 export function ModePopupDesktop({ mode, onClose, onSuccess }: ModePopupDesktopProps) {
   const modeTitle =
     mode === "solo"
-      ? "SOLO OPERATIVE REGISTRATION"
+      ? "SOLO REGISTRATION"
       : mode === "create_team"
-      ? "CREATE SQUAD TEAM"
-      : "JOIN SQUAD TEAM";
+      ? "CREATE TEAM"
+      : "JOIN TEAM";
 
   return (
     <div

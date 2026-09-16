@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import { BaseFields } from "./BaseFields";
@@ -60,19 +60,38 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState("");
 
+  const prefilled = useRef(false);
+
   useEffect(() => {
-    if (session?.user) {
-      if (session.user.name && !fullName) {
-        setFullName(session.user.name);
-      }
-      if (session.user.email && !emailId) {
-        setEmailId(session.user.email);
-      }
+    if (prefilled.current || !session?.user) return;
+    prefilled.current = true;
+    if (session.user.name) {
+      setFullName(session.user.name);
     }
-  }, [session, fullName, emailId]);
+    if (session.user.email) {
+      setEmailId(session.user.email);
+    }
+  }, [session]);
 
   // Generated once when the component mounts; frozen for the session.
   const teamCode = useMemo(() => generateCode(), []);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopyCode() {
+    try {
+      await navigator.clipboard.writeText(teamCode);
+    } catch {
+      // Clipboard API unavailable (permissions/insecure context) — fallback.
+      const ta = document.createElement("textarea");
+      ta.value = teamCode;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -91,6 +110,11 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       !teamName.trim()
     ) {
       setError("Please fill in all fields before creating your team.");
+      return;
+    }
+
+    if (phoneNumber.trim().length !== 10) {
+      setError("Please enter a valid 10-digit phone number.");
       return;
     }
 
@@ -159,12 +183,13 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         onRegistrationNumberChange={setRegistrationNumber}
         onEmailIdChange={setEmailId}
         onPhoneNumberChange={setPhoneNumber}
+        emailLocked={Boolean(session?.user?.email)}
       />
 
       {/* Team Name */}
       <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
         <label className="mode-popup-label" htmlFor="popup-team-name" style={labelStyle}>
-          TEAM NAME
+          TEAM NAME<sup style={{ color: "#ff7abf", fontSize: "0.85em", lineHeight: 0 }}>*</sup>
         </label>
         <div className="mode-popup-input-wrap" style={inputWrapStyle}>
           <input
@@ -187,9 +212,13 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       </div>
 
       {/* Team Code row: pink code badge + Create Team button */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}>
+      <div
+        className="max-sm:flex-col max-sm:items-stretch max-sm:gap-3"
+        style={{ display: "flex", alignItems: "flex-end", gap: "14px", marginTop: "4px" }}
+      >
         <div className="mode-popup-field" style={{ display: "flex", flexDirection: "column", flexShrink: 0, gap: 0 }}>
           <label className="mode-popup-label" style={labelStyle}>TEAM CODE</label>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <div
             className="mode-popup-code"
             style={{
@@ -215,6 +244,31 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
               {teamCode}
             </div>
           </div>
+          <button
+            type="button"
+            onClick={handleCopyCode}
+            title={copied ? "Copied!" : "Copy team code"}
+            aria-label="Copy team code"
+            className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center transition-all hover:scale-110 active:scale-95"
+            style={{ color: copied ? "#4ade80" : "#e5349e" }}
+          >
+            {copied ? (
+              <svg viewBox="0 0 24 24" aria-hidden shapeRendering="crispEdges" className="h-6 w-6" fill="currentColor">
+                <rect x="3" y="12" width="3" height="3" />
+                <rect x="6" y="15" width="3" height="3" />
+                <rect x="9" y="12" width="3" height="3" />
+                <rect x="12" y="9" width="3" height="3" />
+                <rect x="15" y="6" width="3" height="3" />
+                <rect x="18" y="3" width="3" height="3" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden shapeRendering="crispEdges" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="3" width="12" height="12" />
+                <rect x="3" y="9" width="12" height="12" fill="#08080d" />
+              </svg>
+            )}
+          </button>
+          </div>
         </div>
 
         <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
@@ -223,7 +277,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             label={status === "submitting" ? "CREATING..." : status === "success" ? "CREATED" : "CREATE TEAM"}
             interaction="simple"
             className="w-[240px]"
-            labelClassName="text-[13px]"
+            labelClassName="text-[12px] lg:text-[14px]"
             disabled={status === "submitting" || status === "success"}
           />
         </div>

@@ -48,10 +48,10 @@ const titleStyle: CSSProperties = {
 export function ModePopupMobile({ mode, onClose, onSuccess }: ModePopupMobileProps) {
   const modeTitle =
     mode === "solo"
-      ? "SOLO OPERATIVE"
+      ? "SOLO"
       : mode === "create_team"
-      ? "CREATE SQUAD TEAM"
-      : "JOIN SQUAD TEAM";
+      ? "CREATE TEAM"
+      : "JOIN TEAM";
 
   return (
     <div
