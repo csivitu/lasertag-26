@@ -8,6 +8,9 @@ import { HttpError as AppError } from "../errors";
 import { sendEmail, MAILER_CONFIG } from "../services/mailer";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
 
+/** Max times one booking may move between slots. Same-slot re-books don't count. */
+const MAX_SLOT_CHANGES = 3;
+
 /** Postgres unique-violation, unwrapped through driver error nesting. */
 function isUniqueViolation(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
@@ -227,6 +230,14 @@ export const slotController = {
     // Same-slot re-books already hold a seat and skip the claim.
     const prevBooking = existingActiveBookings[0];
     const needsSeat = !prevBooking || prevBooking.slotId !== slot_id;
+
+    // Change-slot limit: a booking may move between slots at most
+    // MAX_SLOT_CHANGES times. Checked before claiming so a rejected change
+    // never consumes a seat. Re-booking the SAME slot is always allowed.
+    if (needsSeat && prevBooking && (prevBooking.slotChangeCount ?? 0) >= MAX_SLOT_CHANGES) {
+      throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+    }
+
     if (needsSeat) {
       const claimed = await claimSlotSeat(slot_id);
       if (!claimed) {
@@ -241,8 +252,14 @@ export const slotController = {
     const moveBookingToSlot = async (
       prev: typeof existingActiveBookings[number],
     ) => {
+      const changedSlot = prev.slotId !== slot_id;
+      // Enforced here too (not just pre-claim) so the race-recovery path
+      // can't push a booking past the allowance either.
+      if (changedSlot && prev.slotChangeCount >= MAX_SLOT_CHANGES) {
+        throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+      }
       // If slot changed, restore 1 capacity to the old slot (atomic).
-      if (prev.slotId !== slot_id) {
+      if (changedSlot) {
         await releaseSlotSeat(prev.slotId);
       }
 
@@ -258,6 +275,9 @@ export const slotController = {
           qrToken,
           confirmedAt: new Date(),
           confirmationEmailSent: false,
+          // Same booking keeps its id and QR across moves; only real moves
+          // consume from the change allowance.
+          slotChangeCount: changedSlot ? prev.slotChangeCount + 1 : prev.slotChangeCount,
         })
         .where(eq(bookings.id, prev.id))
         .returning();

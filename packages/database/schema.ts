@@ -105,6 +105,9 @@ export const bookings = pgTable(
     slotId: uuid('slot_id')
       .notNull()
       .references(() => slots.id, { onDelete: 'cascade' }),
+    // How many times this booking has moved between slots. Capped by the
+    // API (MAX_SLOT_CHANGES) so participants can't churn indefinitely.
+    slotChangeCount: integer('slot_change_count').notNull().default(0),
 
     // Arena Pass, Verification & Check-in
     qrToken: text('qr_token'),
