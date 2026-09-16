@@ -6,10 +6,20 @@ import {
   bookings,
   slots,
 } from "@lasertag-26/database/schema";
-import { eq, and, or, inArray, asc } from "drizzle-orm";
+import { eq, and, or, inArray, asc, sql } from "drizzle-orm";
 
 import { HttpError as AppError } from "../errors";
 import type { CreateTeamInput } from "../validations/team.validation";
+
+function isUniqueConstraintError(err: unknown): boolean {
+  if (err === null || typeof err !== "object") return false;
+  const record = err as Record<string, unknown>;
+  const isCode23505 = record.code === "23505";
+  const hasConstraintMsg =
+    typeof record.message === "string" &&
+    record.message.toLowerCase().includes("unique constraint");
+  return isCode23505 || hasConstraintMsg;
+}
 
 export const teamController = {
   async getAllTeams() {
@@ -269,86 +279,98 @@ export const teamController = {
   },
 
   async joinTeam(teamId: string, userId: string) {
-    const [team] = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.teamCode, teamId));
+    try {
+      return await db.transaction(async (tx) => {
+        const [team] = await tx
+          .select()
+          .from(teams)
+          .where(eq(teams.teamCode, teamId));
 
-    if (!team) {
-      throw new AppError(404, "Team not found.");
+        if (!team) {
+          throw new AppError(404, "Team not found.");
+        }
+
+        const [foundUser] = await tx
+          .select()
+          .from(user)
+          .where(eq(user.id, userId));
+
+        if (!foundUser) {
+          throw new AppError(404, "User not found.");
+        }
+
+        // 1. Team limit is strictly MAX 5 members
+        const currentTeamMembers = await tx
+          .select()
+          .from(teamMembers)
+          .where(eq(teamMembers.teamCode, teamId));
+
+        if (currentTeamMembers.length >= 5 || team.members >= 5) {
+          throw new AppError(400, "Team is full. The maximum limit is 5 members.");
+        }
+
+        // 2. User can only be in 1 team at a time
+        const userInAnyTeam = await tx
+          .select()
+          .from(teamMembers)
+          .where(eq(teamMembers.userId, userId));
+
+        if (userInAnyTeam.length > 0) {
+          throw new AppError(
+            400,
+            "You are already a member of a team. You can only be in 1 team at a time.",
+          );
+        }
+
+        // 3. User cannot join a team if already holding an active solo pass
+        const activeSoloBooking = await tx
+          .select()
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.userId, userId),
+              eq(bookings.type, "individual"),
+              inArray(bookings.status, ["reserved", "confirmed"]),
+            ),
+          );
+
+        if (activeSoloBooking.length > 0) {
+          throw new AppError(
+            400,
+            "You have an active solo pass. You cannot join a team while playing solo.",
+          );
+        }
+
+        await tx.insert(teamMembers).values({
+          teamCode: teamId,
+          userId,
+        });
+
+        const [updatedTeam] = await tx
+          .update(teams)
+          .set({ members: sql`${teams.members} + 1` })
+          .where(eq(teams.teamCode, teamId))
+          .returning();
+
+        return {
+          team: updatedTeam,
+          joined_user: {
+            id: foundUser.id,
+            name: foundUser.name,
+            email: foundUser.email,
+            role: foundUser.role,
+          },
+        };
+      });
+    } catch (err: unknown) {
+      if (isUniqueConstraintError(err)) {
+        throw new AppError(
+          400,
+          "You are already a member of a team. You can only be in 1 team at a time.",
+        );
+      }
+      throw err;
     }
-
-    const [foundUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, userId));
-
-    if (!foundUser) {
-      throw new AppError(404, "User not found.");
-    }
-
-    // 1. Team limit is strictly MAX 5 members
-    const currentTeamMembers = await db
-      .select()
-      .from(teamMembers)
-      .where(eq(teamMembers.teamCode, teamId));
-
-    if (currentTeamMembers.length >= 5 || team.members >= 5) {
-      throw new AppError(400, "Team is full. The maximum limit is 5 members.");
-    }
-
-    // 2. User can only be in 1 team at a time
-    const userInAnyTeam = await db
-      .select()
-      .from(teamMembers)
-      .where(eq(teamMembers.userId, userId));
-
-    if (userInAnyTeam.length > 0) {
-      throw new AppError(
-        400,
-        "You are already a member of a team. You can only be in 1 team at a time."
-      );
-    }
-
-    // 3. User cannot join a team if already holding an active solo pass
-    const activeSoloBooking = await db
-      .select()
-      .from(bookings)
-      .where(
-        and(
-          eq(bookings.userId, userId),
-          eq(bookings.type, "individual"),
-          inArray(bookings.status, ["reserved", "confirmed"])
-        )
-      );
-
-    if (activeSoloBooking.length > 0) {
-      throw new AppError(
-        400,
-        "You have an active solo pass. You cannot join a team while playing solo."
-      );
-    }
-
-    await db.insert(teamMembers).values({
-      teamCode: teamId,
-      userId,
-    });
-
-    const [updatedTeam] = await db
-      .update(teams)
-      .set({ members: currentTeamMembers.length + 1 })
-      .where(eq(teams.teamCode, teamId))
-      .returning();
-
-    return {
-      team: updatedTeam,
-      joined_user: {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        role: foundUser.role,
-      },
-    };
   },
 
   async getTeamMembers(teamId: string) {

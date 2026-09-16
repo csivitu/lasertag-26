@@ -7,6 +7,16 @@ import { HttpError as AppError } from "../errors";
 import { sendEmail, MAILER_CONFIG } from "../services/mailer";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
 
+function isUniqueConstraintError(err: unknown): boolean {
+  if (err === null || typeof err !== "object") return false;
+  const record = err as Record<string, unknown>;
+  const isCode23505 = record.code === "23505";
+  const hasConstraintMsg =
+    typeof record.message === "string" &&
+    record.message.toLowerCase().includes("unique constraint");
+  return isCode23505 || hasConstraintMsg;
+}
+
 export const slotController = {
   async getAllSlots() {
     const allSlots = await db.select().from(slots).orderBy(asc(slots.startTime));
@@ -122,8 +132,9 @@ export const slotController = {
     const { slot_id, user_id, type, team_code } = input;
 
     // Run verification, seat claiming, and booking insert inside an atomic transaction
-    const { activeBooking, targetUser, slotForEmail, assignedQrToken } = await db.transaction(
-      async (tx) => {
+    let reservationResult;
+    try {
+      reservationResult = await db.transaction(async (tx) => {
         const [targetUser] = await tx
           .select()
           .from(user)
@@ -192,6 +203,14 @@ export const slotController = {
 
         const prevBooking = existingActiveBookings[0];
         const isSameSlot = prevBooking && prevBooking.slotId === slot_id;
+        const normalizedTeamCode = type === "team" ? (team_code ?? null) : null;
+        const isAlreadyConfirmed = Boolean(
+          isSameSlot &&
+            prevBooking &&
+            prevBooking.status === "confirmed" &&
+            prevBooking.type === type &&
+            (prevBooking.teamCode ?? null) === normalizedTeamCode,
+        );
 
         let slotForEmail;
 
@@ -238,7 +257,11 @@ export const slotController = {
 
         let activeBooking;
 
-        if (prevBooking) {
+        if (isAlreadyConfirmed && prevBooking) {
+          // Idempotent: already confirmed for this exact slot, type, and team.
+          // Do not rewrite confirmedAt, do not reset confirmationEmailSent, and do not re-send email.
+          activeBooking = prevBooking;
+        } else if (prevBooking) {
           const qrToken = prevBooking.qrToken || `QR-${prevBooking.id}`;
 
           const [updatedBooking] = await tx
@@ -246,7 +269,7 @@ export const slotController = {
             .set({
               slotId: slot_id,
               type,
-              teamCode: type === "team" ? (team_code ?? null) : null,
+              teamCode: normalizedTeamCode,
               status: "confirmed",
               qrToken,
               confirmedAt: new Date(),
@@ -267,7 +290,7 @@ export const slotController = {
               type,
               status: "confirmed",
               userId: user_id,
-              teamCode: type === "team" ? (team_code ?? null) : null,
+              teamCode: normalizedTeamCode,
               slotId: slot_id,
               qrToken,
               confirmedAt: new Date(),
@@ -286,9 +309,41 @@ export const slotController = {
           .set({ qrToken: assignedQrToken })
           .where(eq(user.id, user_id));
 
-        return { activeBooking, targetUser, slotForEmail, assignedQrToken };
-      },
-    );
+        return {
+          activeBooking,
+          targetUser,
+          slotForEmail,
+          assignedQrToken,
+          shouldSendEmail: !isAlreadyConfirmed,
+        };
+      });
+    } catch (err: unknown) {
+      // Idempotency safety net: if concurrent requests race on the unique index
+      if (isUniqueConstraintError(err)) {
+        const [existing] = await db
+          .select()
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.userId, user_id),
+              eq(bookings.slotId, slot_id),
+              inArray(bookings.status, ["reserved", "confirmed"]),
+            ),
+          );
+        if (existing) {
+          return existing;
+        }
+      }
+      throw err;
+    }
+
+    const { activeBooking, targetUser, slotForEmail, assignedQrToken, shouldSendEmail } =
+      reservationResult;
+
+    // If already confirmed, do not duplicate confirmation email or QR generation
+    if (!shouldSendEmail) {
+      return activeBooking;
+    }
 
     // Format slot date and time for confirmation email
     const slotStartDate = new Date(slotForEmail.startTime);
