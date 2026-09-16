@@ -251,7 +251,12 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       // Transition to player pass profile
       router.push("/profile");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to reserve slot";
+      const raw = err instanceof Error ? err.message : "Failed to reserve slot";
+      // Lost the race for the last seat(s) — counts are already refreshed,
+      // so say so plainly instead of surfacing the raw DB message.
+      const msg = /slot is full|fully booked/i.test(raw)
+        ? "THAT SLOT JUST FILLED — PLEASE PICK ANOTHER SLOT."
+        : raw;
       setReserveError(msg);
     } finally {
       setIsReserving(false);
