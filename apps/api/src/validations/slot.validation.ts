@@ -20,7 +20,9 @@ const isoDate = z.iso.datetime({ offset: true }).transform((value) => new Date(v
 const slotFields = createInsertSchema(slots, {
   capacity: (schema) => schema.min(0, "capacity must be a non-negative integer"),
 })
-  .omit({ id: true })
+  // `id` is defaultRandom(); `totalCapacity` is server-set (= capacity at
+  // creation) so clients can never open an inconsistent slot.
+  .omit({ id: true, totalCapacity: true })
   .extend({ startTime: isoDate, endTime: isoDate });
 
 export const slotInputSchema = slotFields.refine(
@@ -71,6 +73,17 @@ export const slotIdSchema = z.object({ params: slotIdParams });
 export const slotResponseSchema = createSelectSchema(slots).extend({
   startTime: z.iso.datetime(),
   endTime: z.iso.datetime(),
+});
+
+/**
+ * Bounded slot listing. Coerced because Express query values are strings;
+ * `validate` writes the parsed numbers back onto req.query.
+ */
+export const listSlotsSchema = z.object({
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(500).default(200),
+    offset: z.coerce.number().int().min(0).default(0),
+  }),
 });
 
 /**

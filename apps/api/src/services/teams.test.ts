@@ -33,6 +33,7 @@ const slot: Slot = {
   startTime: new Date("2026-03-14T09:00:00.000Z"),
   endTime: new Date("2026-03-14T10:00:00.000Z"),
   capacity: 10,
+  totalCapacity: 10,
 };
 
 describe("toTeamDetail", () => {

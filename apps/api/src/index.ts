@@ -1,5 +1,8 @@
 import { createApp } from "./app";
 import { env } from "./env";
+import { seedAdmins } from "./seed-admins";
+
+await seedAdmins(env);
 
 const app = createApp(env);
 

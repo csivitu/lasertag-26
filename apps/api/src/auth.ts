@@ -46,6 +46,7 @@ export const auth = betterAuth({
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: [
         env.WEB_ORIGIN,
+        env.ADMIN_ORIGIN,
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",

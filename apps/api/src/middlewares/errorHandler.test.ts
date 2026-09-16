@@ -73,6 +73,24 @@ describe("errorHandler", () => {
     expect(state.body).toEqual({ error: "Internal server error", code: "internal_error" });
   });
 
+  test("capacity-guard trigger violation: 409 Slot is full", () => {
+    const { res, state } = fakeRes();
+    // Shape the Neon HTTP driver produces: message text dropped, NeonDbError
+    // with code + `where` on `cause`.
+    const err = new Error("Failed query: INSERT INTO bookings ...");
+    (err as { cause?: unknown }).cause = {
+      name: "NeonDbError",
+      severity: "ERROR",
+      code: "P0001",
+      where: "PL/pgSQL function enforce_slot_capacity() line 17 at RAISE",
+    };
+
+    errorHandler(err, {} as Request, res, mock(() => {}));
+
+    expect(state.status).toBe(409);
+    expect(state.body).toEqual({ error: "Slot is full", code: "conflict" });
+  });
+
   test("delegates to next(err) once headers are already sent", () => {
     const next = mock(() => {});
     const res = { headersSent: true } as Response;

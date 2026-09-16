@@ -2,9 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { QrCode } from "./QrCode";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 export function PlayerPassStubRight() {
   const router = useRouter();
+  const { profile } = useUserProfile();
+  const qrToken = profile?.activeRegistration?.qrToken ?? null;
 
   return (
     <div className="flex flex-col items-center justify-between h-full py-8 px-7 select-none">
@@ -18,7 +21,7 @@ export function PlayerPassStubRight() {
 
       {/* QR Code Container */}
       <div className="relative p-2 sm:p-2.5 bg-white rounded-md shadow-lg border-2 border-black my-auto translate-x-6">
-        <QrCode className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32" />
+        <QrCode className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32" value={qrToken} />
       </div>
 
       {/* CHANGE SLOT Button */}

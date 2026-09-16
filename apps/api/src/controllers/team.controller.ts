@@ -412,6 +412,76 @@ export const teamController = {
       message: "Team converted to solo mode successfully.",
     };
   },
+
+  /**
+   * Removes the caller from whatever team they are currently in.
+   * A leader with other active members cannot leave (remove members or
+   * convert first); a sole-member leader deletes the team as well.
+   * Missing membership is a 404 so solo onboarding can treat it as "nothing
+   * to do" instead of a failure.
+   */
+  async leaveTeam(userId: string) {
+    const memberships = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, userId));
+
+    if (memberships.length === 0) {
+      throw new AppError(404, "You are not currently in a team.");
+    }
+
+    const teamCode = memberships[0].teamCode;
+    const [team] = await db
+      .select()
+      .from(teams)
+      .where(eq(teams.teamCode, teamCode));
+
+    if (team && team.leaderId === userId) {
+      const squad = await db
+        .select()
+        .from(teamMembers)
+        .where(eq(teamMembers.teamCode, teamCode));
+      const otherMembers = squad.filter((m) => m.userId !== userId);
+      if (otherMembers.length > 0) {
+        throw new AppError(
+          400,
+          "As team leader with active members, remove members or convert the team before leaving."
+        );
+      }
+      // Sole-member leader: leaving deletes the team as well.
+      await db.delete(teamMembers).where(eq(teamMembers.teamCode, teamCode));
+      await db.delete(teams).where(eq(teams.teamCode, teamCode));
+      return { left: true, teamCode, teamDeleted: true };
+    }
+
+    await db
+      .delete(teamMembers)
+      .where(
+        and(
+          eq(teamMembers.teamCode, teamCode),
+          eq(teamMembers.userId, userId)
+        )
+      );
+    return { left: true, teamCode, teamDeleted: false };
+  },
+
+  /**
+   * Self-service convert: derives the team from the caller's membership,
+   * so clients that never learned the team code (profile convert button,
+   * solo onboarding) don't need it.
+   */
+  async convertMyTeamToSolo(userId: string) {
+    const memberships = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, userId));
+
+    if (memberships.length === 0) {
+      throw new AppError(404, "You are not currently in a team.");
+    }
+
+    return teamController.convertTeamToSolo(memberships[0].teamCode, userId);
+  },
 };
 
 export const teamService = teamController;

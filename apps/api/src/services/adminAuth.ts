@@ -15,9 +15,9 @@ export function makeAdminAuthService(deps: AdminAuthDeps) {
       const role = await deps.findRoleByEmail(email);
 
       // Same error, same status, whether the email doesn't exist or exists
-      // but isn't an admin — a 401-vs-403 split would tell a prober which
+      // but isn't staff — a 401-vs-403 split would tell a prober which
       // case they hit.
-      if (role !== "admin") {
+      if (role !== "admin" && role !== "super_admin") {
         throw new UnauthorizedError("Invalid email or password");
       }
 

@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from "bun:test";
 import type { Request, Response } from "express";
 
 import { ForbiddenError, UnauthorizedError } from "../errors";
-import { makeRequireAdmin } from "./auth.middleware";
+import { makeRequireAdmin, makeRequireSuperAdmin } from "./auth.middleware";
 
 function fakeReqRes() {
   const req = { headers: {} } as Request;
@@ -37,6 +37,34 @@ describe("requireAdmin", () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith();
     expect(res.locals.user).toEqual({ id: "u1", role: "admin" });
+  });
+
+  test("calls next() when the user is a super_admin", async () => {
+    const middleware = makeRequireAdmin(async () => ({ user: { id: "u9", role: "super_admin" } }));
+    const { req, res, next } = fakeReqRes();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("requireSuperAdmin", () => {
+  test("throws ForbiddenError for a plain admin", async () => {
+    const middleware = makeRequireSuperAdmin(async () => ({ user: { id: "u1", role: "admin" } }));
+    const { req, res, next } = fakeReqRes();
+
+    await expect(middleware(req, res, next)).rejects.toBeInstanceOf(ForbiddenError);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  test("calls next() for a super_admin", async () => {
+    const middleware = makeRequireSuperAdmin(async () => ({ user: { id: "u9", role: "super_admin" } }));
+    const { req, res, next } = fakeReqRes();
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
   });
 });
 

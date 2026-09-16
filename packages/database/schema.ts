@@ -46,6 +46,13 @@ export const teams = pgTable(
 // 3. Slots Table
 // PostgreSQL Exclusion Constraint enforced at DB level via GiST index:
 // CONSTRAINT no_overlapping_slots EXCLUDE USING gist (tsrange(start_time, end_time) WITH &&)
+//
+// Two capacity columns with distinct jobs:
+// - capacity: seats REMAINING. Atomically decremented by claimSlotSeat (the
+//   concurrency serialization point) and restored on moves/cancels.
+// - totalCapacity: seats TOTAL at creation. Compared against the active
+//   booking count by the bookings_capacity_guard trigger (the backstop).
+// Invariant: totalCapacity = capacity + active bookings.
 export const slots = pgTable(
   'slots',
   {
@@ -53,6 +60,7 @@ export const slots = pgTable(
     startTime: timestamp('start_time').notNull(),
     endTime: timestamp('end_time').notNull(),
     capacity: integer('capacity').notNull(),
+    totalCapacity: integer('total_capacity').notNull().default(0),
   },
   (table) => [
     index('slots_start_time_idx').on(table.startTime),
@@ -117,6 +125,11 @@ export const bookings = pgTable(
     index('bookings_status_idx').on(table.status),
     uniqueIndex('bookings_active_user_slot_idx')
       .on(table.userId, table.slotId)
+      .where(sql`status IN ('reserved', 'confirmed')`),
+    // One active booking per user, period — a "change slot" moves the row
+    // instead of duplicating it, and double-submits fail safe at the DB.
+    uniqueIndex('bookings_one_active_per_user_idx')
+      .on(table.userId)
       .where(sql`status IN ('reserved', 'confirmed')`),
   ]
 );

@@ -25,6 +25,16 @@ describe("makeAdminAuthService.login", () => {
     expect(result).toEqual({ user: admin, cookies: ["session=abc"] });
   });
 
+  test("signs in when the email belongs to a super_admin", async () => {
+    const deps = makeDeps({ findRoleByEmail: mock(async () => "super_admin") });
+    const service = makeAdminAuthService(deps);
+
+    const result = await service.login("super@example.com", "correct-password");
+
+    expect(deps.signIn).toHaveBeenCalledWith("super@example.com", "correct-password");
+    expect(result).toEqual({ user: admin, cookies: ["session=abc"] });
+  });
+
   test("rejects with the same error whether the email is unknown or just not an admin", async () => {
     const unknown = makeAdminAuthService(makeDeps({ findRoleByEmail: mock(async () => null) }));
     const notAdmin = makeAdminAuthService(

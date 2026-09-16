@@ -19,12 +19,13 @@ export function PlayerPassTicket() {
   const playerName = profile?.name || session?.user?.name || "OPERATIVE";
   const playerEmail = profile?.email || session?.user?.email || "N/A";
   const playerPhone = profile?.phone || "N/A";
-  const regNo = profile?.activeRegistration?.id || "N/A";
+  const regNo = profile?.regNumber || "N/A";
   const rawDate = profile?.activeRegistration?.slot?.slotDate;
   const rawTime = profile?.activeRegistration?.slot?.slotTime;
 
   const slotDate = formatPassDate(rawDate);
   const slotTime = formatPassTime(rawTime);
+  const qrToken = profile?.activeRegistration?.qrToken ?? null;
 
   return (
     <div className="w-full max-w-[1100px] mx-auto px-2">
@@ -76,7 +77,7 @@ export function PlayerPassTicket() {
         {/* QR Code & Button Section */}
         <div className="flex flex-col items-center justify-center gap-6 px-6 pb-10 pt-6 w-full">
           <div className="relative p-2 sm:p-2.5 bg-white rounded-md shadow-lg border-2 border-black">
-            <QrCode className="w-32 h-32" />
+            <QrCode className="w-32 h-32" value={qrToken} />
           </div>
           <button
             type="button"

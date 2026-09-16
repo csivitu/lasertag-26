@@ -24,6 +24,10 @@ interface RawApiSlot {
 
 const SLOTS_PER_PAGE = 24;
 
+// Arena wall-clock is IST. Slots are stored as UTC instants; every display
+// derives from Asia/Kolkata so grid, badge, and pass always agree.
+export const ARENA_TIME_ZONE = "Asia/Kolkata";
+
 export function formatSlotTime(isoString: string): string {
   try {
     const d = new Date(isoString);
@@ -31,7 +35,7 @@ export function formatSlotTime(isoString: string): string {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-      timeZone: "UTC",
+      timeZone: ARENA_TIME_ZONE,
     });
   } catch {
     return isoString;
@@ -44,11 +48,16 @@ export function transformApiSlots(apiSlots: RawApiSlot[]): Slot[] {
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   );
 
-  // Group by UTC date (e.g. "2026-09-18")
+  // Group by IST date (e.g. "2026-09-18")
   const dateGroups = new Map<string, RawApiSlot[]>();
   for (const slot of sorted) {
     const d = new Date(slot.startTime);
-    const dateKey = d.toISOString().slice(0, 10);
+    const dateKey = new Intl.DateTimeFormat("en-CA", {
+      timeZone: ARENA_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(d);
     if (!dateGroups.has(dateKey)) {
       dateGroups.set(dateKey, []);
     }
@@ -60,10 +69,17 @@ export function transformApiSlots(apiSlots: RawApiSlot[]): Slot[] {
   for (const [dateKey, group] of dateGroups.entries()) {
     group.forEach((slot, indexInDay) => {
       const d = new Date(slot.startTime);
-      const day = String(d.getUTCDate()).padStart(2, "0");
+      const day = String(
+        Number(
+          new Intl.DateTimeFormat("en-US", {
+            timeZone: ARENA_TIME_ZONE,
+            day: "numeric",
+          }).format(d)
+        )
+      ).padStart(2, "0");
       const month = d.toLocaleDateString("en-US", {
         month: "short",
-        timeZone: "UTC",
+        timeZone: ARENA_TIME_ZONE,
       }).toUpperCase();
       const page = Math.floor(indexInDay / SLOTS_PER_PAGE) + 1;
       const index = indexInDay % SLOTS_PER_PAGE;

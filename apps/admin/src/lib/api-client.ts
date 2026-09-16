@@ -10,41 +10,42 @@ export async function apiFetch<T>(
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
-  // Admin dev fallback header if session cookie isn't attached
-  if (!headers.has("x-user-id")) {
-    headers.set("x-user-id", "11111111-1111-1111-1111-111111111111");
-  }
 
   try {
     const res = await fetch(url, {
       ...options,
       headers,
+      credentials: "include",
     });
 
     const text = await res.text();
-    let json: any = {};
+    let json: { error?: unknown; message?: unknown; success?: unknown; data?: unknown } = {};
     try {
-      json = JSON.parse(text);
+      const parsed: unknown = JSON.parse(text);
+      if (parsed && typeof parsed === "object") {
+        json = parsed as typeof json;
+      }
     } catch {
       json = { message: text, success: res.ok };
     }
 
     if (!res.ok) {
+      const errMsg = [json.error, json.message].find((v): v is string => typeof v === "string");
       return {
         success: false,
-        error: json.error || json.message || `HTTP Error ${res.status}`,
+        error: errMsg ?? `HTTP Error ${res.status}`,
       };
     }
 
     return {
-      success: json.success ?? true,
-      data: json.data ?? json,
-      message: json.message,
+      success: typeof json.success === "boolean" ? json.success : true,
+      data: (json.data ?? json) as T | undefined,
+      message: typeof json.message === "string" ? json.message : undefined,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       success: false,
-      error: err.message || "Failed to communicate with API server.",
+      error: err instanceof Error ? err.message : "Failed to communicate with API server.",
     };
   }
 }

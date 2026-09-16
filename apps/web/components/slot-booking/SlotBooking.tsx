@@ -57,36 +57,42 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
   // Confirmation modal state
   const [confirmationOpen, setConfirmationOpen] = useState(false);
 
-  // Synchronize player combat mode from local state or server profile
+  // Server profile wins over local state, so a stale browser cache can
+  // never disagree with the DB (e.g. ghost team blocking solo booking).
   const refreshMode = useCallback(() => {
-    try {
-      const mode =
-        sessionStorage.getItem("lasertag_selected_mode") ||
-        localStorage.getItem("lasertag_selected_mode");
-      const teamStr =
-        sessionStorage.getItem("lasertag_active_team") ||
-        localStorage.getItem("lasertag_active_team");
-      const soloStr =
-        sessionStorage.getItem("lasertag_onboarding_solo") ||
-        localStorage.getItem("lasertag_onboarding_solo");
+    const readLocal = (): boolean => {
+      try {
+        const mode =
+          sessionStorage.getItem("lasertag_selected_mode") ||
+          localStorage.getItem("lasertag_selected_mode");
+        const teamStr =
+          sessionStorage.getItem("lasertag_active_team") ||
+          localStorage.getItem("lasertag_active_team");
+        const soloStr =
+          sessionStorage.getItem("lasertag_onboarding_solo") ||
+          localStorage.getItem("lasertag_onboarding_solo");
 
-      if (teamStr) {
-        const parsed = JSON.parse(teamStr);
-        if (parsed?.teamCode) {
-          setSelectedMode("team");
-          setActiveTeam(parsed);
-          return;
+        if (teamStr) {
+          const parsed = JSON.parse(teamStr);
+          if (parsed?.teamCode) {
+            setSelectedMode("team");
+            setActiveTeam(parsed);
+            return true;
+          }
         }
-      }
 
-      if (mode === "solo" || soloStr) {
-        setSelectedMode("solo");
-        setActiveTeam(null);
-        return;
+        if (mode === "solo" || soloStr) {
+          setSelectedMode("solo");
+          setActiveTeam(null);
+          return true;
+        }
+      } catch {
+        // fall through to cleared state
       }
-    } catch {
-      // fallback
-    }
+      setSelectedMode(null);
+      setActiveTeam(null);
+      return false;
+    };
 
     if (session?.user) {
       fetch(`${apiBaseUrl}/users/me/profile`, { credentials: "include" })
@@ -103,17 +109,14 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
             setSelectedMode("solo");
             setActiveTeam(null);
           } else {
-            setSelectedMode(null);
-            setActiveTeam(null);
+            readLocal();
           }
         })
         .catch(() => {
-          setSelectedMode(null);
-          setActiveTeam(null);
+          readLocal();
         });
     } else {
-      setSelectedMode(null);
-      setActiveTeam(null);
+      readLocal();
     }
   }, [session]);
 
@@ -243,23 +246,14 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         <h1 className="slot-title m-0">SLOT BOOKING</h1>
       </div>
 
-      {/* ── Active Combat Mode Status Bar (No change mode here) ── */}
-      <div className="relative z-20 w-full max-w-xl px-4 my-1">
-        <div className="bg-[#0b0c14]/90 border border-white/20 rounded-lg py-1.5 px-4 flex items-center justify-center font-mono text-xs text-white/80">
-          <div className="flex items-center gap-2 truncate">
-            <span className="text-xs">⚔️</span>
-            <span className="text-white/60">DEPLOYMENT:</span>
-            <span className="text-[#FEDC02] font-bold truncate">
-              {selectedMode === "team"
-                ? `SQUAD ${activeTeam?.teamName ? `"${activeTeam.teamName}" ` : ""}[${activeTeam?.teamCode || ""}]`
-                : "SOLO RECON MISSION"}
-            </span>
+      {/* ── Current booking badge + single date (side-by-side on desktop) ── */}
+      <div className="slot-current-row relative z-10 my-2">
+        {!isLoading && dates.length === 1 && (
+          <div className="slot-date-box slot-date-static" aria-current="page">
+            <span className="slot-date-day">{dates[0].day}</span>
+            <span className="slot-date-month">{dates[0].month}</span>
           </div>
-        </div>
-      </div>
-
-      {/* ── Current booking badge ── */}
-      <div className="relative z-10 my-2">
+        )}
         <div className="slot-current-badge">
           <span className="slot-current-label">CURRENT BOOKING:</span>
           <span className="slot-current-val">
@@ -277,22 +271,23 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         </div>
       )}
 
-      {/* ── Date switcher (18, 19, 20 September) ── */}
-      <div className="relative z-10 w-full">
-        <DateSwitcher
-          dates={
-            dates.length > 0
-              ? dates
-              : [
-                  { day: "18", month: "SEPT", active: selectedDay === "18" },
-                  { day: "19", month: "SEPT", active: selectedDay === "19" },
-                  { day: "20", month: "SEPT", active: selectedDay === "20" },
-                ]
-          }
-          onSelect={selectDate}
-        />
-      </div>
-
+      {/* ── Date switcher (hidden when only one date has slots) ── */}
+      {(isLoading || dates.length > 1) && (
+        <div className="relative z-10 w-full">
+          <DateSwitcher
+            dates={
+              dates.length > 0
+                ? dates
+                : [
+                    { day: "18", month: "SEPT", active: selectedDay === "18" },
+                    { day: "19", month: "SEPT", active: selectedDay === "19" },
+                    { day: "20", month: "SEPT", active: selectedDay === "20" },
+                  ]
+            }
+            onSelect={selectDate}
+          />
+        </div>
+      )}
       {/* ── Slot grid ── */}
       <div className="slot-grid-shell relative z-10 w-full min-h-0">
         <SlotGrid

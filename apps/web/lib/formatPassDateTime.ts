@@ -19,7 +19,10 @@ export function formatPassDate(dateStr?: string | null): string {
 
   const parsed = new Date(dateStr);
   if (!isNaN(parsed.getTime())) {
-    const day = parsed.getDate();
+    const IST = "Asia/Kolkata";
+    const day = Number(
+      new Intl.DateTimeFormat("en-US", { timeZone: IST, day: "numeric" }).format(parsed)
+    );
     const nth = (d: number) => {
       if (d > 3 && d < 21) return `${d}th`;
       switch (d % 10) {
@@ -29,8 +32,8 @@ export function formatPassDate(dateStr?: string | null): string {
         default: return `${d}th`;
       }
     };
-    const month = parsed.toLocaleDateString("en-US", { month: "long" });
-    const year = parsed.getFullYear();
+    const month = parsed.toLocaleDateString("en-US", { month: "long", timeZone: IST });
+    const year = parsed.toLocaleDateString("en-US", { year: "numeric", timeZone: IST });
     return `${nth(day)} ${month},\n${year}`;
   }
 

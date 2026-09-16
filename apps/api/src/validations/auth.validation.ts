@@ -15,6 +15,13 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
+/** Staff login is password-only — the server maps the password to its account. */
+export const adminLoginSchema = z.object({
+  body: z.object({
+    password: z.string().min(1, "password is required"),
+  }),
+});
+
 /** Response shape, for the OpenAPI document only — never used to parse input. */
 export const loginResponseSchema = z.object({
   message: z.string(),

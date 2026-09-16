@@ -13,14 +13,18 @@ export function TeamCodeSection() {
   const { profile } = useUserProfile();
   const [teamCode, setTeamCode] = useState<string>("");
   const [memberCount, setMemberCount] = useState<number>(1);
+  const [isLeader, setIsLeader] = useState<boolean>(false);
   const [isConverting, setIsConverting] = useState(false);
   const [confirmStep, setConfirmStep] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.team) {
       setTeamCode(profile.team.teamCode);
       setMemberCount(profile.team.memberCount);
+      setIsLeader(profile.team.isLeader);
       return;
     }
 
@@ -69,12 +73,14 @@ export function TeamCodeSection() {
     try {
       const res = await fetch(`${apiBaseUrl}/teams/convert-to-solo`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ user_id: session?.user?.id }),
       });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || "Failed to switch to solo");
+        throw new Error(errData.error || errData.message || "Failed to switch to solo");
       }
 
       // Clear team storage and mark solo
@@ -108,6 +114,41 @@ export function TeamCodeSection() {
     }
   };
 
+  const handleLeaveTeam = async () => {
+    if (!confirmLeave) {
+      setConfirmLeave(true);
+      return;
+    }
+
+    setIsLeaving(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${apiBaseUrl}/teams/leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ user_id: session?.user?.id }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || errData.message || "Failed to leave squad");
+      }
+
+      localStorage.removeItem("lasertag_active_team");
+      sessionStorage.removeItem("lasertag_active_team");
+
+      router.push("/select-mode");
+      router.refresh();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Leave error";
+      setError(msg);
+      setIsLeaving(false);
+      setConfirmLeave(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-between h-full py-2 sm:py-3 px-2 select-none">
       {/* Header: TEAM CODE */}
@@ -134,7 +175,10 @@ export function TeamCodeSection() {
           SCAN TO ENTER
         </span>
         <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-white p-1.5 rounded shadow-md border-2 border-black">
-          <QrCode className="w-full h-full" />
+          <QrCode
+            className="w-full h-full"
+            value={profile?.activeRegistration?.qrToken ?? profile?.qrToken ?? null}
+          />
         </div>
       </div>
 
@@ -164,7 +208,7 @@ export function TeamCodeSection() {
         </button>
 
         {/* Solo fallback button if only 1 member (leader) in team */}
-        {memberCount === 1 && (
+        {memberCount === 1 && isLeader && (
           <button
             type="button"
             disabled={isConverting}
@@ -180,6 +224,26 @@ export function TeamCodeSection() {
               : confirmStep
               ? "CONFIRM CONVERT"
               : "PLAY SOLO INSTEAD"}
+          </button>
+        )}
+
+        {/* Leave button for non-leaders or multi-member squads */}
+        {(memberCount > 1 || !isLeader) && (
+          <button
+            type="button"
+            disabled={isLeaving}
+            onClick={handleLeaveTeam}
+            className={`w-full py-1 sm:py-1.5 px-2 font-pixel text-[8px] sm:text-[9px] font-bold rounded border transition-all text-center cursor-pointer uppercase tracking-wider ${
+              confirmLeave
+                ? "bg-[#E5349E] text-white border-white animate-pulse"
+                : "bg-transparent text-white/70 border-white/30 hover:border-white/80 hover:text-white"
+            }`}
+          >
+            {isLeaving
+              ? "LEAVING..."
+              : confirmLeave
+              ? "CONFIRM LEAVE"
+              : "LEAVE SQUAD"}
           </button>
         )}
       </div>

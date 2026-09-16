@@ -20,22 +20,21 @@ export const participantPaths = {
       summary: "List bookable slots",
       tags: ["Slots"],
       security: [],
+      parameters: [
+        {
+          in: "query",
+          name: "limit",
+          required: false,
+          schema: { type: "integer", minimum: 1, maximum: 500, default: 200 },
+        },
+        {
+          in: "query",
+          name: "offset",
+          required: false,
+          schema: { type: "integer", minimum: 0, default: 0 },
+        },
+      ],
       responses: { 200: ok("All slots") },
-    },
-    post: {
-      summary: "Create a slot",
-      tags: ["Slots"],
-      security: [],
-      responses: { 201: ok("The created slot"), 400: responses.badRequest },
-    },
-  },
-  "/slots/{slot_id}": {
-    delete: {
-      summary: "Delete a slot",
-      tags: ["Slots"],
-      security: [],
-      parameters: [pathParam("slot_id", "slots.id")],
-      responses: { 200: ok("Slot deleted"), 404: responses.error("Slot not found") },
     },
   },
   "/slots/{slot_id}/reserve": {
@@ -108,6 +107,31 @@ export const participantPaths = {
       responses: { 200: ok("Invite"), 404: responses.error("Team not found") },
     },
   },
+  "/teams/leave": {
+    post: {
+      summary: "Leave your current team",
+      tags: ["Teams"],
+      security: [],
+      responses: {
+        200: ok("Left team"),
+        400: responses.badRequest,
+        404: responses.error("Not in a team"),
+      },
+    },
+  },
+  "/teams/convert-to-solo": {
+    post: {
+      summary: "Convert your own single-member team into a solo registration",
+      tags: ["Teams"],
+      security: [],
+      responses: {
+        200: ok("Converted to solo"),
+        400: responses.badRequest,
+        403: responses.forbidden,
+        404: responses.error("Not in a team"),
+      },
+    },
+  },
   "/teams/{team_id}/convert-to-solo": {
     post: {
       summary: "Convert a single-member team into a solo registration",
@@ -155,6 +179,18 @@ export const participantPaths = {
       tags: ["Users"],
       responses: {
         200: ok("User profile with active registration"),
+        401: responses.unauthorized,
+        404: responses.error("User not found"),
+      },
+    },
+  },
+  "/users/me/details": {
+    patch: {
+      summary: "Save onboarding details (name, phone, reg_number)",
+      tags: ["Users"],
+      responses: {
+        200: ok("Updated details"),
+        400: responses.badRequest,
         401: responses.unauthorized,
         404: responses.error("User not found"),
       },

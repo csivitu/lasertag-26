@@ -44,8 +44,28 @@ const envSchema = z.object({
     emptyToUndefined,
     z.url().default("http://localhost:3000"),
   ),
+  ADMIN_ORIGIN: z.preprocess(
+    emptyToUndefined,
+    z.url().default("http://localhost:3002"),
+  ),
   GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().optional()),
   GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
+  SUPER_ADMIN_EMAIL: z.preprocess(
+    emptyToUndefined,
+    z.string().default("superadmin@lasertag.local"),
+  ),
+  SUPER_ADMIN_PASSWORD: z.preprocess(
+    emptyToUndefined,
+    z.string().default("super30admin"),
+  ),
+  ADMIN_EMAIL: z.preprocess(
+    emptyToUndefined,
+    z.string().default("admin@lasertag.local"),
+  ),
+  ADMIN_PASSWORD: z.preprocess(
+    emptyToUndefined,
+    z.string().default("admin12345"),
+  ),
   SMTP_HOST: z.preprocess(
     emptyToUndefined,
     z.string().min(1).default("smtp.gmail.com"),

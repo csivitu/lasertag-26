@@ -51,6 +51,20 @@ export const getTeamMembersSchema = teamIdSchema;
 
 export const inviteTeamSchema = teamIdSchema;
 
+/**
+ * Self-service schemas: the team is derived from the caller's own
+ * membership, so no team_id is needed. Used by solo onboarding
+ * (auto-leave) and the profile leave/convert buttons.
+ */
+export const leaveTeamSchema = z.object({
+  body: z.object({
+    user_id: z.string().trim().min(1, "user_id is required in body."),
+  }),
+});
+
+export const convertMyTeamToSoloSchema = leaveTeamSchema;
+
 export type CreateTeamInput = z.infer<typeof createTeamSchema>["body"];
 export type JoinTeamInput = z.infer<typeof joinTeamSchema>["body"];
 export type ConvertToSoloInput = z.infer<typeof convertToSoloSchema>["body"];
+export type LeaveTeamInput = z.infer<typeof leaveTeamSchema>["body"];

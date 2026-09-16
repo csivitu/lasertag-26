@@ -12,7 +12,7 @@ export function PlayerInfoSection() {
   const playerName = profile?.name || session?.user?.name || "OPERATIVE";
   const playerEmail = profile?.email || session?.user?.email || "N/A";
   const playerPhone = profile?.phone || "N/A";
-  const regNo = profile?.activeRegistration?.id || "N/A";
+  const regNo = profile?.regNumber || "N/A";
 
   return (
     <div className="flex flex-col h-full py-4 px-3 sm:px-5 select-none">
