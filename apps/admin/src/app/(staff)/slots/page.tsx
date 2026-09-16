@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { getStaffRole, type StaffRole } from "@/lib/auth";
+import { usePoll } from "@/lib/use-poll";
 
 interface SlotItem {
   id: string;
@@ -17,6 +18,25 @@ const EVENT_DATES = [
   { label: "19th Sep", val: "2026-09-19" },
   { label: "20th Sep", val: "2026-09-20" },
 ];
+
+// Module-scope formatters: constructing Intl.DateTimeFormat per row per
+// render was a measurable cost on every poll re-render.
+const ARENA_TIME_ZONE = "Asia/Kolkata";
+const istDateKeyFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ARENA_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const istDateTimeFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: ARENA_TIME_ZONE,
+  dateStyle: "short",
+  timeStyle: "short",
+});
+const istTimeFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: ARENA_TIME_ZONE,
+  timeStyle: "short",
+});
 
 export default function SlotsPage() {
   const [slots, setSlots] = useState<SlotItem[]>([]);
@@ -47,9 +67,13 @@ export default function SlotsPage() {
   const [bulkEndTime, setBulkEndTime] = useState("18:00");
   const [slotDurationMins, setSlotDurationMins] = useState(30);
 
-  const fetchSlots = async () => {
-    setLoading(true);
-    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/admin/slots");
+  const fetchSlots = async (signal?: AbortSignal, silent = false) => {
+    if (!silent) setLoading(true);
+    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/admin/slots", {
+      ...(signal ? { signal } : {}),
+    });
+    // Aborted poll — leave existing state untouched.
+    if (signal?.aborted) return;
     if (res.success && res.data) {
       const list = Array.isArray(res.data)
         ? res.data
@@ -70,16 +94,19 @@ export default function SlotsPage() {
     } else {
       setSlots([]);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
+
+  // Background poll: silent, visible-tab only, aborted on unmount/overlap.
+  // Skipped while a mutation is in flight; mutations refetch explicitly.
+  const { refreshing, refreshNow } = usePoll(
+    (signal) => fetchSlots(signal, true),
+    { paused: submittingSingle || submittingBulk || deletingSelected },
+  );
 
   useEffect(() => {
     getStaffRole().then(setRole);
-    fetchSlots();
-    const interval = setInterval(() => {
-      fetchSlots();
-    }, 5000);
-    return () => clearInterval(interval);
+    void fetchSlots();
   }, []);
 
   // Auto-set single end time when start time or duration changes
@@ -103,7 +130,6 @@ export default function SlotsPage() {
   // IST is UTC+5:30 with no DST, so this offset is exact.
   // (The old helper suffixed Z onto IST wall time, storing 10:00 IST as
   // 10:00 UTC — which every IST display then showed as 3:30 PM.)
-  const ARENA_TIME_ZONE = "Asia/Kolkata";
   const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 
   const istToUtcIso = (dateStr: string, timeStr: string) => {
@@ -112,13 +138,7 @@ export default function SlotsPage() {
     return new Date(Date.UTC(y, mo - 1, d, h, mi) - IST_OFFSET_MS).toISOString();
   };
 
-  const istDateKey = (iso: string) =>
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: ARENA_TIME_ZONE,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date(iso));
+  const istDateKey = (iso: string) => istDateKeyFormat.format(new Date(iso));
 
   // Count slots for a specific date (for 100/day limit check)
   const getSlotCountForDate = (dateStr: string) => {
@@ -194,7 +214,7 @@ export default function SlotsPage() {
 
     if (res.success) {
       setSuccess("Slot created successfully.");
-      fetchSlots();
+      void fetchSlots(undefined, true);
     } else {
       setError(res.error || "Failed to create slot.");
     }
@@ -238,7 +258,7 @@ export default function SlotsPage() {
 
     if (res.success) {
       setSuccess(`Successfully generated ${generated.length} slots for ${bulkDate}!`);
-      fetchSlots();
+      void fetchSlots(undefined, true);
       setSubmittingBulk(false);
       return;
     }
@@ -281,7 +301,7 @@ export default function SlotsPage() {
 
     if (res.success) {
       setSuccess("Slot deleted successfully.");
-      fetchSlots();
+      void fetchSlots(undefined, true);
     } else {
       setError(res.error || "Failed to delete slot.");
     }
@@ -321,24 +341,35 @@ export default function SlotsPage() {
     setDeletingSelected(false);
   };
 
-  const slotList = Array.isArray(slots) ? slots : [];
-  const bulkPreview = getBulkSlotsPreview();
+  const slotList = useMemo(() => (Array.isArray(slots) ? slots : []), [slots]);
+  const bulkPreview = useMemo(
+    () => getBulkSlotsPreview(),
+    [slots, bulkDate, bulkStartTime, bulkEndTime, slotDurationMins],
+  );
 
   // Extract unique dates (IST calendar days)
-  const uniqueDates = Array.from(
-    new Set(
-      slotList
-        .map((s) => (s.startTime ? istDateKey(s.startTime) : null))
-        .filter((d): d is string => d !== null)
-    )
-  ).sort();
+  const uniqueDates = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          slotList
+            .map((s) => (s.startTime ? istDateKey(s.startTime) : null))
+            .filter((d): d is string => d !== null)
+        )
+      ).sort(),
+    [slotList],
+  );
 
   // Filtered slots
-  const filteredSlots = slotList.filter((s) => {
-    if (!filterDate) return true;
-    if (!s.startTime) return false;
-    return istDateKey(s.startTime) === filterDate;
-  });
+  const filteredSlots = useMemo(
+    () =>
+      slotList.filter((s) => {
+        if (!filterDate) return true;
+        if (!s.startTime) return false;
+        return istDateKey(s.startTime) === filterDate;
+      }),
+    [slotList, filterDate],
+  );
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -351,11 +382,11 @@ export default function SlotsPage() {
           </p>
         </div>
         <button
-          onClick={fetchSlots}
-          disabled={loading}
+          onClick={() => void refreshNow()}
+          disabled={loading || refreshing}
           className="flex items-center gap-2 px-3 py-1.5 bg-[#141417] border border-[#27272A] rounded-xl text-xs text-[#FAFAFA] hover:border-[#3F3F46] transition-all"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading || refreshing ? "animate-spin" : ""}`} />
           <span>Reload</span>
         </button>
       </div>
@@ -555,7 +586,7 @@ export default function SlotsPage() {
                       <div key={idx} className="flex justify-between border-b border-[#27272A] pb-1">
                         <span>Slot {idx + 1}:</span>
                         <span className="text-[#FAFAFA]">
-                          {item.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })} - {item.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
+                          {istTimeFormat.format(item.start)} - {istTimeFormat.format(item.end)}
                         </span>
                       </div>
                     ))}
@@ -697,18 +728,11 @@ export default function SlotsPage() {
             <div className="space-y-2.5">
               {filteredSlots.map((slot, idx) => {
                 const startFormatted = slot.startTime
-                  ? new Date(slot.startTime).toLocaleString("en-US", {
-                      timeZone: "Asia/Kolkata",
-                      dateStyle: "short",
-                      timeStyle: "short",
-                    })
+                  ? istDateTimeFormat.format(new Date(slot.startTime))
                   : "N/A";
 
                 const endFormatted = slot.endTime
-                  ? new Date(slot.endTime).toLocaleTimeString("en-US", {
-                      timeZone: "Asia/Kolkata",
-                      timeStyle: "short",
-                    })
+                  ? istTimeFormat.format(new Date(slot.endTime))
                   : "N/A";
 
                 return (
