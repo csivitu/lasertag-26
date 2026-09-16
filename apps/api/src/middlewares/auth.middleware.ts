@@ -2,6 +2,7 @@ import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 
 import { ForbiddenError, UnauthorizedError } from "../errors";
+import { staffSessionHeaders } from "../auth-cookies";
 
 export interface AuthenticatedUser {
   id: string;
@@ -80,6 +81,17 @@ const getSession: GetSession = async (args) => {
   return auth.api.getSession(args);
 };
 
+/**
+ * Staff session reader: same as getSession, but accepts the `staff.*` cookie
+ * namespace (translated back before better-auth sees it). Participant
+ * session cookies are invisible here, and vice versa — the two sessions
+ * cannot roam across apps even when sharing one cookie jar.
+ */
+const getStaffSession: GetSession = async (args) => {
+  const { auth } = await import("../auth");
+  return auth.api.getSession({ headers: staffSessionHeaders(args.headers) });
+};
+
 export const requireAuth = makeRequireAuth(getSession);
-export const requireAdmin = makeRequireAdmin(getSession);
-export const requireSuperAdmin = makeRequireSuperAdmin(getSession);
+export const requireAdmin = makeRequireAdmin(getStaffSession);
+export const requireSuperAdmin = makeRequireSuperAdmin(getStaffSession);
