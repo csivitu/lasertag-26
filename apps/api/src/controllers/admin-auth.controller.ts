@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 
 import { credentialQueries } from "../data/credentials";
 import { userQueries } from "../data/queries";
+import { toAuthCookieHeader, toStaffSetCookies } from "../auth-cookies";
 import { env } from "../env";
 import { UnauthorizedError } from "../errors";
 import { makeAdminAuthService } from "../services/adminAuth";
@@ -20,7 +21,9 @@ export const adminLogin = async (req: Request, res: Response) => {
         : null;
   if (!email) throw new UnauthorizedError("Invalid password");
   const { user, cookies } = await adminAuth.login(email, password);
-  cookies.forEach((cookie) => res.append("Set-Cookie", cookie));
+  // Staff session goes out under the staff.* namespace, isolated from
+  // participant sessions even in a shared cookie jar.
+  toStaffSetCookies(cookies).forEach((cookie) => res.append("Set-Cookie", cookie));
   res.json({ message: "Admin login successful", user });
 };
 
@@ -29,7 +32,7 @@ export const adminMe = async (req: Request, res: Response) => {
 };
 
 export const adminLogout = async (req: Request, res: Response) => {
-  const { cookies } = await adminAuth.logout(req.headers.cookie);
-  cookies.forEach((cookie) => res.append("Set-Cookie", cookie));
+  const { cookies } = await adminAuth.logout(toAuthCookieHeader(req.headers.cookie));
+  toStaffSetCookies(cookies).forEach((cookie) => res.append("Set-Cookie", cookie));
   res.json({ message: "Admin logout successful" });
 };
