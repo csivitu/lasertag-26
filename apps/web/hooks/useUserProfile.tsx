@@ -47,6 +47,7 @@ export interface UserProfileData {
   regNumber: string | null;
   paid: boolean;
   isCheckedIn: boolean;
+  qrToken: string | null;
   team: UserTeamData | null;
   activeRegistration: ActiveRegistrationData | null;
 }

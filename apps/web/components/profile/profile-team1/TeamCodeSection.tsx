@@ -175,7 +175,10 @@ export function TeamCodeSection() {
           SCAN TO ENTER
         </span>
         <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-white p-1.5 rounded shadow-md border-2 border-black">
-          <QrCode className="w-full h-full" />
+          <QrCode
+            className="w-full h-full"
+            value={profile?.activeRegistration?.qrToken ?? profile?.qrToken ?? null}
+          />
         </div>
       </div>
 

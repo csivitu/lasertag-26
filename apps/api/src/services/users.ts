@@ -17,6 +17,7 @@ export type UserProfileDto = {
   regNumber: string | null;
   paid: boolean;
   isCheckedIn: boolean;
+  qrToken: string | null;
   team: {
     teamCode: string;
     isLeader: boolean;
@@ -116,6 +117,7 @@ export const userService = {
       regNumber: user.regNumber ?? null,
       paid: user.paid,
       isCheckedIn: user.isCheckedIn,
+      qrToken: user.qrToken ?? null,
       team,
       activeRegistration: activeReg && slotDetails
         ? {
