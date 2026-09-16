@@ -342,16 +342,16 @@ export const registrationService = {
         slot: result.slot,
       };
     }
-    const updatedUser = await markUserCheckedIn(result.user.id);
+    const updatedBooking = await markUserCheckedIn(result.booking.id);
     return {
       alreadyCheckedIn: false,
       user: {
-        id: updatedUser.id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        checkedInAt: updatedUser.checkedInAt,
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        checkedInAt: updatedBooking.checkedInAt,
       },
-      booking: result.booking,
+      booking: updatedBooking,
       slot: result.slot,
     };
   },

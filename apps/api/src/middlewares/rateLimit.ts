@@ -8,7 +8,7 @@ type RateLimitOptions = {
 
 /**
  * Minimal in-memory sliding-window limiter. Single-process Map keyed by IP.
- * Good enough for one EC2 instance; use Redis if multi-instance.
+ * Good enough for one instance; use Redis if multi-instance.
  */
 function createRateLimiter({ windowMs, max, message }: RateLimitOptions) {
   const hits = new Map<string, number[]>();
