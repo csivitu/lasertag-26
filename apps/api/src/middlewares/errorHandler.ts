@@ -74,10 +74,29 @@ export function errorHandler(
     return;
   }
 
+  // The slot capacity-guard trigger (bookings_capacity_guard) rejects
+  // overfills and slot moves into full slots. The Neon HTTP driver surfaces
+  // Postgres RAISE as an Error whose `cause` is the NeonDbError (code P0001,
+  // `where` naming this function) — the human message text is dropped, so
+  // match the marker instead of the message. Same 409 clients get from the
+  // application-level full-slot check.
+  if (isCapacityGuardViolation(err)) {
+    res.status(409).json({ error: "Slot is full", code: "conflict" });
+    return;
+  }
+
   // Anything unrecognised is a bug. Log it server-side; never return the
   // message or stack, which on an admin API would leak schema and paths.
   console.error("[api] unhandled error", err);
   res.status(500).json({ error: "Internal server error", code: "internal_error" });
+}
+
+function isCapacityGuardViolation(err: unknown): boolean {
+  const cause = (err as { cause?: unknown } | null | undefined)?.cause as
+    | Record<string, unknown>
+    | undefined;
+  if (!cause) return false;
+  return cause.code === "P0001" && String(cause.where ?? "").includes("enforce_slot_capacity");
 }
 
 /**

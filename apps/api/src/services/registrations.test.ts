@@ -17,6 +17,7 @@ import * as queries from "../data/queries";
 
 type QueryMock<T extends (...args: never[]) => unknown> = T & {
   mockReset(): void;
+  mockResolvedValue(value: unknown): QueryMock<T>;
   mockResolvedValueOnce(value: unknown): QueryMock<T>;
   mockImplementationOnce(fn: T): QueryMock<T>;
 };
@@ -24,6 +25,8 @@ type QueryMock<T extends (...args: never[]) => unknown> = T & {
 mock.module("../data/queries", () => ({
   findSlotById: mock(),
   countActiveBookingsForSlot: mock(),
+  claimSlotSeat: mock(async () => true),
+  releaseSlotSeat: mock(async () => {}),
   findUserById: mock(),
   findActiveRegistrationForUser: mock(),
   createSoloRegistration: mock(),
@@ -38,6 +41,8 @@ const findSlotByIdMock = queries.findSlotById as QueryMock<typeof queries.findSl
 const countActiveBookingsForSlotMock = queries.countActiveBookingsForSlot as QueryMock<
   typeof queries.countActiveBookingsForSlot
 >;
+const claimSlotSeatMock = queries.claimSlotSeat as QueryMock<typeof queries.claimSlotSeat>;
+const releaseSlotSeatMock = queries.releaseSlotSeat as QueryMock<typeof queries.releaseSlotSeat>;
 const findUserByIdMock = queries.findUserById as QueryMock<typeof queries.findUserById>;
 const findActiveRegistrationForUserMock =
   queries.findActiveRegistrationForUser as QueryMock<
@@ -63,11 +68,13 @@ const markUserCheckedInMock = queries.markUserCheckedIn as QueryMock<
   typeof queries.markUserCheckedIn
 >;
 
-const m = { findSlotById: findSlotByIdMock, countActiveBookingsForSlot: countActiveBookingsForSlotMock, findUserById: findUserByIdMock, findActiveRegistrationForUser: findActiveRegistrationForUserMock, createSoloRegistration: createSoloRegistrationMock, findRegistrationWithUserAndSlot: findRegistrationWithUserAndSlotMock, confirmRegistration: confirmRegistrationMock, cancelRegistration: cancelRegistrationMock, findRegistrationForScan: findRegistrationForScanMock, markUserCheckedIn: markUserCheckedInMock };
+const m = { findSlotById: findSlotByIdMock, countActiveBookingsForSlot: countActiveBookingsForSlotMock, claimSlotSeat: claimSlotSeatMock, releaseSlotSeat: releaseSlotSeatMock, findUserById: findUserByIdMock, findActiveRegistrationForUser: findActiveRegistrationForUserMock, createSoloRegistration: createSoloRegistrationMock, findRegistrationWithUserAndSlot: findRegistrationWithUserAndSlotMock, confirmRegistration: confirmRegistrationMock, cancelRegistration: cancelRegistrationMock, findRegistrationForScan: findRegistrationForScanMock, markUserCheckedIn: markUserCheckedInMock };
 
 const queryMocks = [
   findSlotByIdMock,
   countActiveBookingsForSlotMock,
+  claimSlotSeatMock,
+  releaseSlotSeatMock,
   findUserByIdMock,
   findActiveRegistrationForUserMock,
   createSoloRegistrationMock,
@@ -83,6 +90,7 @@ const mockSlot = {
   startTime: new Date("2026-10-01T10:00:00Z"),
   endTime: new Date("2026-10-01T11:00:00Z"),
   capacity: 10,
+  totalCapacity: 10,
 };
 
 const mockUser = {
@@ -130,6 +138,8 @@ beforeEach(() => {
   for (const queryMock of queryMocks) {
     queryMock.mockReset();
   }
+  // mockReset wipes the factory default — seat claims succeed unless a test says otherwise.
+  claimSlotSeatMock.mockResolvedValue(true);
 });
 
 const row: RegistrationRow = {

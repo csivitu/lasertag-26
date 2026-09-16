@@ -1,15 +1,35 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
-import { eq, and, inArray, lt, gt } from "drizzle-orm";
+import { asc, eq, and, inArray, lt, gt } from "drizzle-orm";
 import QRCode from "qrcode";
 
+import { claimSlotSeat, releaseSlotSeat } from "../data/queries";
 import { HttpError as AppError } from "../errors";
 import { sendEmail, MAILER_CONFIG } from "../services/mailer";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
 
+/** Postgres unique-violation, unwrapped through driver error nesting. */
+function isUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; cause?: unknown };
+  if (e.code === "23505") return true;
+  return isUniqueViolation(e.cause ?? null);
+}
+
 export const slotController = {
-  async getAllSlots() {
-    const allSlots = await db.select().from(slots);
+  /**
+   * Bounded listing: chronological, capped at 500 rows. The table is tiny
+   * today, but an unbounded full-table scan is a free DoS primitive.
+   */
+  async getAllSlots(pagination?: { limit?: number; offset?: number }) {
+    const limit = Math.min(Math.max(pagination?.limit ?? 200, 1), 500);
+    const offset = Math.max(pagination?.offset ?? 0, 0);
+    const allSlots = await db
+      .select()
+      .from(slots)
+      .orderBy(asc(slots.startTime))
+      .limit(limit)
+      .offset(offset);
     return allSlots;
   },
 
@@ -200,22 +220,32 @@ export const slotController = {
         )
       );
 
+    // Claim one seat atomically BEFORE writing the booking. This single
+    // statement is the serialization point for concurrent requests: losers
+    // get zero rows back and fail here with 409 instead of overbooking.
+    // Same-slot re-books already hold a seat and skip the claim.
+    const prevBooking = existingActiveBookings[0];
+    const needsSeat = !prevBooking || prevBooking.slotId !== slot_id;
+    if (needsSeat) {
+      const claimed = await claimSlotSeat(slot_id);
+      if (!claimed) {
+        throw new AppError(409, "Selected slot is already fully booked.");
+      }
+    }
+
     let activeBooking;
 
-    if (existingActiveBookings.length > 0) {
-      const prevBooking = existingActiveBookings[0];
-      // If slot changed, restore 1 capacity to the old slot
-      if (prevBooking.slotId !== slot_id) {
-        const [prevSlot] = await db.select().from(slots).where(eq(slots.id, prevBooking.slotId));
-        if (prevSlot) {
-          await db
-            .update(slots)
-            .set({ capacity: prevSlot.capacity + 1 })
-            .where(eq(slots.id, prevBooking.slotId));
-        }
+    // Moves an existing active booking into the target slot. Shared by the
+    // normal path and the race-recovery path so both behave identically.
+    const moveBookingToSlot = async (
+      prev: typeof existingActiveBookings[number],
+    ) => {
+      // If slot changed, restore 1 capacity to the old slot (atomic).
+      if (prev.slotId !== slot_id) {
+        await releaseSlotSeat(prev.slotId);
       }
 
-      const qrToken = prevBooking.qrToken || `QR-${prevBooking.id}`;
+      const qrToken = prev.qrToken || `QR-${prev.id}`;
 
       const [updatedBooking] = await db
         .update(bookings)
@@ -228,30 +258,80 @@ export const slotController = {
           confirmedAt: new Date(),
           confirmationEmailSent: false,
         })
-        .where(eq(bookings.id, prevBooking.id))
+        .where(eq(bookings.id, prev.id))
         .returning();
 
-      activeBooking = updatedBooking;
-    } else {
-      const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-      const qrToken = `QR-${bookingId}`;
+      return updatedBooking;
+    };
 
-      const [newBooking] = await db
-        .insert(bookings)
-        .values({
-          id: bookingId,
-          type,
-          status: "confirmed",
-          userId: user_id,
-          teamCode: type === "team" ? (team_code ?? null) : null,
-          slotId: slot_id,
-          qrToken,
-          confirmedAt: new Date(),
-          confirmationEmailSent: false,
-        })
-        .returning();
+    // Heal: cancel duplicate active bookings beyond the first, freeing their
+    // seats, so one user can never hold two slots at once.
+    const healStrays = async (strays: typeof existingActiveBookings) => {
+      for (const stray of strays) {
+        await releaseSlotSeat(stray.slotId);
+        await db
+          .update(bookings)
+          .set({ status: "cancelled", cancelledAt: new Date() })
+          .where(eq(bookings.id, stray.id));
+      }
+    };
 
-      activeBooking = newBooking;
+    try {
+      if (prevBooking) {
+        await healStrays(existingActiveBookings.slice(1));
+        activeBooking = await moveBookingToSlot(prevBooking);
+      } else {
+        const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const qrToken = `QR-${bookingId}`;
+
+        const [newBooking] = await db
+          .insert(bookings)
+          .values({
+            id: bookingId,
+            type,
+            status: "confirmed",
+            userId: user_id,
+            teamCode: type === "team" ? (team_code ?? null) : null,
+            slotId: slot_id,
+            qrToken,
+            confirmedAt: new Date(),
+            confirmationEmailSent: false,
+          })
+          .returning();
+
+        activeBooking = newBooking;
+      }
+    } catch (err) {
+      if (!activeBooking && isUniqueViolation(err)) {
+        // Lost a race: a parallel request created the active booking first
+        // (one-active-per-user index). Move that row instead of duplicating;
+        // the seat claimed above becomes its seat, so it must not be released.
+        const rivals = await db
+          .select()
+          .from(bookings)
+          .where(
+            and(
+              eq(bookings.userId, user_id),
+              inArray(bookings.status, ["reserved", "confirmed"])
+            )
+          );
+        const winner = rivals[0];
+        if (winner) {
+          await healStrays(rivals.slice(1));
+          activeBooking = await moveBookingToSlot(winner);
+          if (winner.slotId === slot_id) {
+            // Same-slot double submit: the claimed seat is spare, give it back.
+            await releaseSlotSeat(slot_id);
+          }
+        }
+      }
+      if (!activeBooking) {
+        // Give the claimed seat back so a failed booking never leaks capacity.
+        if (needsSeat) {
+          await releaseSlotSeat(slot_id);
+        }
+        throw err;
+      }
     }
 
     const assignedQrToken = activeBooking.qrToken || `QR-${activeBooking.id}`;
@@ -262,15 +342,8 @@ export const slotController = {
       .set({ qrToken: assignedQrToken })
       .where(eq(user.id, user_id));
 
-    // Decrement new slot capacity
-    await db
-      .update(slots)
-      .set({
-        capacity: Math.max(0, targetSlot.capacity - 1),
-      })
-      .where(eq(slots.id, slot_id));
-
-    // Format slot date and time for confirmation email
+    // Format slot date and time for confirmation email (arena wall-clock: IST)
+    const IST = "Asia/Kolkata";
     const slotStartDate = new Date(targetSlot.startTime);
     const slotEndDate = new Date(targetSlot.endTime);
 
@@ -279,10 +352,16 @@ export const slotController = {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: IST,
     });
 
     const formatHour = (d: Date) =>
-      d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+      d.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: IST,
+      });
 
     const slotTimeStr = `${formatHour(slotStartDate)} - ${formatHour(slotEndDate)}`;
     const passUrl = `${process.env.WEB_ORIGIN || "http://localhost:3000"}/profile`;
