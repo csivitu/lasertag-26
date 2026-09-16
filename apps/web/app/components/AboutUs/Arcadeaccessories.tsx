@@ -6,7 +6,7 @@ const CASSETTE_SRC = "/about/cassette-bar.png";
 export default function ArcadeAccessories() {
     return (
         <div className={`${styles.cassetteWrap} select-none`}>
-            <Image src={CASSETTE_SRC} alt="" fill draggable={false} className={`${styles.fitImg} select-none`} />
+            <Image src={CASSETTE_SRC} alt="" fill draggable={false} sizes="(max-width: 1024px) 54vw, 320px" className={`${styles.fitImg} select-none`} />
         </div>
     );
 }

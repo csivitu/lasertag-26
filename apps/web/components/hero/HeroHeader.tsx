@@ -8,6 +8,7 @@ import { useState } from "react";
 import { HeroMenu } from "./HeroMenu";
 import { NavArrow } from "./NavArrow";
 import { useSession, signOut } from "@/lib/auth-client";
+import { readHasAccount } from "@/lib/auth-mode";
 import { playSound } from "@/lib/sound";
 
 // Defer the modal bundle off the landing critical path — only loaded on open.
@@ -27,7 +28,7 @@ export function HeroHeader() {
     playSound("navSelect", 0.7);
     if (link.label === "SIGN IN") {
       e.preventDefault();
-      setAuthMode("signin");
+      setAuthMode(readHasAccount() ? "signin" : "signup");
       setAuthOpen(true);
       return;
     }
@@ -129,7 +130,7 @@ export function HeroHeader() {
         links={navLinks}
         onNavClick={(label) => {
           if (label === "SIGN IN") {
-            setAuthMode("signin");
+            setAuthMode(readHasAccount() ? "signin" : "signup");
             setAuthOpen(true);
           } else if (label === "SIGN OUT") {
             signOut();

@@ -14,14 +14,15 @@ const DESIGN_HEIGHT = 900;
 export default function AboutUs() {
     const stageRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
-    const [isDesktop, setIsDesktop] = useState(
-        () =>
-            typeof window !== "undefined" &&
-            window.matchMedia("(min-width: 1024px)").matches
-    );
+    // Start false so the first client render matches the SSR HTML, then sync
+    // to the real viewport in the effect below. Reading matchMedia in the
+    // useState initializer diverges on desktop (SSR: false, client: true)
+    // and throws a hydration mismatch that regenerates the whole tree.
+    const [isDesktop, setIsDesktop] = useState(false);
 
     useEffect(() => {
         const mq = window.matchMedia("(min-width: 1024px)");
+        setIsDesktop(mq.matches);
         const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
         mq.addEventListener("change", onChange);
         return () => mq.removeEventListener("change", onChange);

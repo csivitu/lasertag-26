@@ -23,14 +23,15 @@ import {
 export function ArcadeScene() {
   // Desktop-only scene (parent hides it on mobile via CSS) — unmount the
   // canvas rAF loop + key listeners on mobile instead of hiding them.
-  const [isDesktop, setIsDesktop] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia('(min-width: 1024px)').matches
-  );
+  // Start false so the first client render matches the SSR HTML (null),
+  // then sync to the real viewport in the effect below. Reading matchMedia
+  // in the useState initializer diverges on desktop and throws a hydration
+  // mismatch that regenerates the whole tree.
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)');
+    setIsDesktop(mq.matches);
     const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
