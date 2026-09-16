@@ -104,14 +104,27 @@ export const teamQueries: TeamsDeps = {
 export const registrationQueries: RegistrationsDeps = {
   search: (filters): Promise<RegistrationRow[]> => {
     const conditions = [];
+    if (filters.type !== undefined) conditions.push(eq(bookings.type, filters.type));
     if (filters.reg_no !== undefined) conditions.push(eq(bookings.id, filters.reg_no));
     if (filters.name !== undefined) conditions.push(ilike(user.name, `%${filters.name}%`));
     if (filters.phone !== undefined)
       conditions.push(ilike(user.phNumber, `%${filters.phone}%`));
     if (filters.email !== undefined)
       conditions.push(ilike(user.email, `%${filters.email}%`));
+    if (filters.q !== undefined) {
+      const pattern = `%${filters.q}%`;
+      conditions.push(
+        or(
+          ilike(user.name, pattern),
+          ilike(user.phNumber, pattern),
+          ilike(user.email, pattern),
+          ilike(bookings.id, pattern),
+          ilike(user.regNumber, pattern),
+        ),
+      );
+    }
 
-    return db
+    const query = db
       .select({
         regNo: bookings.id,
         type: bookings.type,
@@ -128,7 +141,9 @@ export const registrationQueries: RegistrationsDeps = {
       })
       .from(bookings)
       .innerJoin(user, eq(bookings.userId, user.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .limit(filters.limit ?? 30);
+    return query;
   },
 };
 
