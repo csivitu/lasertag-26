@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { playSound } from '@/lib/sound';
 import {
   BULLET_HEIGHT,
@@ -129,6 +130,7 @@ function getInvaderColor(type: InvaderType): string {
 export function SpaceInvadersScreen() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   const [score, setScore] = useState<number>(INITIAL_SCORE);
   const [lives, setLives] = useState<number>(INITIAL_LIVES);
@@ -308,6 +310,14 @@ export function SpaceInvadersScreen() {
       vy: -BULLET_SPEED,
     });
   }, [resetGame]);
+
+  // Navigating away from home resets the game to attract state, so no
+  // mid-game state (or stray key listeners' effects) survives a route change.
+  useEffect(() => {
+    if (pathname !== '/') {
+      resetToIdle();
+    }
+  }, [pathname, resetToIdle]);
 
   // Handle external arcade controller clicks
   useEffect(() => {

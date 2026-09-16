@@ -8,11 +8,28 @@ const MAX_ENERGY = 5;
 export function SponsEnergy() {
   const [energy, setEnergy] = useState(4);
   const increasing = useRef(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const visibleRef = useRef(true);
 
   useEffect(() => {
-    // Skip ticks while the tab is hidden — value + direction preserved.
+    const el = wrapRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = entry.isIntersecting;
+      },
+      { threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Skip ticks while the tab is hidden or the widget is off-screen —
+    // value + direction preserved, animation resumes where it left off.
     const interval = setInterval(() => {
       if (typeof document !== "undefined" && document.hidden) return;
+      if (!visibleRef.current) return;
       setEnergy((current) => {
         if (current === MAX_ENERGY) {
           increasing.current = false;
@@ -32,7 +49,7 @@ export function SponsEnergy() {
   }, []);
 
   return (
-    <div className="flex select-none items-center">
+    <div ref={wrapRef} className="flex select-none items-center">
       <div className="relative size-[clamp(28px,4.1vw,59px)] shrink-0">
         <Image
           src="/spons/energy.svg"
