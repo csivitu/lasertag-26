@@ -57,36 +57,42 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
   // Confirmation modal state
   const [confirmationOpen, setConfirmationOpen] = useState(false);
 
-  // Synchronize player combat mode from local state or server profile
+  // Server profile wins over local state, so a stale browser cache can
+  // never disagree with the DB (e.g. ghost team blocking solo booking).
   const refreshMode = useCallback(() => {
-    try {
-      const mode =
-        sessionStorage.getItem("lasertag_selected_mode") ||
-        localStorage.getItem("lasertag_selected_mode");
-      const teamStr =
-        sessionStorage.getItem("lasertag_active_team") ||
-        localStorage.getItem("lasertag_active_team");
-      const soloStr =
-        sessionStorage.getItem("lasertag_onboarding_solo") ||
-        localStorage.getItem("lasertag_onboarding_solo");
+    const readLocal = (): boolean => {
+      try {
+        const mode =
+          sessionStorage.getItem("lasertag_selected_mode") ||
+          localStorage.getItem("lasertag_selected_mode");
+        const teamStr =
+          sessionStorage.getItem("lasertag_active_team") ||
+          localStorage.getItem("lasertag_active_team");
+        const soloStr =
+          sessionStorage.getItem("lasertag_onboarding_solo") ||
+          localStorage.getItem("lasertag_onboarding_solo");
 
-      if (teamStr) {
-        const parsed = JSON.parse(teamStr);
-        if (parsed?.teamCode) {
-          setSelectedMode("team");
-          setActiveTeam(parsed);
-          return;
+        if (teamStr) {
+          const parsed = JSON.parse(teamStr);
+          if (parsed?.teamCode) {
+            setSelectedMode("team");
+            setActiveTeam(parsed);
+            return true;
+          }
         }
-      }
 
-      if (mode === "solo" || soloStr) {
-        setSelectedMode("solo");
-        setActiveTeam(null);
-        return;
+        if (mode === "solo" || soloStr) {
+          setSelectedMode("solo");
+          setActiveTeam(null);
+          return true;
+        }
+      } catch {
+        // fall through to cleared state
       }
-    } catch {
-      // fallback
-    }
+      setSelectedMode(null);
+      setActiveTeam(null);
+      return false;
+    };
 
     if (session?.user) {
       fetch(`${apiBaseUrl}/users/me/profile`, { credentials: "include" })
@@ -103,17 +109,14 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
             setSelectedMode("solo");
             setActiveTeam(null);
           } else {
-            setSelectedMode(null);
-            setActiveTeam(null);
+            readLocal();
           }
         })
         .catch(() => {
-          setSelectedMode(null);
-          setActiveTeam(null);
+          readLocal();
         });
     } else {
-      setSelectedMode(null);
-      setActiveTeam(null);
+      readLocal();
     }
   }, [session]);
 

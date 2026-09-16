@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
-import { useSession } from "@/lib/auth-client";
+import { useSession, apiBaseUrl } from "@/lib/auth-client";
 
 interface SoloFormProps {
   onClose?: () => void;
@@ -55,6 +55,28 @@ export function SoloForm({ onClose }: SoloFormProps) {
     setStatus("submitting");
 
     try {
+      // Leave any server-side team first so the DB agrees with solo mode.
+      // 404 = not in a team, safe to ignore.
+      if (session?.user?.id) {
+        let leaveRes: Response;
+        try {
+          leaveRes = await fetch(`${apiBaseUrl}/teams/leave`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ user_id: session.user.id }),
+          });
+        } catch {
+          throw new Error("Could not reach the server. Check connection and retry.");
+        }
+        if (!leaveRes.ok && leaveRes.status !== 404) {
+          const errBody = await leaveRes.json().catch(() => ({}));
+          throw new Error(
+            errBody.error || "Could not leave your current team. Leave it from your profile first."
+          );
+        }
+      }
+
       // Store registration data in localStorage and sessionStorage for the subsequent slot booking step
       const soloPayload = {
         fullName: fullName.trim(),

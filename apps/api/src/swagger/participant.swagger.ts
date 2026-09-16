@@ -22,21 +22,6 @@ export const participantPaths = {
       security: [],
       responses: { 200: ok("All slots") },
     },
-    post: {
-      summary: "Create a slot",
-      tags: ["Slots"],
-      security: [],
-      responses: { 201: ok("The created slot"), 400: responses.badRequest },
-    },
-  },
-  "/slots/{slot_id}": {
-    delete: {
-      summary: "Delete a slot",
-      tags: ["Slots"],
-      security: [],
-      parameters: [pathParam("slot_id", "slots.id")],
-      responses: { 200: ok("Slot deleted"), 404: responses.error("Slot not found") },
-    },
   },
   "/slots/{slot_id}/reserve": {
     post: {
@@ -106,6 +91,31 @@ export const participantPaths = {
       security: [],
       parameters: [pathParam("team_id", "teams.team_code")],
       responses: { 200: ok("Invite"), 404: responses.error("Team not found") },
+    },
+  },
+  "/teams/leave": {
+    post: {
+      summary: "Leave your current team",
+      tags: ["Teams"],
+      security: [],
+      responses: {
+        200: ok("Left team"),
+        400: responses.badRequest,
+        404: responses.error("Not in a team"),
+      },
+    },
+  },
+  "/teams/convert-to-solo": {
+    post: {
+      summary: "Convert your own single-member team into a solo registration",
+      tags: ["Teams"],
+      security: [],
+      responses: {
+        200: ok("Converted to solo"),
+        400: responses.badRequest,
+        403: responses.forbidden,
+        404: responses.error("Not in a team"),
+      },
     },
   },
   "/teams/{team_id}/convert-to-solo": {

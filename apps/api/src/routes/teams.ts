@@ -8,6 +8,8 @@ import {
   getTeamMembersSchema,
   inviteTeamSchema,
   convertToSoloSchema,
+  leaveTeamSchema,
+  convertMyTeamToSoloSchema,
 } from "../validations/team.validation";
 import { teamController } from "../controllers/team.controller";
 
@@ -84,6 +86,32 @@ publicTeamsRouter.post(
     const result = await teamController.generateInvite(req.params.team_id);
     res.status(200).json({
       success: true,
+      data: result,
+    });
+  })
+);
+
+publicTeamsRouter.post(
+  "/leave",
+  validateRequest(leaveTeamSchema),
+  asyncHandler(async (req: Request<unknown, unknown, { user_id: string }>, res: Response): Promise<void> => {
+    const result = await teamController.leaveTeam(req.body.user_id);
+    res.status(200).json({
+      success: true,
+      message: "Left team successfully.",
+      data: result,
+    });
+  })
+);
+
+publicTeamsRouter.post(
+  "/convert-to-solo",
+  validateRequest(convertMyTeamToSoloSchema),
+  asyncHandler(async (req: Request<unknown, unknown, { user_id: string }>, res: Response): Promise<void> => {
+    const result = await teamController.convertMyTeamToSolo(req.body.user_id);
+    res.status(200).json({
+      success: true,
+      message: "Team converted to solo mode successfully.",
       data: result,
     });
   })
