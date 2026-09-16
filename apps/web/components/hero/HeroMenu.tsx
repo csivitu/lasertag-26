@@ -71,6 +71,8 @@ export function HeroMenu({
                     if (targetId) {
                       history.pushState(null, "", `#${targetId}`);
                     }
+                  } else {
+                    e.preventDefault();
                   }
                 }
               }}

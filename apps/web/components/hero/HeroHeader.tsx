@@ -39,7 +39,7 @@ export function HeroHeader() {
     if (link.href.startsWith("/#") || link.href.startsWith("#")) {
       if (pathname !== "/") {
         e.preventDefault();
-        router.push("/" + link.href.replace(/^#/, ""));
+        router.push(link.href.startsWith("#") ? `/${link.href}` : link.href);
       } else {
         // Same-page anchor: instant scroll without smooth-scroll fighting
         const targetId = link.href.replace(/^\/?#/, "");
