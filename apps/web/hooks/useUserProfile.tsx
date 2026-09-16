@@ -44,6 +44,7 @@ export interface UserProfileData {
   name: string;
   email: string;
   phone: string | null;
+  regNumber: string | null;
   paid: boolean;
   isCheckedIn: boolean;
   team: UserTeamData | null;

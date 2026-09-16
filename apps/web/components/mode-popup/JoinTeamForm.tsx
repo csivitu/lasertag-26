@@ -7,6 +7,7 @@ import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
 import { INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
 import { useSession, apiBaseUrl } from "@/lib/auth-client";
+import { saveOnboardingDetails } from "@/lib/onboarding-details";
 
 const labelStyle: CSSProperties = {
   fontFamily: "var(--ft-pixel), monospace",
@@ -118,6 +119,13 @@ export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || data.message || "Failed to join team in arena database");
       }
+
+      const detailsError = await saveOnboardingDetails({
+        fullName,
+        phoneNumber,
+        registrationNumber,
+      });
+      if (detailsError) throw new Error(detailsError);
 
       const teamPayload = {
         teamCode: cleanCode,

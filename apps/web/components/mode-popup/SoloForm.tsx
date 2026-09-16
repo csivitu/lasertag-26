@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
 import { useSession, apiBaseUrl } from "@/lib/auth-client";
+import { saveOnboardingDetails } from "@/lib/onboarding-details";
 
 interface SoloFormProps {
   onClose?: () => void;
@@ -75,6 +76,16 @@ export function SoloForm({ onClose }: SoloFormProps) {
             errBody.error || "Could not leave your current team. Leave it from your profile first."
           );
         }
+      }
+
+      // Persist name/phone/reg-number to the DB row (signed-in only).
+      if (session?.user?.id) {
+        const detailsError = await saveOnboardingDetails({
+          fullName,
+          phoneNumber,
+          registrationNumber,
+        });
+        if (detailsError) throw new Error(detailsError);
       }
 
       // Store registration data in localStorage and sessionStorage for the subsequent slot booking step

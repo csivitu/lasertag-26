@@ -19,7 +19,7 @@ export function PlayerPassTicket() {
   const playerName = profile?.name || session?.user?.name || "OPERATIVE";
   const playerEmail = profile?.email || session?.user?.email || "N/A";
   const playerPhone = profile?.phone || "N/A";
-  const regNo = profile?.activeRegistration?.id || "N/A";
+  const regNo = profile?.regNumber || "N/A";
   const rawDate = profile?.activeRegistration?.slot?.slotDate;
   const rawTime = profile?.activeRegistration?.slot?.slotTime;
 
