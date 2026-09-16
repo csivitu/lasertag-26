@@ -1,4 +1,8 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Same-origin: the browser talks only to the admin host, and Next rewrites
+// /api/* through to the real API server-side. This keeps session cookies
+// first-party — cross-origin fetch (admin :3002 -> api :3001) silently drops
+// SameSite=Lax cookies, which made logins bounce forever despite 200s.
+const API_BASE_URL = "/api";
 
 export async function apiFetch<T>(
   endpoint: string,

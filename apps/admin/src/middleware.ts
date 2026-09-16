@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+// Server-side address (runtime env). The browser never calls this host
+// directly anymore — it goes same-origin through /api/* (see next.config).
+const API_BASE =
+  process.env.ADMIN_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 /**
  * Password-gates every admin page server-side, before any HTML renders.
@@ -27,6 +30,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except /login, Next internals, and static/file requests.
-  matcher: ["/((?!login|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  // Everything except the API proxy, /login, Next internals, and static files.
+  // /api/* must pass through untouched: middleware runs BEFORE rewrites, so
+  // gating it here would redirect API calls (POST /api/... replays as POST
+  // /login -> 405) instead of proxying them.
+  matcher: ["/((?!api|login|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };
