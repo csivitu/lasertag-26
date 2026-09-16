@@ -10,6 +10,8 @@ interface PassDetailItemProps {
   labelColor?: string;
   valueColor?: string;
   multiline?: boolean;
+  /** Wrap long values (e.g. email) instead of truncating with ellipsis. */
+  wrap?: boolean;
 }
 
 export function PassDetailItem({
@@ -20,6 +22,7 @@ export function PassDetailItem({
   labelColor = "#00F0FF",
   valueColor = "#FFFFFF",
   multiline = false,
+  wrap = false,
 }: PassDetailItemProps) {
   const isMulti = multiline || value.includes("\n");
 
@@ -42,7 +45,9 @@ export function PassDetailItem({
           className={`font-pixel tracking-wider uppercase select-text ${
             isMulti
               ? "whitespace-pre-line leading-[1.25] break-words text-[10px] sm:text-[11.5px]"
-              : "truncate text-[11px] sm:text-[13px]"
+              : wrap
+                ? "whitespace-normal leading-[1.4] break-all text-[11px] sm:text-[13px]"
+                : "truncate text-[11px] sm:text-[13px]"
           }`}
           style={{ color: valueColor, textShadow: "0 0 8px rgba(255,255,255,0.2)" }}
           title={value}

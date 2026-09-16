@@ -8,6 +8,7 @@ import { PlayerPassStubLeft } from "./PlayerPassStubLeft";
 import { PlayerPassDetails } from "./PlayerPassDetails";
 import { PlayerPassStubRight } from "./PlayerPassStubRight";
 import { PassDetailItem } from "../shared/PassDetailItem";
+import { EditablePlayerName } from "./EditablePlayerName";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useSession } from "@/lib/auth-client";
 import { formatPassDate, formatPassTime } from "@/lib/formatPassDateTime";
@@ -34,15 +35,12 @@ export function PlayerPassTicket() {
       <div className="lg:hidden relative w-full max-w-sm mx-auto border-[3px] border-[#FEDC02] rounded-[1.5rem] bg-[#0b0b10] flex flex-col shadow-2xl">
         {/* Details Section */}
         <div className="flex flex-col gap-4 px-4 pt-8 pb-6 w-full">
-          <PassDetailItem
-            icon="/profile/profile-solo/playericon.svg"
-            label="PLAYER"
-            value={playerName}
-          />
+          <EditablePlayerName value={playerName} />
           <PassDetailItem
             icon="/profile/profile-solo/email.svg"
             label="EMAIL ID"
             value={playerEmail}
+            wrap
           />
           <PassDetailItem
             icon="/profile/profile-solo/regno.svg"
