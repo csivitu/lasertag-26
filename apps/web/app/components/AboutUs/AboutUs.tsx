@@ -14,18 +14,37 @@ const DESIGN_HEIGHT = 900;
 export default function AboutUs() {
     const stageRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
+    const [isDesktop, setIsDesktop] = useState(
+        () =>
+            typeof window !== "undefined" &&
+            window.matchMedia("(min-width: 1024px)").matches
+    );
+
+    useEffect(() => {
+        const mq = window.matchMedia("(min-width: 1024px)");
+        const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+        mq.addEventListener("change", onChange);
+        return () => mq.removeEventListener("change", onChange);
+    }, []);
 
     useEffect(() => {
         const el = stageRef.current;
         if (!el) return;
 
+        let lastScale = 0;
         function updateScale() {
             const el2 = stageRef.current;
             if (!el2) return;
             const width = el2.clientWidth;
             const height = el2.clientHeight;
             const nextScale = Math.min(width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
-            setScale(nextScale > 0 ? nextScale : 1);
+            // Round + skip no-op updates — RO fires continuously during
+            // scroll-snap tweens, and each setState was a full re-render.
+            const rounded = Math.round(nextScale * 1000) / 1000;
+            if (rounded > 0 && Math.abs(rounded - lastScale) > 0.001) {
+                lastScale = rounded;
+                setScale(rounded);
+            }
         }
 
         updateScale();
@@ -41,8 +60,8 @@ export default function AboutUs() {
 
     return (
         <section id="about" className={styles.section} ref={stageRef}>
-            {/* Desktop View (>= 1024px): 1440x900 proportional canvas fitting 100vh with static arcade row at bottom */}
-            <div className="hidden lg:contents">
+            {/* Desktop View (>= 1024px): single-mounted, mobile tree not in DOM. */}
+            {isDesktop ? (
                 <div
                     className={styles.stageFrame}
                     style={{
@@ -72,25 +91,26 @@ export default function AboutUs() {
                         <Pacman />
                     </div>
                 </div>
-            </div>
-
-            {/* Mobile View (< 1024px): Fluid responsive column with playable arcade runway */}
-            <div className={styles.mobileContainer}>
-                <AboutUsHeader />
-                <div className={styles.contentGrid}>
-                    <AboutUsLeftDisc />
-                    <div className={styles.pacmanHint}>
-                        <p>
-                            tap pacman to play
-                        </p>
+            ) : (
+                /* Mobile View (< 1024px): desktop canvas not in DOM — halves
+                   video/Pacman/image instances decoded. */
+                <div className={styles.mobileContainer}>
+                    <AboutUsHeader />
+                    <div className={styles.contentGrid}>
+                        <AboutUsLeftDisc />
+                        <div className={styles.pacmanHint}>
+                            <p>
+                                tap pacman to play
+                            </p>
+                        </div>
+                        <div className={styles.mediaWrap}>
+                            <AboutUsVid />
+                            <ArcadeAccessories />
+                        </div>
                     </div>
-                    <div className={styles.mediaWrap}>
-                        <AboutUsVid />
-                        <ArcadeAccessories />
-                    </div>
+                    <Pacman isMobile />
                 </div>
-                <Pacman isMobile />
-            </div>
+            )}
         </section>
     );
 }

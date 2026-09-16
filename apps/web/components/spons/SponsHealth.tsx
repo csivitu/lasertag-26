@@ -10,7 +10,9 @@ export function SponsHealth() {
   const increasing = useRef(true);
 
   useEffect(() => {
+    // Skip ticks while the tab is hidden — value + direction preserved.
     const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       setHealth((current) => {
         if (current === MAX_HEALTH) {
           increasing.current = false;

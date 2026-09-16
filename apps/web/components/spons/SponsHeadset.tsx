@@ -22,7 +22,7 @@ export function SponsHeadset() {
         height={691}
         draggable={false}
         className="relative z-10 h-auto w-full select-none"
-        priority
+        loading="lazy"
       />
 
       {/* TOP — hover only over middle section */}

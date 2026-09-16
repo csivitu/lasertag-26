@@ -10,7 +10,7 @@ export function FaqSideArt({ isJumping = false, isActive = false }: FaqSideArtPr
         <div className="relative h-full w-full">
             <div className="absolute bottom-0 right-[3%] hidden w-[clamp(300px,34vw,560px)] lg:right-[5%] lg:block xl:right-[8%]">
                 <Image
-                    src="/faq/building.png"
+                    src="/faq/building.webp"
                     alt="Niceland arcade building"
                     width={637}
                     height={820}

@@ -10,7 +10,9 @@ export function SponsEnergy() {
   const increasing = useRef(false);
 
   useEffect(() => {
+    // Skip ticks while the tab is hidden — value + direction preserved.
     const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       setEnergy((current) => {
         if (current === MAX_ENERGY) {
           increasing.current = false;

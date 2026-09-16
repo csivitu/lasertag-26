@@ -243,14 +243,16 @@
 
 @keyframes pew-pew-typewriter {
   from {
-    width: 0ch;
+    clip-path: inset(0 100% 0 0);
   }
   to {
-    width: 7.5ch;
+    clip-path: inset(0 0 0 0);
   }
 }
 
 .pew-pew-typewriter {
+  width: 7.5ch;
+  clip-path: inset(0 100% 0 0);
   animation: pew-pew-typewriter 0.9s steps(7, jump-none) forwards;
 }
 
@@ -262,6 +264,7 @@
   }
   .pew-pew-typewriter {
     width: 7.5ch !important;
+    clip-path: none !important;
   }
   .cursor-blink {
     opacity: 1 !important;

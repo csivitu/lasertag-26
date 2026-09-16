@@ -27,10 +27,10 @@ const MOBILE_GHOST_OFFSETS = [14, 28];
 const MOBILE_GHOST_HUNT_POSITIONS = [42, 78];
 
 const GHOST_DATA = [
-    { id: 0, src: "/about/ghost-1.png", alt: "Blinky" },
-    { id: 1, src: "/about/ghost-2.png", alt: "Inky" },
-    { id: 2, src: "/about/ghost-3.png", alt: "Pinky" },
-    { id: 3, src: "/about/ghost-4.png", alt: "Clyde" },
+    { id: 0, src: "/about/ghost-1.webp", alt: "Blinky" },
+    { id: 1, src: "/about/ghost-2.webp", alt: "Inky" },
+    { id: 2, src: "/about/ghost-3.webp", alt: "Pinky" },
+    { id: 3, src: "/about/ghost-4.webp", alt: "Clyde" },
 ];
 
 function createInitialDots(isMobile: boolean) {
@@ -393,7 +393,8 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
                         fill
                         draggable={false}
                         className={`${styles.fitImg} select-none`}
-                        priority
+                        loading="lazy"
+                        sizes="66px"
                     />
                 </div>
             </div>
@@ -420,7 +421,8 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
                         fill
                         draggable={false}
                         className={`${styles.fitImg} select-none`}
-                        priority
+                        loading="lazy"
+                        sizes="66px"
                     />
                 </div>
             ))}

@@ -382,6 +382,12 @@ export function SpaceInvadersScreen() {
     let animationFrameId: number;
 
     const gameLoop = () => {
+      // Hidden tab: keep the rAF chain + all ref state alive, skip the
+      // update/draw work (no paint, no sounds, no setState). Nothing resets.
+      if (typeof document !== 'undefined' && document.hidden) {
+        animationFrameId = requestAnimationFrame(gameLoop);
+        return;
+      }
       const now = performance.now();
       const status = gameStatusRef.current;
       const player = playerRef.current;

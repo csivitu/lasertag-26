@@ -45,7 +45,7 @@ export function HeroMenu({
       {open && (
         <nav
           aria-label="Primary"
-          className="absolute left-5 right-5 top-[76px] z-30 flex flex-col overflow-hidden rounded-md border border-white/15 bg-[#0d0d14]/95 backdrop-blur-sm sm:left-8 sm:right-8 sm:top-[88px]"
+          className="absolute left-5 right-5 top-[76px] z-30 flex flex-col overflow-hidden rounded-md border border-white/15 bg-[#0d0d14] sm:left-8 sm:right-8 sm:top-[88px]"
         >
           {links.map((link) => (
             <a

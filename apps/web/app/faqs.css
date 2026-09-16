@@ -164,23 +164,24 @@
     background: currentColor;
 }
 
-/* ── Dot glow pulse (box-shadow, no clip-path) ── */
+/* ── Dot glow pulse (opacity only — box-shadow animation forced a repaint
+   every frame while open; same pulsing feel, composited) ── */
 @keyframes glow-pink {
-    0%, 100% { box-shadow: 0 0 8px -2px #e5349e, 0 0 20px -4px #e5349e44; }
-    50%      { box-shadow: 0 0 18px -2px #e5349e, 0 0 36px -4px #e5349e66; }
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
 }
 @keyframes glow-yellow {
-    0%, 100% { box-shadow: 0 0 8px -2px #fec414, 0 0 20px -4px #fec41444; }
-    50%      { box-shadow: 0 0 18px -2px #fec414, 0 0 36px -4px #fec41466; }
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
 }
 @keyframes glow-cyan {
-    0%, 100% { box-shadow: 0 0 8px -2px #23eff1, 0 0 20px -4px #23eff144; }
-    50%      { box-shadow: 0 0 18px -2px #23eff1, 0 0 36px -4px #23eff166; }
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
 }
 
-.faq-dot--open[data-color="pink"]   { animation: glow-pink   1.8s ease-in-out infinite; }
-.faq-dot--open[data-color="yellow"] { animation: glow-yellow  1.8s ease-in-out infinite; }
-.faq-dot--open[data-color="cyan"]   { animation: glow-cyan   1.8s ease-in-out infinite; }
+.faq-dot--open[data-color="pink"]   { box-shadow: 0 0 12px -2px #e5349e, 0 0 28px -4px #e5349e66; animation: glow-pink   1.8s ease-in-out infinite; }
+.faq-dot--open[data-color="yellow"] { box-shadow: 0 0 12px -2px #fec414, 0 0 28px -4px #fec41466; animation: glow-yellow  1.8s ease-in-out infinite; }
+.faq-dot--open[data-color="cyan"]   { box-shadow: 0 0 12px -2px #23eff1, 0 0 28px -4px #23eff166; animation: glow-cyan   1.8s ease-in-out infinite; }
 
 /* ── Ralph bounce ── */
 @keyframes ralph-bounce {

@@ -22,7 +22,22 @@ export const SOUNDS = {
 export type SoundKey = keyof typeof SOUNDS;
 
 const audioPool: Partial<Record<SoundKey, HTMLAudioElement[]>> = {};
-const POOL_SIZE = 6;
+// Small pools — overlapping same-sound playback beyond 3 is inaudible.
+const POOL_SIZE = 3;
+
+// Landing-critical sounds warmed on first interaction; the rest lazy-load
+// on first actual play (playSound creates its pool on demand).
+const WARM_SOUNDS: SoundKey[] = [
+  "navHover",
+  "navSelect",
+  "buttonClick",
+  "ralphJump",
+  "invaderShoot",
+  "invaderBlast",
+  "playerHit",
+  "waveCleared",
+  "gameOver",
+];
 
 export function playSound(key: SoundKey, volume = 0.4) {
   if (typeof window === "undefined") return;
@@ -48,7 +63,7 @@ export function playSound(key: SoundKey, volume = 0.4) {
 
 export function preloadSounds() {
   if (typeof window === "undefined") return;
-  (Object.keys(SOUNDS) as SoundKey[]).forEach((key) => {
+  WARM_SOUNDS.forEach((key) => {
     if (!audioPool[key]) {
       audioPool[key] = Array.from({ length: POOL_SIZE }, () => {
         const audio = new Audio(SOUNDS[key]);

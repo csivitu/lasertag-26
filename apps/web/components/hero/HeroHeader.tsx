@@ -2,13 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { HeroMenu } from "./HeroMenu";
 import { NavArrow } from "./NavArrow";
-import { AuthModal } from "../auth/AuthModal";
 import { useSession, signOut } from "@/lib/auth-client";
 import { playSound } from "@/lib/sound";
+
+// Defer the modal bundle off the landing critical path — only loaded on open.
+const AuthModal = dynamic(
+  () => import("../auth/AuthModal").then((m) => m.AuthModal),
+  { ssr: false }
+);
 
 export function HeroHeader() {
   const { data: session } = useSession();
@@ -43,7 +49,13 @@ export function HeroHeader() {
             : document.getElementById(targetId);
         if (targetElement) {
           e.preventDefault();
-          targetElement.scrollIntoView({ behavior: "instant" });
+          // Kill any in-flight section-snap tween so it doesn't fight this jump.
+          import("gsap").then(({ gsap }) => {
+            gsap.killTweensOf(window);
+            targetElement.scrollIntoView({ behavior: "instant" });
+          }).catch(() => {
+            targetElement.scrollIntoView({ behavior: "instant" });
+          });
           if (targetId) {
             history.pushState(null, "", `#${targetId}`);
           } else {

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { SpaceInvadersScreen } from './arcade/SpaceInvadersScreen';
 import {
   SCREEN_HEIGHT_PERCENT,
@@ -21,6 +21,21 @@ import {
  * - Height: 541 (541 / 645.37 = 83.8279%)
  */
 export function ArcadeScene() {
+  // Desktop-only scene (parent hides it on mobile via CSS) — unmount the
+  // canvas rAF loop + key listeners on mobile instead of hiding them.
+  const [isDesktop, setIsDesktop] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(min-width: 1024px)').matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   const handleControllerYellowClick = useCallback(() => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
@@ -37,6 +52,8 @@ export function ArcadeScene() {
     }
   }, []);
 
+  if (!isDesktop) return null;
+
   return (
     <div
       className="relative aspect-[621/645.37] max-h-full max-w-full select-none"
@@ -50,7 +67,7 @@ export function ArcadeScene() {
             src="/guidelines/arcade-monitor.svg"
             alt="LaserTag Arcade Computer"
             fill
-            priority
+            loading="lazy"
             sizes="560px"
             draggable={false}
             className="select-none"
