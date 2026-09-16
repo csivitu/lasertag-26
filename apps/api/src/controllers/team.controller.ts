@@ -91,7 +91,7 @@ export const teamController = {
       const memberIdSet = new Set<string>([t.leaderId, ...membersList.map((m) => m.id)]);
 
       const teamBookings = allBookings
-        .filter((b) => b.teamCode === t.teamCode || memberIdSet.has(b.userId))
+        .filter((b) => b.teamCode === t.teamCode || (!b.teamCode && memberIdSet.has(b.userId)))
         .map((b) => ({
           id: b.id,
           type: b.type,
