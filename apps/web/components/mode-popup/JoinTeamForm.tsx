@@ -38,10 +38,10 @@ const inputStyle: CSSProperties = {
 };
 
 interface JoinTeamFormProps {
-  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
+export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [fullName, setFullName] = useState("");
@@ -134,13 +134,6 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
 
       setStatus("success");
-      window.setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push("/profile");
-        }
-      }, 700);
     } catch (err: unknown) {
       setStatus("idle");
       const msg = err instanceof Error ? err.message : "Failed to join team";
@@ -184,20 +177,36 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
 
       {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
       {status === "success" && (
-        <p className="mode-popup-form-success" role="status">
-          Joined team {teamCode.trim().toUpperCase()}! Loading operative pass...
-        </p>
+        <div className="flex flex-col items-center gap-3 pt-1 text-center" role="status">
+          <p className="font-pixel text-[13px] tracking-[0.1em] text-[#FEDC02]">
+            JOINED {teamCode.trim().toUpperCase()}
+          </p>
+          <PixelButton
+            label="PROCEED TO SLOT BOOKING →"
+            onClick={() => router.push("/slot-booking")}
+            labelClassName="text-[12px] lg:text-[14px]"
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer font-pixel text-[11px] tracking-[0.1em] text-white/60 transition-colors hover:text-white"
+          >
+            ← PICK DIFFERENT
+          </button>
+        </div>
       )}
 
-      <div style={{ marginTop: "4px", display: "flex", justifyContent: "center" }}>
-        <PixelButton
-          type="submit"
-          label={status === "submitting" ? "JOINING..." : status === "success" ? "JOINED" : "JOIN TEAM"}
-          interaction="simple"
-          labelClassName="text-[12px] lg:text-[14px]"
-          disabled={status === "submitting" || status === "success"}
-        />
-      </div>
+      {status !== "success" && (
+        <div style={{ marginTop: "4px", display: "flex", justifyContent: "center" }}>
+          <PixelButton
+            type="submit"
+            label={status === "submitting" ? "JOINING..." : "JOIN TEAM"}
+            interaction="simple"
+            labelClassName="text-[12px] lg:text-[14px]"
+            disabled={status === "submitting"}
+          />
+        </div>
+      )}
     </form>
   );
 }

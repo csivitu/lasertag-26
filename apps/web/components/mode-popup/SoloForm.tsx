@@ -7,10 +7,10 @@ import { PixelButton } from "../hero/PixelButton";
 import { useSession } from "@/lib/auth-client";
 
 interface SoloFormProps {
-  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export function SoloForm({ onSuccess }: SoloFormProps) {
+export function SoloForm({ onClose }: SoloFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -74,13 +74,6 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
       sessionStorage.setItem("lasertag_onboarding_solo", JSON.stringify(soloPayload));
 
       setStatus("success");
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push("/slot-booking");
-        }
-      }, 600);
     } catch (err: unknown) {
       setStatus("idle");
       const message = err instanceof Error ? err.message : "Failed to proceed to slot booking.";
@@ -103,18 +96,34 @@ export function SoloForm({ onSuccess }: SoloFormProps) {
       />
       {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
       {status === "success" && (
-        <p className="mode-popup-form-success" role="status">
-          Profile recorded! Proceeding to slot booking arena...
-        </p>
+        <div className="flex flex-col items-center gap-3 pt-1 text-center" role="status">
+          <p className="font-pixel text-[13px] tracking-[0.1em] text-[#FEDC02]">
+            SOLO LOCKED IN
+          </p>
+          <PixelButton
+            label="PROCEED TO SLOT BOOKING →"
+            onClick={() => router.push("/slot-booking")}
+            labelClassName="text-[12px] lg:text-[14px]"
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer font-pixel text-[11px] tracking-[0.1em] text-white/60 transition-colors hover:text-white"
+          >
+            ← PICK DIFFERENT
+          </button>
+        </div>
       )}
-      <div style={{ marginTop: "4px", display: "flex", justifyContent: "center" }}>
-        <PixelButton
-          type="submit"
-          label={status === "submitting" ? "RECORDING..." : "CONFIRM PROFILE"}
-          labelClassName="text-[12px] lg:text-[14px]"
-          disabled={status === "submitting"}
-        />
-      </div>
+      {status !== "success" && (
+        <div style={{ marginTop: "4px", display: "flex", justifyContent: "center" }}>
+          <PixelButton
+            type="submit"
+            label={status === "submitting" ? "RECORDING..." : "CONFIRM PROFILE"}
+            labelClassName="text-[12px] lg:text-[14px]"
+            disabled={status === "submitting"}
+          />
+        </div>
+      )}
     </form>
   );
 }

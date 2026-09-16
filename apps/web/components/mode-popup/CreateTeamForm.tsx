@@ -46,10 +46,10 @@ function generateCode(): string {
 }
 
 interface CreateTeamFormProps {
-  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
+export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [fullName, setFullName] = useState("");
@@ -158,13 +158,6 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       sessionStorage.setItem("lasertag_active_team", JSON.stringify(teamPayload));
 
       setStatus("success");
-      window.setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          router.push("/slot-booking");
-        }
-      }, 700);
     } catch (err: unknown) {
       setStatus("idle");
       const msg = err instanceof Error ? err.message : "Failed to create team";
@@ -203,12 +196,26 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             autoComplete="off"
           />
         </div>
-        {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
-        {status === "success" && (
-          <p className="mode-popup-form-success" role="status">
-            Team created! Share code <strong>{teamCode}</strong> with your teammates.
+      {error && <p className="mode-popup-form-error" role="alert">{error}</p>}
+      {status === "success" && (
+        <div className="flex flex-col items-center gap-3 pt-1 text-center" role="status">
+          <p className="font-pixel text-[13px] tracking-[0.1em] text-[#FEDC02]">
+            TEAM CREATED
           </p>
-        )}
+          <PixelButton
+            label="PROCEED TO SLOT BOOKING →"
+            onClick={() => router.push("/slot-booking")}
+            labelClassName="text-[12px] lg:text-[14px]"
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer font-pixel text-[11px] tracking-[0.1em] text-white/60 transition-colors hover:text-white"
+          >
+            ← PICK DIFFERENT
+          </button>
+        </div>
+      )}
       </div>
 
       {/* Team Code row: pink code badge + Create Team button */}
@@ -271,16 +278,18 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
           </div>
         </div>
 
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-          <PixelButton
-            type="submit"
-            label={status === "submitting" ? "CREATING..." : status === "success" ? "CREATED" : "CREATE TEAM"}
-            interaction="simple"
-            className="w-[240px]"
+        {status !== "success" && (
+          <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+            <PixelButton
+              type="submit"
+              label={status === "submitting" ? "CREATING..." : "CREATE TEAM"}
+              interaction="simple"
+              className="w-[240px]"
             labelClassName="text-[12px] lg:text-[14px]"
-            disabled={status === "submitting" || status === "success"}
-          />
-        </div>
+            disabled={status === "submitting"}
+            />
+          </div>
+        )}
       </div>
     </form>
   );

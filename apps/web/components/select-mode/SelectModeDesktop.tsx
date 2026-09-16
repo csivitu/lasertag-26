@@ -9,9 +9,10 @@ import type { PopupMode } from "../mode-popup/ModePopup";
 
 interface SelectModeDesktopProps {
   onSelect: (mode: PopupMode) => void;
+  currentModeNote?: string | null;
 }
 
-export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) { 
+export function SelectModeDesktop({ onSelect, currentModeNote }: SelectModeDesktopProps) { 
   return ( 
     <section 
       className="relative hidden min-h-[100svh] overflow-hidden bg-[#08080d] lg:flex lg:flex-col justify-between font-pixel pt-[2vh] pb-8 select-none"
@@ -34,6 +35,11 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
             className="w-full h-auto" 
           /> 
         </div> 
+        {currentModeNote && (
+          <p className="-mt-6 mb-6 font-pixel text-[10px] tracking-[0.2em] text-white/50">
+            {currentModeNote}
+          </p>
+        )}
  
         {/* Selection Row */}
         <div className="flex flex-row items-center justify-center gap-6 w-full max-w-6xl xl:gap-12"> 

@@ -8,9 +8,10 @@ import type { PopupMode } from "../mode-popup/ModePopup";
 
 interface SelectModeMobileProps {
   onSelect: (mode: PopupMode) => void;
+  currentModeNote?: string | null;
 }
 
-export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
+export function SelectModeMobile({ onSelect, currentModeNote }: SelectModeMobileProps) {
   return (
     <section
       className="relative flex min-h-[100svh] flex-col overflow-hidden bg-[#08080d] lg:hidden font-pixel pb-10 select-none"
@@ -34,6 +35,11 @@ export function SelectModeMobile({ onSelect }: SelectModeMobileProps) {
             className="w-full h-auto"
           />
         </div>
+        {currentModeNote && (
+          <p className="-mt-3 font-pixel text-[10px] tracking-[0.2em] text-white/50">
+            {currentModeNote}
+          </p>
+        )}
 
         {/* Selection Column */}
         <div className="flex flex-col items-center justify-center gap-6 w-full max-w-md">
