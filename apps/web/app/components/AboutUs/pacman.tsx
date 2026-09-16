@@ -139,7 +139,7 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
             osc.frequency.setValueAtTime(freq, now);
 
             // Short, crisp arcade blip with quick decay (80% volume)
-            gain.gain.setValueAtTime(0.14, now);
+            gain.gain.setValueAtTime(0.2, now);
             gain.gain.exponentialRampToValueAtTime(0.004, now + 0.055);
 
             osc.connect(gain);
@@ -160,7 +160,7 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
                 osc.type = "square";
                 const start = now + idx * 0.06;
                 osc.frequency.setValueAtTime(freq, start);
-                gain.gain.setValueAtTime(0.16, start);
+                gain.gain.setValueAtTime(0.22, start);
                 gain.gain.exponentialRampToValueAtTime(0.008, start + 0.06);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
@@ -185,7 +185,7 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
             filter.type = "lowpass";
             filter.frequency.setValueAtTime(2400, now);
 
-            gain.gain.setValueAtTime(0.24, now);
+            gain.gain.setValueAtTime(0.34, now);
             gain.gain.exponentialRampToValueAtTime(0.008, now + 0.38);
 
             osc.connect(filter);
@@ -207,7 +207,7 @@ export default function Pacman({ isMobile = false }: { isMobile?: boolean }) {
                 osc.type = "triangle";
                 const start = now + idx * 0.09;
                 osc.frequency.setValueAtTime(freq, start);
-                gain.gain.setValueAtTime(0.14, start);
+                gain.gain.setValueAtTime(0.2, start);
                 gain.gain.exponentialRampToValueAtTime(0.008, start + 0.12);
                 osc.connect(gain);
                 gain.connect(ctx.destination);

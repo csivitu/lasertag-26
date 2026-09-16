@@ -21,7 +21,7 @@ export default function TextUpperRight() {
       <button
         type="button"
         data-testid="cta-placeholder-box"
-        onClick={() => playSound("buttonClick", 0.5)}
+        onClick={() => playSound("buttonClick", 0.7)}
         className="btn-book-now group relative block aspect-[305/87] h-auto w-[185px] max-w-full cursor-pointer sm:w-[250px]"
         aria-label="Book Now"
       >

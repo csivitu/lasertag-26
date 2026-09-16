@@ -23,7 +23,7 @@ export function HeroGun() {
   useEffect(() => {
     const audio = new Audio("/hero/laser-shoot.wav");
     audio.preload = "auto";
-    audio.volume = 0.6;
+    audio.volume = 0.84;
     audioRef.current = audio;
     return () => {
       audioRef.current = null;

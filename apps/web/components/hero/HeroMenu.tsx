@@ -22,7 +22,7 @@ export function HeroMenu({
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         onClick={() => {
-          playSound("buttonClick", 0.4);
+          playSound("buttonClick", 0.56);
           setOpen((o) => !o);
         }}
         className="relative flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-[6px] rounded-sm outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent"
@@ -52,7 +52,7 @@ export function HeroMenu({
               key={link.label}
               href={link.href}
               onClick={(e) => {
-                playSound("navSelect", 0.5);
+                playSound("navSelect", 0.7);
                 if (link.label === "SIGN IN" || link.label === "SIGN OUT") {
                   e.preventDefault();
                 }

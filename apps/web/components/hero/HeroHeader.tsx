@@ -24,7 +24,7 @@ export function HeroHeader() {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
 
   function handleNavClick(e: React.MouseEvent, link: { label: string; href: string }) {
-    playSound("navSelect", 0.5);
+    playSound("navSelect", 0.7);
     if (link.label === "SIGN IN") {
       e.preventDefault();
       setAuthMode("signin");
@@ -110,7 +110,7 @@ export function HeroHeader() {
           <Link
             key={link.label}
             href={link.href}
-            onMouseEnter={() => playSound("navHover", 0.4)}
+            onMouseEnter={() => playSound("navHover", 0.56)}
             onClick={(e) => handleNavClick(e, link)}
             className="group relative inline-flex items-center whitespace-nowrap font-pixel leading-[1.338] tracking-[0.1em] text-white outline-offset-4 transition-colors duration-150 hover:text-accent focus-visible:text-accent focus-visible:outline-2 focus-visible:outline-accent motion-reduce:transition-none"
           >

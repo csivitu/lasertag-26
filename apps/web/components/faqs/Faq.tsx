@@ -15,7 +15,7 @@ export function Faq() {
     const jumpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleToggle = useCallback(() => {
-        playSound("ralphJump", 0.4);
+        playSound("ralphJump", 0.56);
         setIsJumping(true);
         if (jumpTimer.current) clearTimeout(jumpTimer.current);
         jumpTimer.current = setTimeout(() => setIsJumping(false), 700);

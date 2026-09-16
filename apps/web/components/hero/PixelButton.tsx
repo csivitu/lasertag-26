@@ -117,7 +117,7 @@ export function PixelButton({
     e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>,
   ) => {
     if (sound) {
-      playSound(sound, 0.5);
+      playSound(sound, 0.7);
     }
     onClick?.(e);
   };
