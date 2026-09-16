@@ -10,10 +10,12 @@ import {
   // DEPRECATED: team feature disabled — re-add Users to restore Teams nav.
   // Users,
   Search,
+  UserSearch,
 } from "lucide-react";
 
 const NAV_MAIN = [
   { name: "Overview", href: "/analytics", icon: LayoutDashboard },
+  { name: "Solo Users", href: "/users", icon: UserSearch },
   { name: "Slot Manager", href: "/slots", icon: CalendarDays },
   { name: "Check-In Station", href: "/checkin", icon: QrCode },
   // DEPRECATED: team feature disabled — uncomment to restore.
