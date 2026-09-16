@@ -20,7 +20,7 @@ export function Hero() {
       <div className="relative z-10 row-start-2 flex flex-col items-center px-5 pt-24 sm:px-8 sm:pt-28 lg:col-start-2 lg:row-start-2 lg:justify-center lg:px-0 lg:pr-[var(--hero-gutter)] lg:pt-0 lg:-translate-x-[10vw]">
         <HeroTitle />
         <HeroTagline />
-        <div className="mt-4 w-[clamp(210px,53vw,340px)] lg:mt-[7vh] lg:w-[min(25vw,350px)]">
+        <div className="mt-6 w-[clamp(200px,48vw,320px)] lg:mt-[7vh] lg:w-[min(25vw,350px)]">
           <RegisterButton />
         </div>
       </div>

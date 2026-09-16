@@ -4,6 +4,7 @@
 import React from "react";
 import { Starfield } from "../hero/Starfield"; 
 import { HeroHeader } from "../hero/HeroHeader";
+import { PlayerCountLabel } from "./PlayerCountLabel";
 import type { PopupMode } from "../mode-popup/ModePopup";
 
 interface SelectModeDesktopProps {
@@ -13,7 +14,8 @@ interface SelectModeDesktopProps {
 export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) { 
   return ( 
     <section 
-      className="relative hidden min-h-[100svh] overflow-hidden bg-[#08080d] lg:flex lg:flex-col justify-between font-pixel pb-8 select-none" 
+      className="relative hidden min-h-[100svh] overflow-hidden bg-[#08080d] lg:flex lg:flex-col justify-between font-pixel pt-[2vh] pb-8 select-none"
+      onDragStart={(e) => e.preventDefault()}
     > 
       {/* Background Decor */}
       <Starfield /> 
@@ -33,11 +35,12 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
           /> 
         </div> 
  
-        {/* Selection Row */} 
-        <div className="flex flex-row items-center justify-center gap-12 w-full max-w-6xl"> 
+        {/* Selection Row — panels share space fluidly instead of fixed
+            450px each (which overflowed below ~1280px and squeezed solo) */}
+        <div className="flex flex-row items-center justify-center gap-6 w-full max-w-6xl xl:gap-12"> 
            
           {/* SOLO PANEL */} 
-          <div className="relative flex flex-col items-center justify-center w-[450px] aspect-square p-12 group cursor-pointer"> 
+          <div className="relative flex min-w-0 flex-1 flex-col items-center justify-center w-full max-w-[450px] aspect-square p-8 xl:p-12 group cursor-pointer"> 
             {/* Box Background */} 
             <img  
               src="/select-mode/select-mode-solo/solo-box.svg"  
@@ -77,11 +80,8 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
                 /> 
               </div> 
  
-              {/* 1 Player */} 
-              <div className="flex items-center gap-3 mt-1"> 
-                <img src="/select-mode/select-mode-solo/icon.svg" alt="" className="h-8 w-auto" /> 
-                <span className="text-[#f5d506] text-xl uppercase tracking-widest"></span> 
-              </div> 
+              {/* 1 Player */}
+              <PlayerCountLabel text="1 PLAYER" />
  
               {/* Join Button */} 
               <button
@@ -115,7 +115,7 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
           </div> 
  
           {/* TEAM PANEL */} 
-          <div className="relative flex flex-col items-center justify-center w-[450px] aspect-square p-12 group cursor-pointer"> 
+          <div className="relative flex min-w-0 flex-1 flex-col items-center justify-center w-full max-w-[450px] aspect-square p-8 xl:p-12 group cursor-pointer"> 
             {/* Box Background */} 
             <img  
               src="/select-mode/select-mode-team/team-box.svg"  
@@ -137,12 +137,12 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
  
             {/* Content Container */} 
             <div className="relative z-10 flex flex-col items-center gap-6 mt-4"> 
-              {/* Team Avatars */} 
-              <div className="flex flex-row items-end justify-center gap-0 h-32 mb-4 transition-transform duration-300 group-hover:-translate-y-2"> 
-                <img src="/select-mode/select-mode-team/blue-guy.svg" alt="" className="h-[90%] w-auto -mr-3" /> 
-                <img src="/select-mode/select-mode-team/purple-guy.svg" alt="" className="h-[90%] w-auto z-10" /> 
-                <img src="/select-mode/select-mode-team/yellow-guy.svg" alt="" className="h-[90%] w-auto z-10" /> 
-                <img src="/select-mode/select-mode-team/pink-guy.svg" alt="" className="h-[90%] w-auto -ml-1" /> 
+              {/* Team Avatars — three in a peak: outer two low, middle high.
+                  Same row box as solo (h-40 mb-2) so both cards align. */}
+              <div className="flex flex-row items-end justify-center gap-0 h-40 mb-2 transition-transform duration-300 group-hover:-translate-y-2"> 
+                <img src="/select-mode/select-mode-team/blue-guy.svg" alt="" className="h-[85%] w-auto -mr-7" /> 
+                <img src="/select-mode/select-mode-team/yellow-guy.svg" alt="" className="h-[85%] w-auto z-10 -translate-y-4" /> 
+                <img src="/select-mode/select-mode-team/pink-guy.svg" alt="" className="h-[85%] w-auto -ml-7" /> 
               </div> 
  
               {/* TEAM text */} 
@@ -154,13 +154,11 @@ export function SelectModeDesktop({ onSelect }: SelectModeDesktopProps) {
                 /> 
               </div> 
  
-              {/* 5 Players */} 
-              <div className="mt-1 w-40"> 
-                <img src="/select-mode/select-mode-team/no-of-players.svg" alt="5 Players" className="w-full h-auto" /> 
-              </div> 
- 
-              {/* Create/Join Team Buttons */} 
-              <div className="relative w-[400px] max-w-full mt-4 transition-transform duration-200 active:scale-95"> 
+              {/* MAX 5 PLAYERS — same shared label as solo */}
+              <PlayerCountLabel text="MAX 5 PLAYERS" />
+
+              {/* Create/Join Team Buttons */}
+              <div className="relative w-[400px] max-w-full mt-2 transition-transform duration-200 active:scale-95"> 
                 <img  
                   src="/select-mode/select-mode-team/create-join-team.svg"  
                   alt="Create or Join Team"  

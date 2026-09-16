@@ -306,7 +306,7 @@
 
 .hero-wordmark {
   font-family: var(--font-logo);
-  font-size: clamp(4.2rem, 22vw, 7.4rem);
+  font-size: clamp(4.2rem, 19vw, 7.4rem);
   font-weight: 200;
   line-height: 0.62;
   letter-spacing: -0.027em;
