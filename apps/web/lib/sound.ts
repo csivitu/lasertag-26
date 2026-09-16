@@ -24,6 +24,11 @@ export type SoundKey = keyof typeof SOUNDS;
 const audioPool: Partial<Record<SoundKey, HTMLAudioElement[]>> = {};
 const POOL_SIZE = 3;
 
+// Throttle rapid hover sweeps across nav links — restarting the pool entry
+// on every mouseenter is wasted work and sounds glitchy. Hover sounds only.
+const HOVER_THROTTLE_MS = 90;
+const lastPlay: Partial<Record<SoundKey, number>> = {};
+
 const WARM_SOUNDS: SoundKey[] = [
   "navHover",
   "navSelect",
@@ -39,6 +44,12 @@ const WARM_SOUNDS: SoundKey[] = [
 export function playSound(key: SoundKey, volume = 0.4) {
   if (typeof window === "undefined") return;
   try {
+    // Drop repeat hover triggers fired faster than the throttle window.
+    if (key === "navHover") {
+      const now = performance.now();
+      if (now - (lastPlay[key] ?? 0) < HOVER_THROTTLE_MS) return;
+      lastPlay[key] = now;
+    }
     const src = SOUNDS[key];
     if (!audioPool[key]) {
       audioPool[key] = Array.from({ length: POOL_SIZE }, () => {
@@ -71,7 +82,9 @@ export function preloadSounds() {
   });
 }
 
-// Auto-unlock and prime the audio system on the very first interaction anywhere on the page
+// Auto-unlock and prime the audio system on the very first interaction anywhere on the page.
+// Includes pointerover/pointermove so mouse-only users warm the pool on first
+// hover instead of paying fetch+decode cost inside the first navHover play.
 if (typeof window !== "undefined") {
   const unlock = () => {
     preloadSounds();
@@ -85,10 +98,14 @@ if (typeof window !== "undefined") {
     window.removeEventListener("pointerdown", unlock, true);
     window.removeEventListener("keydown", unlock, true);
     window.removeEventListener("touchstart", unlock, true);
+    window.removeEventListener("pointerover", unlock, true);
+    window.removeEventListener("pointermove", unlock, true);
   };
 
   window.addEventListener("pointerdown", unlock, { once: true, capture: true });
   window.addEventListener("keydown", unlock, { once: true, capture: true });
   window.addEventListener("touchstart", unlock, { once: true, capture: true });
+  window.addEventListener("pointerover", unlock, { once: true, capture: true });
+  window.addEventListener("pointermove", unlock, { once: true, capture: true });
 }
 
