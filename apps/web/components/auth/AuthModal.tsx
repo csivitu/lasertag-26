@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { signIn, signUp } from "@/lib/auth-client";
+import { markHasAccount } from "@/lib/auth-mode";
 import { PixelButton } from "@/components/hero/PixelButton";
+import { NavArrow } from "@/components/hero/NavArrow";
 import {
   INPUT_BORDER_SVG,
   MODAL_BORDER_SVG,
@@ -92,12 +94,20 @@ export function AuthModal({
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
+  useEffect(() => {
+    if (isOpen) {
+      setTab(initialMode);
+      setErrorMsg("");
+    }
+  }, [isOpen, initialMode]);
+
   if (!isOpen) return null;
 
   async function handleGoogleAuth() {
     setErrorMsg("");
     setStatus("loading");
     try {
+      markHasAccount();
       await signIn.social({
         provider: "google",
         callbackURL: window.location.origin,
@@ -176,6 +186,7 @@ export function AuthModal({
       }
 
       setStatus("idle");
+      markHasAccount();
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: unknown) {
@@ -197,7 +208,8 @@ export function AuthModal({
       aria-label="Account Authentication"
     >
       <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
-        {/* Header Tabs */}
+        {/* Header Tabs — same select animation as the navbar
+            (arrow marker + nudge), but silent: no sounds in the modal. */}
         <div className="flex justify-center gap-4 mb-4 border-b border-[#333] pb-3">
           <button
             type="button"
@@ -205,12 +217,18 @@ export function AuthModal({
               setTab("signup");
               setErrorMsg("");
             }}
-            className={`font-mono text-xs tracking-wider uppercase px-3 py-1.5 transition-colors ${
+            className={`group relative inline-flex items-center font-pixel text-[11px] tracking-[0.1em] uppercase px-3 py-1.5 transition-colors ${
               tab === "signup"
-                ? "text-[#FEDC02] border-b-2 border-[#FEDC02] font-bold"
-                : "text-zinc-400 hover:text-white"
+                ? "text-[#FEDC02]"
+                : "text-zinc-400 hover:text-accent"
             }`}
           >
+            <span
+              aria-hidden
+              className="nav-arrow-marker pointer-events-none absolute right-full top-1/2 mr-[0.5em] -mt-[0.625em] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+            >
+              <NavArrow />
+            </span>
             CREATE ACCOUNT
           </button>
           <button
@@ -219,28 +237,31 @@ export function AuthModal({
               setTab("signin");
               setErrorMsg("");
             }}
-            className={`font-mono text-xs tracking-wider uppercase px-3 py-1.5 transition-colors ${
+            className={`group relative inline-flex items-center font-pixel text-[11px] tracking-[0.1em] uppercase px-3 py-1.5 transition-colors ${
               tab === "signin"
-                ? "text-[#00F0FF] border-b-2 border-[#00F0FF] font-bold"
-                : "text-zinc-400 hover:text-white"
+                ? "text-[#FEDC02]"
+                : "text-zinc-400 hover:text-accent"
             }`}
           >
+            <span
+              aria-hidden
+              className="nav-arrow-marker pointer-events-none absolute right-full top-1/2 mr-[0.5em] -mt-[0.625em] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+            >
+              <NavArrow />
+            </span>
             SIGN IN
           </button>
         </div>
 
-        <h2 style={titleStyle}>
-          {tab === "signup" ? "PLAYER REGISTRATION" : "PLAYER SIGN IN"}
-        </h2>
-
-        {/* Google OAuth Button */}
+        {/* Google OAuth Button — arcade style: bold theme type, big logo,
+            short label, flat (no glow/shine). */}
         <div className="mb-4">
           <button
             type="button"
             onClick={handleGoogleAuth}
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 rounded border border-white/20 bg-white/5 hover:bg-white/10 transition-colors text-white font-mono text-xs tracking-wider cursor-pointer"
+            className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded border border-white/25 bg-white/10 hover:bg-white/15 transition-colors text-white font-body font-bold text-base tracking-[0.08em] cursor-pointer"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -263,8 +284,8 @@ export function AuthModal({
 
           <div className="flex items-center my-3">
             <div className="flex-1 border-t border-white/15" />
-            <span className="px-2 text-zinc-500 font-mono text-[10px] tracking-widest">
-              OR WITH EMAIL
+            <span className="px-2 text-zinc font-mono text-sm tracking-widest">
+              OR
             </span>
             <div className="flex-1 border-t border-white/15" />
           </div>
