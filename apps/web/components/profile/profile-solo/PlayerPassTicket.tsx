@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { QrCode } from "./QrCode";
+import { PixelButton } from "@/components/hero/PixelButton";
 import { PlayerPassStubLeft } from "./PlayerPassStubLeft";
 import { PlayerPassDetails } from "./PlayerPassDetails";
 import { PlayerPassStubRight } from "./PlayerPassStubRight";
@@ -79,14 +80,18 @@ export function PlayerPassTicket() {
           <div className="relative p-2 sm:p-2.5 bg-white rounded-md shadow-lg border-2 border-black">
             <QrCode className="w-32 h-32" value={qrToken} />
           </div>
-          <button
-            type="button"
-            onClick={() => router.push("/slot-booking")}
-            className="w-full max-w-[180px] py-2.5 px-4 bg-[#f949cc] hover:bg-[#ff5be2] active:translate-y-[1px] text-white text-[11px] font-bold rounded-full border-[3px] border-[#ff7beb] shadow-[0_4px_0_#9c187d] transition-all uppercase tracking-wider text-center cursor-pointer"
-            style={{ fontFamily: "var(--font-pixel), monospace" }}
-          >
-            CHANGE SLOT
-          </button>
+          <div className="flex w-full max-w-[180px] flex-col items-center gap-1.5">
+            <PixelButton
+              label="CHANGE SLOT"
+              onClick={() => router.push("/slot-booking")}
+              interaction="hero"
+              className="w-full"
+              labelClassName="text-[11px] cursor-pointer"
+            />
+            <p className="font-pixel text-[8px] tracking-wider text-white/50 uppercase text-center leading-relaxed">
+              (Max 3 slot changes allowed)
+            </p>
+          </div>
         </div>
       </div>
 

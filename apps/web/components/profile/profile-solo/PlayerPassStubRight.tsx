@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { QrCode } from "./QrCode";
+import { PixelButton } from "@/components/hero/PixelButton";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 export function PlayerPassStubRight() {
@@ -25,14 +26,18 @@ export function PlayerPassStubRight() {
       </div>
 
       {/* CHANGE SLOT Button */}
-      <button
-        type="button"
-        onClick={() => router.push("/slot-booking")}
-        className="w-full max-w-[170px] py-2 px-3 bg-[#f949cc] hover:bg-[#ff5be2] active:translate-y-[1px] translate-x-6 text-white text-[10px] sm:text-[11px] font-bold rounded-full border-2 border-[#ff7beb] shadow-[0_3px_0_#9c187d] transition-all uppercase tracking-wider text-center cursor-pointer"
-        style={{ fontFamily: "var(--font-pixel), monospace" }}
-      >
-        CHANGE SLOT
-      </button>
+      <div className="flex w-full max-w-[170px] flex-col items-center gap-1.5 translate-x-6">
+        <PixelButton
+          label="CHANGE SLOT"
+          onClick={() => router.push("/slot-booking")}
+          interaction="hero"
+          className="w-full"
+          labelClassName="text-[10px] sm:text-[11px] cursor-pointer"
+        />
+        <p className="font-pixel text-[8px] tracking-wider text-white/50 uppercase text-center leading-relaxed">
+          (Max 3 slot changes allowed)
+        </p>
+      </div>
     </div>
   );
 }
