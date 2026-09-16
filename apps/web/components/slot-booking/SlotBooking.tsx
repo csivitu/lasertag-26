@@ -256,7 +256,9 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       // so say so plainly instead of surfacing the raw DB message.
       const msg = /slot is full|fully booked/i.test(raw)
         ? "THAT SLOT JUST FILLED — PLEASE PICK ANOTHER SLOT."
-        : raw;
+        : /slot change limit/i.test(raw)
+          ? "YOU HAVE USED ALL 3 SLOT CHANGES — PLEASE CONTACT US FOR HELP."
+          : raw;
       setReserveError(msg);
     } finally {
       setIsReserving(false);
@@ -309,6 +311,12 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
               ? `${booking.day}${getOrdinalSuffix(booking.day)} ${booking.month.toUpperCase()} ${booking.time}`
               : "SELECT A TIME SLOT"}
           </span>
+          {profile?.activeRegistration && (
+            <span className="slot-current-label" style={{ marginTop: "4px" }}>
+              SLOT CHANGES LEFT:{" "}
+              {Math.max(0, 3 - (profile.activeRegistration.slotChangeCount ?? 0))}/3
+            </span>
+          )}
         </div>
       </div>
 

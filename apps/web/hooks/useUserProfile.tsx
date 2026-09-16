@@ -29,6 +29,7 @@ export interface ActiveRegistrationData {
   qrToken: string | null;
   confirmedAt: string | null;
   cancelledAt: string | null;
+  slotChangeCount: number;
   slot: {
     id: string;
     startTime: string;

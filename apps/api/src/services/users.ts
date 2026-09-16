@@ -43,6 +43,7 @@ export type UserProfileDto = {
     qrToken: string | null;
     confirmedAt: Date | null;
     cancelledAt: Date | null;
+    slotChangeCount: number;
     slot: {
       id: string;
       startTime: Date;
@@ -148,6 +149,7 @@ export const userService = {
             qrToken: activeReg.booking.qrToken,
             confirmedAt: activeReg.booking.confirmedAt,
             cancelledAt: activeReg.booking.cancelledAt,
+            slotChangeCount: activeReg.booking.slotChangeCount ?? 0,
             slot: slotDetails,
           }
         : null,
