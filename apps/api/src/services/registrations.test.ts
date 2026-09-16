@@ -103,6 +103,7 @@ const mockReservedBooking = {
   userId: "user-123",
   slotId: "slot-uuid-1",
   teamCode: null,
+  side: null,
   qrToken: null,
   confirmedAt: null,
   cancelledAt: null,

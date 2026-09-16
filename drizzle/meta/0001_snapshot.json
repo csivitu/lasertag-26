@@ -1,5 +1,5 @@
 {
-  "id": "abb3a606-ad06-4a44-8681-bfc9e3ecac31",
+  "id": "2796b84c-b057-471e-abc3-b4562f7058fa",
   "prevId": "510b9dfb-e32e-4a74-a1f6-2feba4c22ac8",
   "version": "7",
   "dialect": "postgresql",
@@ -46,6 +46,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "side": {
+          "name": "side",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "qr_token": {
           "name": "qr_token",
@@ -183,6 +189,22 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "bookings_one_active_user_idx": {
+          "name": "bookings_one_active_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "status IN ('reserved', 'confirmed')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -306,6 +328,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -498,6 +527,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "reg_no": {
+          "name": "reg_no",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "ph_number": {
           "name": "ph_number",

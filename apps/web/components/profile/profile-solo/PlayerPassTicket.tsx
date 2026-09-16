@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { QrCode } from "./QrCode";
 import { PlayerPassStubLeft } from "./PlayerPassStubLeft";
@@ -19,7 +18,7 @@ export function PlayerPassTicket() {
   const playerName = profile?.name || session?.user?.name || "OPERATIVE";
   const playerEmail = profile?.email || session?.user?.email || "N/A";
   const playerPhone = profile?.phone || "N/A";
-  const regNo = profile?.activeRegistration?.id || "N/A";
+  const regNo = profile?.regNo || profile?.activeRegistration?.regNo || "N/A";
   const rawDate = profile?.activeRegistration?.slot?.slotDate;
   const rawTime = profile?.activeRegistration?.slot?.slotTime;
 
@@ -78,67 +77,28 @@ export function PlayerPassTicket() {
           <div className="relative p-2 sm:p-2.5 bg-white rounded-md shadow-lg border-2 border-black">
             <QrCode className="w-32 h-32" />
           </div>
+
           <button
-            type="button"
-            onClick={() => router.push("/slot-booking")}
-            className="w-full max-w-[180px] py-2.5 px-4 bg-[#f949cc] hover:bg-[#ff5be2] active:translate-y-[1px] text-white text-[11px] font-bold rounded-full border-[3px] border-[#ff7beb] shadow-[0_4px_0_#9c187d] transition-all uppercase tracking-wider text-center cursor-pointer"
-            style={{ fontFamily: "var(--font-pixel), monospace" }}
+            onClick={() => router.push("/slots")}
+            className="w-full max-w-[240px] py-3.5 px-6 rounded-xl font-black text-sm tracking-wider uppercase transition-all duration-300 shadow-[0_0_20px_rgba(254,220,2,0.3)] hover:shadow-[0_0_30px_rgba(254,220,2,0.5)] active:scale-95 bg-[#FEDC02] text-black hover:bg-[#ffe53b]"
           >
             CHANGE SLOT
           </button>
         </div>
       </div>
 
-      {/* DESKTOP TICKET (>= lg) */}
-      <div className="hidden lg:block relative w-full aspect-[1100/533] min-h-[460px] select-none">
-        {/* Outer yellow border ticket frame (Group 628.svg) */}
-        <div className="absolute inset-0 pointer-events-none z-20">
-          <Image
-            src="/profile/profile-solo/Group 628.svg"
-            alt="Ticket Frame"
-            fill
-            priority
-            className="object-contain"
-          />
+      {/* DESKTOP / TABLET TICKET (>= lg) */}
+      <div className="hidden lg:flex relative items-stretch justify-center w-full">
+        {/* Left Tear-off Stub (QR + Branding) */}
+        <PlayerPassStubLeft />
+
+        {/* Center Details Section */}
+        <div className="flex-1 min-w-0 max-w-[580px] z-10">
+          <PlayerPassDetails />
         </div>
 
-        {/* Inner ticket content container aligned inside the border frame */}
-        <div className="absolute inset-[3.5%] z-10 grid grid-cols-[11%_1px_62%_1px_26%] items-stretch bg-black rounded-lg overflow-hidden p-2">
-          {/* Left stub: Vertical LASERTAG */}
-          <div className="h-full">
-            <PlayerPassStubLeft />
-          </div>
-
-          {/* Divider Line (Left) */}
-          <div className="relative h-full w-full opacity-90">
-            <Image
-              src="/profile/profile-solo/Line 115.svg"
-              alt=""
-              fill
-              className="object-cover"
-            />
-          </div>
-
-          {/* Center main area: 3x2 Grid */}
-          <div className="h-full overflow-hidden">
-            <PlayerPassDetails />
-          </div>
-
-          {/* Divider Line (Right) */}
-          <div className="relative h-full w-full opacity-80">
-            <Image
-              src="/profile/profile-solo/Group 629.svg"
-              alt=""
-              fill
-              className="object-cover"
-            />
-          </div>
-
-          {/* Right stub: QR & Action Button */}
-          <div className="h-full overflow-hidden">
-            <PlayerPassStubRight />
-          </div>
-        </div>
+        {/* Right Action Stub */}
+        <PlayerPassStubRight />
       </div>
     </div>
   );

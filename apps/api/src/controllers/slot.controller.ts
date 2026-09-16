@@ -1,37 +1,110 @@
+import { randomBytes } from "node:crypto";
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
 import { eq, and, inArray, lt, gt } from "drizzle-orm";
 import QRCode from "qrcode";
 
 import { HttpError as AppError } from "../errors";
+import { env } from "../env";
 import { sendEmail, MAILER_CONFIG } from "../services/mailer";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
 
 export const slotController = {
   async getAllSlots() {
     const allSlots = await db.select().from(slots);
-    return allSlots;
+
+    // Fetch active bookings to calculate Red vs Blue faction breakdown
+    const activeBookings = await db
+      .select({
+        slotId: bookings.slotId,
+        side: bookings.side,
+        type: bookings.type,
+      })
+      .from(bookings)
+      .where(inArray(bookings.status, ["reserved", "confirmed"]));
+
+    const slotsWithSides = allSlots.map((slot) => {
+      const slotBookings = activeBookings.filter((b) => b.slotId === slot.id);
+      const redOccupied = slotBookings.filter((b) => b.side === "red").length;
+      const blueOccupied = slotBookings.filter((b) => b.side === "blue").length;
+      const unassignedOccupied = slotBookings.filter(
+        (b) => !b.side || (b.side !== "red" && b.side !== "blue"),
+      ).length;
+
+      // Available spots calculation (total capacity 10, 5 per side)
+      const maxPerSide = 5;
+      const redAvailable = Math.max(0, maxPerSide - redOccupied);
+      const blueAvailable = Math.max(0, maxPerSide - blueOccupied);
+      const totalBooked = redOccupied + blueOccupied + unassignedOccupied;
+      const totalAvailable = Math.max(0, slot.capacity - totalBooked);
+
+      return {
+        ...slot,
+        totalBooked,
+        totalAvailable,
+        redOccupied,
+        redAvailable,
+        blueOccupied,
+        blueAvailable,
+      };
+    });
+
+    return slotsWithSides;
   },
 
   async getSlotById(slotId: string) {
-    const [slot] = await db
-      .select()
-      .from(slots)
-      .where(eq(slots.id, slotId));
-
+    const [slot] = await db.select().from(slots).where(eq(slots.id, slotId));
     if (!slot) {
       throw new AppError(404, "Slot not found.");
     }
 
-    return slot;
+    const activeBookings = await db
+      .select({
+        slotId: bookings.slotId,
+        side: bookings.side,
+        type: bookings.type,
+      })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.slotId, slotId),
+          inArray(bookings.status, ["reserved", "confirmed"]),
+        ),
+      );
+
+    const redOccupied = activeBookings.filter((b) => b.side === "red").length;
+    const blueOccupied = activeBookings.filter((b) => b.side === "blue").length;
+    const unassignedOccupied = activeBookings.filter(
+      (b) => !b.side || (b.side !== "red" && b.side !== "blue"),
+    ).length;
+
+    const maxPerSide = 5;
+    const redAvailable = Math.max(0, maxPerSide - redOccupied);
+    const blueAvailable = Math.max(0, maxPerSide - blueOccupied);
+    const totalBooked = redOccupied + blueOccupied + unassignedOccupied;
+    const totalAvailable = Math.max(0, slot.capacity - totalBooked);
+
+    return {
+      ...slot,
+      totalBooked,
+      totalAvailable,
+      redOccupied,
+      redAvailable,
+      blueOccupied,
+      blueAvailable,
+    };
   },
 
   async createSlot(input: CreateSlotInput) {
     const startTime = new Date(input.startTime);
     const endTime = new Date(input.endTime);
+
+    if (endTime <= startTime) {
+      throw new AppError(400, "endTime must be after startTime.");
+    }
+
     const capacity = input.capacity;
 
-    // Check for overlapping slots in the same time range
     const overlapping = await db
       .select()
       .from(slots)
@@ -60,7 +133,6 @@ export const slotController = {
     slotId: string,
     updates: Partial<{ startTime: Date; endTime: Date; capacity: number }>,
   ) {
-    // 1. Verify slot exists
     const [existingSlot] = await db
       .select()
       .from(slots)
@@ -73,7 +145,6 @@ export const slotController = {
     const newStartTime = updates.startTime ? new Date(updates.startTime) : existingSlot.startTime;
     const newEndTime = updates.endTime ? new Date(updates.endTime) : existingSlot.endTime;
 
-    // 2. Check overlap if times are modified
     if (updates.startTime || updates.endTime) {
       const overlapping = await db
         .select()
@@ -82,11 +153,10 @@ export const slotController = {
           and(
             lt(slots.startTime, newEndTime),
             gt(slots.endTime, newStartTime),
-            eq(slots.id, slotId), // Ensure it's not the same slot
+            eq(slots.id, slotId),
           ),
         );
 
-      // If we find any overlapping slot that isn't the slot being updated
       const otherOverlaps = overlapping.filter((s) => s.id !== slotId);
       if (otherOverlaps.length > 0) {
         throw new AppError(
@@ -119,7 +189,7 @@ export const slotController = {
   },
 
   async reserveSlot(input: ReserveSlotInput) {
-    const { slot_id, user_id, type, team_code } = input;
+    const { slot_id, user_id, type, team_code, side } = input;
 
     const [targetSlot] = await db
       .select()
@@ -130,8 +200,8 @@ export const slotController = {
       throw new AppError(404, "Slot not found.");
     }
 
-    if (targetSlot.capacity <= 0) {
-      throw new AppError(400, "Selected slot is already fully booked.");
+    if (new Date(targetSlot.endTime) <= new Date()) {
+      throw new AppError(400, "Cannot book a slot that has already ended.");
     }
 
     const [targetUser] = await db
@@ -153,10 +223,13 @@ export const slotController = {
       if (userInTeam.length > 0) {
         throw new AppError(
           400,
-          "You are currently part of a team and cannot book an individual solo slot."
+          "You are currently part of a team and cannot book an individual solo slot.",
         );
       }
     }
+
+    let teamUsers: Array<{ id: string; name: string; email: string; regNo: string | null }> = [];
+    let currentTeamName = "";
 
     // 2. If Team, verify team exists and only the leader can reserve the slot
     if (type === "team") {
@@ -170,233 +243,249 @@ export const slotController = {
         .where(eq(teams.teamCode, team_code));
 
       if (!team) {
-        // If team was pending creation from client session, establish it now with user as leader
-        await db.insert(teams).values({
-          teamCode: team_code,
-          leaderId: user_id,
-          members: 1,
-        });
-
-        await db
-          .insert(teamMembers)
-          .values({
-            teamCode: team_code,
-            userId: user_id,
-          })
-          .onConflictDoNothing();
-      } else if (team.leaderId !== user_id) {
-        throw new AppError(403, "Only the team leader can reserve a slot for the team.");
-      }
-    }
-
-    // Check if user already has an active booking (to update slot rather than orphan bookings)
-    const existingActiveBookings = await db
-      .select()
-      .from(bookings)
-      .where(
-        and(
-          eq(bookings.userId, user_id),
-          inArray(bookings.status, ["reserved", "confirmed"])
-        )
-      );
-
-    let activeBooking;
-
-    if (existingActiveBookings.length > 0) {
-      const prevBooking = existingActiveBookings[0];
-      // If slot changed, restore 1 capacity to the old slot
-      if (prevBooking.slotId !== slot_id) {
-        const [prevSlot] = await db.select().from(slots).where(eq(slots.id, prevBooking.slotId));
-        if (prevSlot) {
-          await db
-            .update(slots)
-            .set({ capacity: prevSlot.capacity + 1 })
-            .where(eq(slots.id, prevBooking.slotId));
-        }
+        throw new AppError(404, "Team not found.");
       }
 
-      const qrToken = prevBooking.qrToken || `QR-${prevBooking.id}`;
+      if (team.leaderId !== user_id) {
+        throw new AppError(403, "Only the team leader can book the slot for the squad.");
+      }
 
-      const [updatedBooking] = await db
-        .update(bookings)
-        .set({
-          slotId: slot_id,
-          type,
-          teamCode: type === "team" ? (team_code ?? null) : null,
-          status: "confirmed",
-          qrToken,
-          confirmedAt: new Date(),
-          confirmationEmailSent: false,
+      currentTeamName = team.name || team.teamCode;
+
+      // Check team members count: leader can only book if at least 1 teammate has joined (min 2 members)
+      const currentTeamMemberRows = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          regNo: user.regNo,
         })
-        .where(eq(bookings.id, prevBooking.id))
-        .returning();
+        .from(teamMembers)
+        .innerJoin(user, eq(teamMembers.userId, user.id))
+        .where(eq(teamMembers.teamCode, team_code));
 
-      activeBooking = updatedBooking;
+      if (currentTeamMemberRows.length < 2) {
+        throw new AppError(
+          400,
+          "Leader can only book a slot when all team members have joined or at least 1 member has joined.",
+        );
+      }
+
+      teamUsers = currentTeamMemberRows;
     } else {
-      const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-      const qrToken = `QR-${bookingId}`;
-
-      const [newBooking] = await db
-        .insert(bookings)
-        .values({
-          id: bookingId,
-          type,
-          status: "confirmed",
-          userId: user_id,
-          teamCode: type === "team" ? (team_code ?? null) : null,
-          slotId: slot_id,
-          qrToken,
-          confirmedAt: new Date(),
-          confirmationEmailSent: false,
-        })
-        .returning();
-
-      activeBooking = newBooking;
+      teamUsers = [
+        {
+          id: targetUser.id,
+          name: targetUser.name,
+          email: targetUser.email,
+          regNo: targetUser.regNo,
+        },
+      ];
     }
 
-    const assignedQrToken = activeBooking.qrToken || `QR-${activeBooking.id}`;
+    const partySize = teamUsers.length;
 
-    // Ensure user record also holds the qrToken for instant scanner lookups
-    await db
-      .update(user)
-      .set({ qrToken: assignedQrToken })
-      .where(eq(user.id, user_id));
-
-    // Decrement new slot capacity
-    await db
-      .update(slots)
-      .set({
-        capacity: Math.max(0, targetSlot.capacity - 1),
+    // Check slot side capacity (5v5 Red vs Blue)
+    const activeSlotBookings = await db
+      .select({
+        id: bookings.id,
+        side: bookings.side,
+        userId: bookings.userId,
       })
-      .where(eq(slots.id, slot_id));
+      .from(bookings)
+      .where(and(eq(bookings.slotId, slot_id), inArray(bookings.status, ["reserved", "confirmed"])));
 
-    // Format slot date and time for confirmation email
+    // Filter out users from current party if they are rescheduling the same slot
+    const currentPartyUserIds = new Set(teamUsers.map((u) => u.id));
+    const redOccupied = activeSlotBookings.filter(
+      (b) => b.side === "red" && !currentPartyUserIds.has(b.userId),
+    ).length;
+    const blueOccupied = activeSlotBookings.filter(
+      (b) => b.side === "blue" && !currentPartyUserIds.has(b.userId),
+    ).length;
+
+    let chosenSide = side;
+    if (!chosenSide) {
+      // Pick side with sufficient room
+      if (5 - redOccupied >= partySize) {
+        chosenSide = "red";
+      } else if (5 - blueOccupied >= partySize) {
+        chosenSide = "blue";
+      } else {
+        throw new AppError(
+          400,
+          `Selected slot cannot fit your party of ${partySize}. Red side has ${5 - redOccupied} spots and Blue side has ${5 - blueOccupied} spots remaining.`,
+        );
+      }
+    } else {
+      const availableOnSide = chosenSide === "red" ? 5 - redOccupied : 5 - blueOccupied;
+      if (availableOnSide < partySize) {
+        throw new AppError(
+          400,
+          `Not enough spots remaining on the ${chosenSide.toUpperCase()} side. (${availableOnSide} available, party size: ${partySize}).`,
+        );
+      }
+    }
+
+    // Format slot date and time
     const slotStartDate = new Date(targetSlot.startTime);
     const slotEndDate = new Date(targetSlot.endTime);
-
     const slotDateStr = slotStartDate.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "short",
       day: "numeric",
     });
-
     const formatHour = (d: Date) =>
       d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-
     const slotTimeStr = `${formatHour(slotStartDate)} - ${formatHour(slotEndDate)}`;
-    const passUrl = `${process.env.WEB_ORIGIN || "http://localhost:3000"}/profile`;
+    const passUrl = `${env.WEB_ORIGIN}/profile`;
 
-    // Asynchronous non-blocking dispatch: Send confirmation email w/ embedded QR Ticket
+    // Process bookings and tickets for all party members
+    let leaderBooking: typeof bookings.$inferSelect | undefined;
+
+    for (const member of teamUsers) {
+      const existing = await db
+        .select()
+        .from(bookings)
+        .where(
+          and(
+            eq(bookings.userId, member.id),
+            inArray(bookings.status, ["reserved", "confirmed"]),
+          ),
+        );
+
+      let memberBooking: typeof bookings.$inferSelect;
+      // Cryptographically secure QR token
+      const memberQrToken = randomBytes(32).toString("hex");
+
+      if (existing.length > 0) {
+        const [updated] = await db
+          .update(bookings)
+          .set({
+            slotId: slot_id,
+            type,
+            teamCode: type === "team" ? (team_code ?? null) : null,
+            side: chosenSide,
+            status: "confirmed",
+            qrToken: existing[0].qrToken || memberQrToken,
+            confirmedAt: new Date(),
+            confirmationEmailSent: false,
+          })
+          .where(eq(bookings.id, existing[0].id))
+          .returning();
+        memberBooking = updated;
+      } else {
+        const bookingId = `BKG-${Date.now()}-${member.id.slice(0, 6)}`;
+        const [created] = await db
+          .insert(bookings)
+          .values({
+            id: bookingId,
+            type,
+            status: "confirmed",
+            userId: member.id,
+            teamCode: type === "team" ? (team_code ?? null) : null,
+            slotId: slot_id,
+            side: chosenSide,
+            qrToken: memberQrToken,
+            confirmedAt: new Date(),
+            confirmationEmailSent: false,
+          })
+          .returning();
+        memberBooking = created;
+      }
+
+      const assignedToken = memberBooking.qrToken || memberQrToken;
+      await db.update(user).set({ qrToken: assignedToken }).where(eq(user.id, member.id));
+
+      if (member.id === user_id) {
+        leaderBooking = memberBooking;
+      }
+    }
+
+    // Fixed capacity ceiling: do not decrement slots.capacity!
+    // Active bookings count determines remaining availability dynamically.
+
+    // Asynchronous email dispatch to ALL party members
     void (async () => {
       try {
-        if (type === "team" && team_code) {
-          const teamUsers = await db
-            .select({
-              id: user.id,
-              name: user.name,
-              email: user.email,
-            })
-            .from(teamMembers)
-            .innerJoin(user, eq(teamMembers.userId, user.id))
-            .where(eq(teamMembers.teamCode, team_code));
+        await Promise.all(
+          teamUsers.map(async (member) => {
+            const [memberBookingRecord] = await db
+              .select()
+              .from(bookings)
+              .where(
+                and(
+                  eq(bookings.userId, member.id),
+                  eq(bookings.slotId, slot_id),
+                  inArray(bookings.status, ["reserved", "confirmed"]),
+                ),
+              );
 
-          const emailResults = await Promise.all(
-            teamUsers.map(async (member) => {
-              const memberQrToken = `QR-${activeBooking.id}-${member.id.slice(0, 6)}`;
-              await db
-                .update(user)
-                .set({ qrToken: memberQrToken })
-                .where(eq(user.id, member.id));
+            const token = memberBookingRecord?.qrToken || randomBytes(32).toString("hex");
 
-              // Render high-res QR code PNG buffer
-              const memberQrBuffer = await QRCode.toBuffer(memberQrToken, {
-                width: 360,
-                margin: 1,
-                color: {
-                  dark: "#000000",
-                  light: "#FFFFFF",
-                },
-              });
-
-              return sendEmail({
-                to: member.email,
-                subject: `LaserTag 2026: Team Slot Confirmed (${team_code})`,
-                template: MAILER_CONFIG.BOOKING_CONFIRMATION,
-                variables: {
-                  name: member.name,
-                  bookingId: activeBooking.id,
-                  bookingType: "Team Battle",
-                  teamCode: team_code,
-                  slotDate: slotDateStr,
-                  slotTime: slotTimeStr,
-                  passUrl,
-                  qrToken: memberQrToken,
-                },
-                attachments: [
-                  {
-                    filename: `arena-pass-${memberQrToken}.png`,
-                    content: memberQrBuffer,
-                    cid: "qrTicketCode",
-                  },
-                ],
-              });
-            }),
-          );
-
-          const anySent = emailResults.some((messageId) => messageId !== null);
-          if (anySent && teamUsers.length > 0) {
-            await db
-              .update(bookings)
-              .set({ confirmationEmailSent: true })
-              .where(eq(bookings.id, activeBooking.id));
-          }
-        } else {
-          // Render high-res QR code PNG buffer for Solo operative
-          const qrBuffer = await QRCode.toBuffer(assignedQrToken, {
-            width: 360,
-            margin: 1,
-            color: {
-              dark: "#000000",
-              light: "#FFFFFF",
-            },
-          });
-
-          const messageId = await sendEmail({
-            to: targetUser.email,
-            subject: "LaserTag 2026: Battle Pass Slot Confirmed",
-            template: MAILER_CONFIG.BOOKING_CONFIRMATION,
-            variables: {
-              name: targetUser.name,
-              bookingId: activeBooking.id,
-              bookingType: "Solo Mission",
-              teamCode: "N/A",
-              slotDate: slotDateStr,
+            // Build structured QR payload encoding verification info
+            const qrPayload = JSON.stringify({
+              token,
+              name: member.name,
+              regNo: member.regNo,
               slotTime: slotTimeStr,
-              passUrl,
-              qrToken: assignedQrToken,
-            },
-            attachments: [
-              {
-                filename: `arena-pass-${assignedQrToken}.png`,
-                content: qrBuffer,
-                cid: "qrTicketCode",
-              },
-            ],
-          });
+              side: chosenSide,
+              type,
+            });
 
-          if (messageId) {
-            await db
-              .update(bookings)
-              .set({ confirmationEmailSent: true })
-              .where(eq(bookings.id, activeBooking.id));
-          }
-        }
+            // Generate high-resolution QR Buffer
+            const qrBuffer = await QRCode.toBuffer(qrPayload, {
+              width: 320,
+              margin: 2,
+              color: {
+                dark: "#000000",
+                light: "#FFFFFF",
+              },
+            });
+
+            const emailSubject =
+              type === "team"
+                ? `Combat Pass: Squad ${currentTeamName} - LaserTag 2026`
+                : "Combat Pass: Solo Operative - LaserTag 2026";
+
+            await sendEmail({
+              to: member.email,
+              subject: emailSubject,
+              template: MAILER_CONFIG.BOOKING_CONFIRMATION,
+              variables: {
+                name: member.name || "Operative",
+                bookingId: memberBookingRecord?.id || "N/A",
+                bookingType: type.toUpperCase(),
+                teamCode: currentTeamName || "N/A",
+                slotDate: slotDateStr,
+                slotTime: slotTimeStr,
+                qrToken: token,
+                side: (chosenSide || "red").toUpperCase(),
+                passUrl,
+              },
+              attachments: [
+                {
+                  filename: "combat-pass-qr.png",
+                  content: qrBuffer,
+                  cid: "qrTicketCode",
+                },
+              ],
+            });
+
+            if (memberBookingRecord) {
+              await db
+                .update(bookings)
+                .set({ confirmationEmailSent: true })
+                .where(eq(bookings.id, memberBookingRecord.id));
+            }
+          }),
+        );
       } catch (emailErr) {
-        console.error("[Mailer] Background confirmation email dispatch error:", emailErr);
+        console.error("Failed to deliver combat pass confirmation email:", emailErr);
       }
     })();
 
-    return activeBooking;
+    return leaderBooking;
   },
 };

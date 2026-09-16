@@ -7,6 +7,7 @@ import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
 import { INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
 import { useSession, apiBaseUrl } from "@/lib/auth-client";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const labelStyle: CSSProperties = {
   fontFamily: "var(--ft-pixel), monospace",
@@ -44,6 +45,7 @@ interface JoinTeamFormProps {
 export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const { profile, refetch } = useUserProfile();
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
@@ -55,21 +57,26 @@ export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
   const prefilled = useRef(false);
 
   useEffect(() => {
-    if (prefilled.current || !session?.user) return;
-    prefilled.current = true;
-    if (session.user.name) {
-      setFullName(session.user.name);
+    if (prefilled.current) return;
+    if (profile) {
+      prefilled.current = true;
+      if (profile.name) setFullName(profile.name);
+      if (profile.regNo) setRegistrationNumber(profile.regNo);
+      if (profile.email) setEmailId(profile.email);
+      if (profile.phone) setPhoneNumber(profile.phone);
+    } else if (session?.user) {
+      prefilled.current = true;
+      if (session.user.name) setFullName(session.user.name);
+      if (session.user.email) setEmailId(session.user.email);
     }
-    if (session.user.email) {
-      setEmailId(session.user.email);
-    }
-  }, [session]);
+  }, [session, profile]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
-    if (!session?.user?.id) {
+    const userId = profile?.id || session?.user?.id;
+    if (!userId) {
       setError("Please sign in before joining a team.");
       return;
     }
@@ -97,8 +104,8 @@ export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
 
     const cleanCode = teamCode.trim().toUpperCase();
 
-    if (!/^[A-Z]{6}$/.test(cleanCode)) {
-      setError("Team codes contain exactly 6 letters.");
+    if (!/^[A-Z0-9]{4,8}$/.test(cleanCode)) {
+      setError("Please enter a valid squad code.");
       return;
     }
 
@@ -110,7 +117,10 @@ export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          user_id: session.user.id,
+          user_id: userId,
+          fullName: fullName.trim(),
+          regNo: registrationNumber.trim(),
+          phone: phoneNumber.trim(),
         }),
       });
 
@@ -118,6 +128,8 @@ export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || data.message || "Failed to join team in arena database");
       }
+
+      await refetch?.();
 
       const teamPayload = {
         teamCode: cleanCode,
@@ -167,7 +179,7 @@ export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
             value={teamCode}
             onChange={(e) => setTeamCode(e.target.value)}
             placeholder="ABCDEF"
-            maxLength={6}
+            maxLength={8}
             className="mode-popup-input"
             style={{ ...inputStyle, letterSpacing: "0.12em", textTransform: "uppercase" }}
             autoComplete="off"
@@ -183,7 +195,7 @@ export function JoinTeamForm({ onClose }: JoinTeamFormProps) {
           </p>
           <PixelButton
             label="PROCEED TO SLOT BOOKING →"
-            onClick={() => router.push("/slot-booking")}
+            onClick={() => router.push("/slots")}
             labelClassName="text-[12px] lg:text-[14px]"
           />
           <button

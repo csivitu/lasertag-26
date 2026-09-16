@@ -28,13 +28,15 @@ const envSchema = z.object({
     z.coerce.number().int().positive().default(3001),
   ),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  // better-auth signs session cookies with this.
+  // better-auth signs session cookies with this. In production, must be explicitly provided.
   BETTER_AUTH_SECRET: z.preprocess(
     emptyToUndefined,
-    z
-      .string()
-      .min(32, "BETTER_AUTH_SECRET must be at least 32 characters")
-      .default("lasertag_dev_secret_key_32_characters_minimum_length_required"),
+    process.env.NODE_ENV === "production"
+      ? z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters in production")
+      : z
+          .string()
+          .min(32, "BETTER_AUTH_SECRET must be at least 32 characters")
+          .default("lasertag_dev_secret_key_32_characters_minimum_length_required"),
   ),
   BETTER_AUTH_URL: z.preprocess(
     emptyToUndefined,
@@ -43,6 +45,18 @@ const envSchema = z.object({
   WEB_ORIGIN: z.preprocess(
     emptyToUndefined,
     z.url().default("http://localhost:3000"),
+  ),
+  ADMIN_ORIGIN: z.preprocess(
+    emptyToUndefined,
+    z.url().default("http://localhost:3002"),
+  ),
+  ADMIN_EMAILS: z.preprocess(
+    emptyToUndefined,
+    z.string().default("sujalmishra.0306@gmail.com"),
+  ),
+  CORS_ORIGINS: z.preprocess(
+    emptyToUndefined,
+    z.string().optional(),
   ),
   GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().optional()),
   GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),

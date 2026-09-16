@@ -1,4 +1,7 @@
 import { Router, Request, Response } from "express";
+import { fromNodeHeaders } from "better-auth/node";
+import { auth } from "../auth";
+import { HttpError as AppError } from "../errors";
 import { validateRequest } from "../middlewares/validate";
 import { asyncHandler } from "../middlewares/errorHandler";
 import {
@@ -28,7 +31,24 @@ publicTeamsRouter.post(
   "/",
   validateRequest(createTeamSchema),
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const newTeam = await teamController.createTeam(req.body);
+    let leaderId = req.body.leader_id;
+    if (!leaderId) {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        leaderId = session.user.id;
+      }
+    }
+
+    if (!leaderId) {
+      throw new AppError(400, "leader_id is required or user must be signed in.");
+    }
+
+    const newTeam = await teamController.createTeam({
+      ...req.body,
+      leader_id: leaderId,
+    });
     res.status(201).json({
       success: true,
       message: "Team created successfully.",
@@ -52,10 +72,29 @@ publicTeamsRouter.get(
 publicTeamsRouter.post(
   "/:team_id/join",
   validateRequest(joinTeamSchema),
-  asyncHandler(async (req: Request<{ team_id: string }, unknown, { user_id: string }>, res: Response): Promise<void> => {
+  asyncHandler(async (req: Request<{ team_id: string }>, res: Response): Promise<void> => {
+    let userId = req.body.user_id;
+    if (!userId) {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        userId = session.user.id;
+      }
+    }
+
+    if (!userId) {
+      throw new AppError(400, "user_id is required or user must be signed in.");
+    }
+
     const result = await teamController.joinTeam(
       req.params.team_id,
-      req.body.user_id
+      userId,
+      {
+        fullName: req.body.fullName,
+        regNo: req.body.regNo,
+        phone: req.body.phone,
+      }
     );
     res.status(200).json({
       success: true,
@@ -92,10 +131,15 @@ publicTeamsRouter.post(
 publicTeamsRouter.post(
   "/:team_id/convert-to-solo",
   validateRequest(convertToSoloSchema),
-  asyncHandler(async (req: Request<{ team_id: string }, unknown, { user_id: string }>, res: Response): Promise<void> => {
+  asyncHandler(async (req: Request<{ team_id: string }, unknown, { user_id?: string }>, res: Response): Promise<void> => {
+    const sessionUserId =
+      (req as unknown as { session?: { user?: { id?: string } } }).session?.user?.id ||
+      (req as unknown as { user?: { id?: string } }).user?.id ||
+      req.body?.user_id;
+
     const result = await teamController.convertTeamToSolo(
       req.params.team_id,
-      req.body.user_id
+      sessionUserId
     );
     res.status(200).json({
       success: true,

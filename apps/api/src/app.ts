@@ -1,20 +1,20 @@
-import cors from "cors";
 import express, { type Express } from "express";
+import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import swaggerUi from "swagger-ui-express";
 
 import { auth } from "./auth";
+import type { Env } from "./env";
 import { errorHandler, notFound } from "./middlewares/errorHandler";
-import { adminAuthRouter } from "./routes/admin-auth";
 import { adminRouter } from "./routes/admin";
+import { adminAuthRouter } from "./routes/admin-auth";
 import { authRouter } from "./routes/auth";
+import { publicRegistrationsRouter } from "./routes/public-registrations";
 import { publicSlotsRouter } from "./routes/slots";
 import { publicTeamsRouter } from "./routes/teams";
-import { publicRegistrationsRouter } from "./routes/public-registrations";
 import { usersRouter } from "./routes/users";
 import verificationRouter from "./routes/verification";
 import { openapiDocument } from "./swagger";
-import type { Env } from "./env";
 
 /**
  * Builds the app without binding a port, so it can be exercised directly
@@ -24,23 +24,29 @@ import type { Env } from "./env";
 export function createApp(env: Env): Express {
     const app = express();
 
-    const allowedOrigins = [
+    const extraOrigins = env.CORS_ORIGINS
+        ? env.CORS_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean)
+        : [];
+
+    const allowedOrigins = new Set([
         env.WEB_ORIGIN,
+        env.ADMIN_ORIGIN,
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "http://127.0.0.1:3002",
-    ];
+        ...extraOrigins,
+    ]);
 
     app.use(
         cors({
             origin: (origin, callback) => {
-                if (!origin || allowedOrigins.includes(origin)) {
+                if (!origin || allowedOrigins.has(origin)) {
                     callback(null, true);
                 } else {
-                    callback(null, true);
+                    callback(new Error("Origin not allowed by CORS"));
                 }
             },
             credentials: true,

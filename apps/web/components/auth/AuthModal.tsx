@@ -41,16 +41,6 @@ const cardStyle: CSSProperties = {
   boxSizing: "border-box",
 };
 
-const titleStyle: CSSProperties = {
-  fontFamily: "var(--ft-pixel), monospace",
-  fontSize: "20px",
-  color: "#FEDC02",
-  textAlign: "center",
-  letterSpacing: "0.08em",
-  marginBottom: "16px",
-  lineHeight: 1.3,
-};
-
 const labelStyle: CSSProperties = {
   fontFamily: "var(--ft-pixel), monospace",
   fontSize: "11px",

@@ -21,8 +21,8 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "apps/web/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": "bun run --cwd apps/web eslint --fix",
-    "{apps/api,apps/admin,packages}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": "eslint --fix"
+    "apps/web/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": "bun run --cwd apps/web eslint --fix --no-warn-ignored",
+    "{apps/api,apps/admin,packages}/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": "eslint --fix --no-warn-ignored"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

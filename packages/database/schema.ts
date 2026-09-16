@@ -70,6 +70,7 @@ export const teamMembers = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    joinedAt: timestamp('joined_at').notNull().defaultNow(),
   },
   (table) => [
     primaryKey({
@@ -98,6 +99,9 @@ export const bookings = pgTable(
       .notNull()
       .references(() => slots.id, { onDelete: 'cascade' }),
 
+    // Side selection for 5v5 game: 'red' | 'blue' | null
+    side: text('side'),
+
     // Arena Pass, Verification & Check-in
     qrToken: text('qr_token'),
     isCheckedIn: boolean('is_checked_in').notNull().default(false),
@@ -117,6 +121,9 @@ export const bookings = pgTable(
     index('bookings_status_idx').on(table.status),
     uniqueIndex('bookings_active_user_slot_idx')
       .on(table.userId, table.slotId)
+      .where(sql`status IN ('reserved', 'confirmed')`),
+    uniqueIndex('bookings_one_active_user_idx')
+      .on(table.userId)
       .where(sql`status IN ('reserved', 'confirmed')`),
   ]
 );

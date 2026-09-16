@@ -1,56 +1,58 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useSession, apiBaseUrl } from "@/lib/auth-client";
-
-export interface UserTeamMember {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  isLeader: boolean;
-}
-
-export interface UserTeamData {
-  teamCode: string;
-  isLeader: boolean;
-  leaderId: string;
-  memberCount: number;
-  maxMembers: number;
-  members: UserTeamMember[];
-}
-
-export interface ActiveRegistrationData {
-  id: string;
-  type: "individual" | "team";
-  status: "reserved" | "confirmed" | "cancelled";
-  slotId: string;
-  teamCode: string | null;
-  qrToken: string | null;
-  confirmedAt: string | null;
-  cancelledAt: string | null;
-  slot: {
-    id: string;
-    startTime: string;
-    endTime: string;
-    capacity: number;
-    slotDate: string;
-    slotTime: string;
-  };
-}
 
 export interface UserProfileData {
   id: string;
   name: string;
   email: string;
-  phone: string | null;
+  regNo?: string;
+  phone?: string;
+  role: string;
   paid: boolean;
   isCheckedIn: boolean;
-  team: UserTeamData | null;
-  activeRegistration: ActiveRegistrationData | null;
+  activeRegistration?: ActiveRegistrationData | null;
+  team?: TeamSummaryData | null;
 }
 
-export interface UserProfileContextValue {
+export interface ActiveRegistrationData {
+  id: string;
+  type: "solo" | "team";
+  status: string;
+  side?: "red" | "blue" | null;
+  teamCode?: string | null;
+  regNo?: string;
+  qrToken?: string | null;
+  confirmedAt?: string | null;
+  slot?: {
+    id: string;
+    slotDate: string;
+    slotTime: string;
+    capacity: number;
+    bookingCount: number;
+    side?: "red" | "blue" | null;
+  } | null;
+}
+
+export interface TeamMemberData {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  isLeader?: boolean;
+}
+
+export interface TeamSummaryData {
+  id: string;
+  name: string;
+  teamCode: string;
+  memberCount: number;
+  isLeader: boolean;
+  members: TeamMemberData[];
+}
+
+interface UserProfileContextValue {
   profile: UserProfileData | null;
   isLoading: boolean;
   error: string | null;
@@ -59,37 +61,35 @@ export interface UserProfileContextValue {
 
 const UserProfileContext = createContext<UserProfileContextValue | null>(null);
 
-function setItemIfChanged(storage: Storage, key: string, value: string) {
-  try {
-    if (storage.getItem(key) !== value) {
-      storage.setItem(key, value);
-    }
-  } catch {
-    // ignore
-  }
-}
-
 export function UserProfileProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, isPending: sessionLoading } = useSession();
+  const { data: session } = useSession();
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const userId = session?.user?.id;
-  const isFetchingRef = useRef(false);
+  // Clean up any stale localStorage leftover from past sessions
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("lasertag_selected_mode");
+        localStorage.removeItem("lasertag_active_team");
+        localStorage.removeItem("lasertag_onboarding_solo");
+        localStorage.removeItem("lasertag_confirmed_slot");
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   const fetchProfile = useCallback(async () => {
-    if (!userId) {
+    if (!session?.user) {
       setProfile(null);
       setIsLoading(false);
       return;
     }
 
-    // Prevent duplicate in-flight requests
-    if (isFetchingRef.current) return;
-    isFetchingRef.current = true;
-
     try {
+      setIsLoading(true);
       setError(null);
 
       const res = await fetch(`${apiBaseUrl}/users/me/profile`, {
@@ -101,57 +101,42 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       }
 
       const json = await res.json();
-      if (json.data) {
-        setProfile(json.data);
-
-        // Safely synchronize storage only when changed
-        if (typeof window !== "undefined") {
-          if (json.data.team) {
-            setItemIfChanged(localStorage, "lasertag_selected_mode", "team");
-            setItemIfChanged(sessionStorage, "lasertag_selected_mode", "team");
-
-            const activeTeamStr = JSON.stringify({
-              teamCode: json.data.team.teamCode,
-              isLeader: json.data.team.isLeader,
-            });
-            setItemIfChanged(localStorage, "lasertag_active_team", activeTeamStr);
-            setItemIfChanged(sessionStorage, "lasertag_active_team", activeTeamStr);
-          } else if (json.data.activeRegistration?.type === "individual") {
-            setItemIfChanged(localStorage, "lasertag_selected_mode", "solo");
-            setItemIfChanged(sessionStorage, "lasertag_selected_mode", "solo");
-          }
-
-          if (json.data.activeRegistration) {
-            const regPayload = JSON.stringify({
-              slotId: json.data.activeRegistration.slotId,
-              day: json.data.activeRegistration.slot.slotDate,
-              time: json.data.activeRegistration.slot.slotTime,
-            });
-            setItemIfChanged(localStorage, "lasertag_confirmed_slot", regPayload);
-            setItemIfChanged(sessionStorage, "lasertag_confirmed_slot", regPayload);
-          }
-        }
+      if (json?.data) {
+        const userData = json.data;
+        const mappedProfile: UserProfileData = {
+          id: userData.id,
+          name: userData.name || session.user.name,
+          email: userData.email || session.user.email,
+          regNo: userData.regNo || undefined,
+          phone: userData.phone || undefined,
+          role: userData.role || "user",
+          paid: userData.paid ?? false,
+          isCheckedIn: userData.isCheckedIn ?? false,
+          activeRegistration: userData.activeRegistration || null,
+          team: userData.team || null,
+        };
+        setProfile(mappedProfile);
+      } else {
+        setProfile(null);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error fetching profile";
+      const msg = err instanceof Error ? err.message : "Error loading operative profile";
       setError(msg);
+      setProfile(null);
     } finally {
-      isFetchingRef.current = false;
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [session]);
 
   useEffect(() => {
-    if (!sessionLoading) {
-      fetchProfile();
-    }
-  }, [sessionLoading, userId, fetchProfile]);
+    fetchProfile();
+  }, [fetchProfile]);
 
   return (
     <UserProfileContext.Provider
       value={{
         profile,
-        isLoading: sessionLoading || (Boolean(userId) && isLoading && !profile),
+        isLoading,
         error,
         refetch: fetchProfile,
       }}
@@ -161,64 +146,17 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
   );
 }
 
+const DEFAULT_PROFILE_CONTEXT: UserProfileContextValue = {
+  profile: null,
+  isLoading: false,
+  error: null,
+  refetch: async () => {},
+};
+
 export function useUserProfile(): UserProfileContextValue {
   const context = useContext(UserProfileContext);
-  if (context) {
-    return context;
+  if (!context) {
+    return DEFAULT_PROFILE_CONTEXT;
   }
-
-  // Fallback for standalone usage outside of UserProfileProvider
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { data: session, isPending: sessionLoading } = useSession();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [profile, setProfile] = useState<UserProfileData | null>(null);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [error, setError] = useState<string | null>(null);
-
-  const userId = session?.user?.id;
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const fetchProfile = useCallback(async () => {
-    if (!userId) {
-      setProfile(null);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setError(null);
-      const res = await fetch(`${apiBaseUrl}/users/me/profile`, {
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        throw new Error(`Profile fetch failed: ${res.statusText}`);
-      }
-
-      const json = await res.json();
-      if (json.data) {
-        setProfile(json.data);
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error fetching profile");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId]);
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (!sessionLoading) {
-      fetchProfile();
-    }
-  }, [sessionLoading, userId, fetchProfile]);
-
-  return {
-    profile,
-    isLoading: sessionLoading || (Boolean(userId) && isLoading && !profile),
-    error,
-    refetch: fetchProfile,
-  };
+  return context;
 }

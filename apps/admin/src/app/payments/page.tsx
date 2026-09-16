@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CreditCard, CheckCircle2, XCircle, Search, RefreshCw, ShieldCheck } from "lucide-react";
+import { CheckCircle2, XCircle, Search, RefreshCw, ShieldCheck } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 
+interface PaymentRecord {
+  id: string;
+  user_id?: string;
+  name?: string;
+  email?: string;
+  amount?: number;
+  paid: boolean;
+  date?: string;
+}
+
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "paid" | "unpaid">("all");
   const [search, setSearch] = useState("");
@@ -16,7 +26,7 @@ export default function PaymentsPage() {
   const fetchPayments = async () => {
     setLoading(true);
     setError(null);
-    const res = await apiFetch<any[]>("/admin/payments");
+    const res = await apiFetch<PaymentRecord[]>("/admin/payments");
     if (res.success && res.data) {
       setPayments(res.data);
     } else {
@@ -37,7 +47,7 @@ export default function PaymentsPage() {
     setError(null);
     setSuccess(null);
 
-    const res = await apiFetch<any>(`/admin/payments/${paymentId}`, {
+    const res = await apiFetch<PaymentRecord>(`/admin/payments/${paymentId}`, {
       method: "PATCH",
       body: JSON.stringify({ paid: !currentPaidStatus }),
     });
@@ -59,9 +69,9 @@ export default function PaymentsPage() {
       filter === "all" ? true : filter === "paid" ? p.paid : !p.paid;
     const matchesSearch =
       search === "" ||
-      p.email?.toLowerCase().includes(search.toLowerCase()) ||
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.id?.toLowerCase().includes(search.toLowerCase());
+      (p.email && p.email.toLowerCase().includes(search.toLowerCase())) ||
+      (p.name && p.name.toLowerCase().includes(search.toLowerCase())) ||
+      (p.id && p.id.toLowerCase().includes(search.toLowerCase()));
 
     return matchesFilter && matchesSearch;
   });

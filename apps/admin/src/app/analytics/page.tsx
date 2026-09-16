@@ -12,15 +12,22 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 
+interface SlotItem {
+  id: string;
+  startTime: string;
+  endTime: string;
+  capacity?: number;
+}
+
 export default function AnalyticsPage() {
-  const [slots, setSlots] = useState<any[]>([]);
+  const [slots, setSlots] = useState<SlotItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    const res = await apiFetch<any>("/slots");
+    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/slots");
     if (res.success && res.data) {
       const list = Array.isArray(res.data)
         ? res.data

@@ -12,7 +12,7 @@ export function PlayerInfoSection() {
   const playerName = profile?.name || session?.user?.name || "OPERATIVE";
   const playerEmail = profile?.email || session?.user?.email || "N/A";
   const playerPhone = profile?.phone || "N/A";
-  const regNo = profile?.activeRegistration?.id || "N/A";
+  const regNo = profile?.regNo || profile?.activeRegistration?.regNo || "N/A";
 
   return (
     <div className="flex flex-col h-full py-4 px-3 sm:px-5 select-none">
@@ -48,26 +48,9 @@ export function PlayerInfoSection() {
           />
         </div>
 
-        {/* Row 2: REG. No. */}
+        {/* Row 2: EMAIL ID */}
         <PassDetailItem
-          icon="/profile/profile-solo/Group 750.svg"
-          label="REG. NO."
-          value={regNo}
-        />
-
-        {/* Divider */}
-        <div className="relative h-0.5 w-full opacity-70">
-          <Image
-            src="/profile/profile-solo/Group 698.svg"
-            alt=""
-            fill
-            className="object-cover"
-          />
-        </div>
-
-        {/* Row 3: EMAIL ID */}
-        <PassDetailItem
-          icon="/profile/profile-solo/Vector (3).svg"
+          icon="/profile/profile-solo/email.svg"
           label="EMAIL ID"
           value={playerEmail}
         />
@@ -82,9 +65,26 @@ export function PlayerInfoSection() {
           />
         </div>
 
-        {/* Row 4: PHONE NO. */}
+        {/* Row 3: REG NO */}
         <PassDetailItem
-          icon="/profile/profile-solo/Group 752.svg"
+          icon="/profile/profile-solo/regno.svg"
+          label="REG. NO."
+          value={regNo}
+        />
+
+        {/* Divider */}
+        <div className="relative h-0.5 w-full opacity-70">
+          <Image
+            src="/profile/profile-solo/Group 698.svg"
+            alt=""
+            fill
+            className="object-cover"
+          />
+        </div>
+
+        {/* Row 4: PHONE NO */}
+        <PassDetailItem
+          icon="/profile/profile-solo/Group 741.svg"
           label="PHONE NO."
           value={playerPhone}
         />

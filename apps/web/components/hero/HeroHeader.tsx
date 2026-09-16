@@ -65,8 +65,7 @@ export function HeroHeader() {
     }
   }
 
-  // Only show the new features after the user is authenticated/signed in.
-  // Otherwise, show the original previous navbar (HOME, ABOUT, FAQs, SIGN IN).
+  // Navigation items for signed-in and guest visitors
   const navLinks = session?.user
     ? [
         { label: "HOME", href: "/" },

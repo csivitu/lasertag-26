@@ -1,3 +1,5 @@
+import { db, user } from "@lasertag-26/database";
+import { eq } from "drizzle-orm";
 import { NotFoundError } from "../errors";
 import {
   findUserById,
@@ -8,6 +10,7 @@ import {
 export type UserProfileDto = {
   id: string;
   name: string;
+  regNo: string | null;
   email: string;
   phone: string | null;
   paid: boolean;
@@ -21,6 +24,7 @@ export type UserProfileDto = {
     members: Array<{
       id: string;
       name: string;
+      regNo?: string | null;
       email: string;
       phone: string | null;
       isLeader: boolean;
@@ -32,6 +36,7 @@ export type UserProfileDto = {
     status: "reserved" | "confirmed" | "cancelled";
     slotId: string;
     teamCode: string | null;
+    side: string | null;
     qrToken: string | null;
     confirmedAt: Date | null;
     cancelledAt: Date | null;
@@ -48,8 +53,8 @@ export type UserProfileDto = {
 
 export const userService = {
   async getUserProfile(userId: string): Promise<UserProfileDto> {
-    const user = await findUserById(userId);
-    if (!user) {
+    const foundUser = await findUserById(userId);
+    if (!foundUser) {
       throw new NotFoundError("User not found");
     }
 
@@ -93,12 +98,13 @@ export const userService = {
     }
 
     return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phNumber ?? null,
-      paid: user.paid,
-      isCheckedIn: user.isCheckedIn,
+      id: foundUser.id,
+      name: foundUser.name,
+      regNo: foundUser.regNo ?? null,
+      email: foundUser.email,
+      phone: foundUser.phNumber ?? null,
+      paid: foundUser.paid,
+      isCheckedIn: foundUser.isCheckedIn,
       team,
       activeRegistration: activeReg && slotDetails
         ? {
@@ -107,6 +113,7 @@ export const userService = {
             status: activeReg.booking.status,
             slotId: activeReg.booking.slotId,
             teamCode: activeReg.booking.teamCode,
+            side: activeReg.booking.side ?? null,
             qrToken: activeReg.booking.qrToken,
             confirmedAt: activeReg.booking.confirmedAt,
             cancelledAt: activeReg.booking.cancelledAt,
@@ -114,5 +121,20 @@ export const userService = {
           }
         : null,
     };
+  },
+
+  async updateUserProfile(
+    userId: string,
+    data: { name?: string; regNo?: string; phone?: string },
+  ): Promise<UserProfileDto> {
+    const updateData: Partial<typeof user.$inferInsert> = {};
+    if (data.name) updateData.name = data.name;
+    if (data.regNo) updateData.regNo = data.regNo;
+    if (data.phone) updateData.phNumber = data.phone;
+
+    if (Object.keys(updateData).length > 0) {
+      await db.update(user).set(updateData).where(eq(user.id, userId));
+    }
+    return this.getUserProfile(userId);
   },
 };

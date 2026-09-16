@@ -29,28 +29,83 @@ export const auth = betterAuth({
             trustedProviders: ["google"],
         },
     },
+    databaseHooks: {
+        user: {
+            create: {
+                before: async (newUser) => {
+                    const adminEmails = (env.ADMIN_EMAILS || "")
+                        .split(",")
+                        .map((e) => e.trim().toLowerCase())
+                        .filter(Boolean);
+
+                    if (newUser.email && adminEmails.includes(newUser.email.toLowerCase())) {
+                        return {
+                            data: {
+                                ...newUser,
+                                role: "admin",
+                            },
+                        };
+                    }
+                },
+            },
+        },
+    },
     user: {
         additionalFields: {
-            // `role` already exists on the `user` table (auth-schema.ts); this
-            // just tells better-auth to select it into the session payload.\n            // `input: false` is not optional — without it a client can pass
-            // {"role":"admin"} to sign-up/update-user and self-grant admin.
             role: {
                 type: "string",
                 required: false,
                 defaultValue: "user",
                 input: false,
             },
+            regNo: {
+                type: "string",
+                required: false,
+                input: false,
+            },
+            phNumber: {
+                type: "string",
+                required: false,
+                input: false,
+            },
+            qrToken: {
+                type: "string",
+                required: false,
+                input: false,
+            },
+            isCheckedIn: {
+                type: "boolean",
+                required: false,
+                defaultValue: false,
+                input: false,
+            },
+            paid: {
+                type: "boolean",
+                required: false,
+                defaultValue: false,
+                input: false,
+            },
         },
+    },
+    onAPIError: {
+        onError: (error) => {
+            console.error("[Better-Auth API Error]:", error);
+        },
+        errorURL: `${env.WEB_ORIGIN || "http://localhost:3000"}/auth-error`,
     },
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: [
         env.WEB_ORIGIN,
+        env.ADMIN_ORIGIN,
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "http://127.0.0.1:3002",
+        ...(env.CORS_ORIGINS
+            ? env.CORS_ORIGINS.split(",").map((o: string) => o.trim()).filter(Boolean)
+            : []),
     ],
 });

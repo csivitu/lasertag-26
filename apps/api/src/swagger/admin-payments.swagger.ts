@@ -20,6 +20,38 @@ const registrationIdParam = {
 };
 
 export const paymentPaths = {
+  "/admin/payments": {
+    get: {
+      summary: "List all payments",
+      tags: ["Payments"],
+      responses: {
+        200: {
+          description: "List of payments",
+          content: {
+            "application/json": {
+              schema: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    user_id: { type: "string" },
+                    name: { type: "string" },
+                    email: { type: "string" },
+                    amount: { type: "number" },
+                    paid: { type: "boolean" },
+                    date: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        401: responses.unauthorized,
+        403: responses.forbidden,
+      },
+    },
+  },
   "/admin/payments/verify": {
     post: {
       summary: "Bulk-verify payments",

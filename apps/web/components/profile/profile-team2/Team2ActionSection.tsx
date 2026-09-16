@@ -5,38 +5,11 @@ import { useRouter } from "next/navigation";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { QrCode } from "../profile-solo/QrCode";
 
-function formatSlotDate(dateStr?: string): string {
-  if (!dateStr) return "";
-  const match = dateStr.match(/\b(18|19|20)\b/);
-  if (match) {
-    return `${match[1]}th Sep 2026`;
-  }
-  return dateStr.replace(/December/gi, "Sep").replace(/th SEP 2026/gi, " Sep 2026");
-}
-
 export function Team2ActionSection() {
   const router = useRouter();
   const { profile } = useUserProfile();
   const [copied, setCopied] = useState(false);
 
-  // Fallback to local storage if profile slot is still hydrating
-  let storedSlot: { day?: string | number; month?: string; time?: string } | null = null;
-  if (typeof window !== "undefined") {
-    try {
-      const raw =
-        localStorage.getItem("lasertag_confirmed_slot") ||
-        sessionStorage.getItem("lasertag_confirmed_slot");
-      if (raw) storedSlot = JSON.parse(raw);
-    } catch {
-      // ignore
-    }
-  }
-
-  const rawSlotDate =
-    profile?.activeRegistration?.slot?.slotDate ||
-    (storedSlot?.day ? `${storedSlot.day}th ${storedSlot.month || "SEP"} 2026` : "18th Sep 2026");
-  const slotDate = formatSlotDate(rawSlotDate);
-  const slotTime = profile?.activeRegistration?.slot?.slotTime || storedSlot?.time || "STANDBY";
   const teamCode = profile?.team?.teamCode || "TEAM";
 
   const handleCopyCode = () => {
@@ -48,55 +21,46 @@ export function Team2ActionSection() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between h-full py-2.5 sm:py-3.5 px-2 select-none">
-      {/* 1. SLOT & DATE/TIME */}
-      <div className="flex flex-col items-center gap-1 text-center w-full">
-        <span className="font-pixel text-[10px] sm:text-xs text-[#00F0FF] tracking-wider uppercase">
-          BATTLE SLOT
-        </span>
-        <div className="font-pixel text-[10px] sm:text-[11px] text-white/90 bg-[#141422] border border-[#00F0FF]/40 rounded px-2.5 py-1 tracking-wider">
-          {slotDate}
-          <div className="text-[#FEDC02] text-[9px] mt-0.5">{slotTime}</div>
-        </div>
+    <div className="flex flex-col items-center justify-between h-full py-4 px-3 select-none gap-3">
+      {/* SCAN TO PLAY Title */}
+      <h3
+        className="text-[#23eff1] font-mono font-bold text-xs tracking-wider uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+        style={{ fontFamily: "var(--font-pixel), monospace" }}
+      >
+        SCAN PASS TO ENTER
+      </h3>
+
+      {/* Dynamic QR Code Container */}
+      <div className="relative p-2 bg-white rounded-md shadow-lg border-2 border-black">
+        <QrCode className="w-24 h-24 sm:w-28 sm:h-28" />
       </div>
 
-      {/* 2. TEAM CODE + COPY BUTTON */}
-      <div className="flex flex-col items-center gap-1 my-1.5 text-center">
-        <span className="font-pixel text-[10px] sm:text-xs text-[#00F0FF] tracking-wider uppercase">
-          TEAM CODE
-        </span>
-        <div className="flex items-center gap-1.5">
-          <div className="font-pixel text-base sm:text-lg text-[#FEDC02] tracking-[0.2em] border-2 border-[#FEDC02] px-2.5 py-0.5 bg-[#161622] rounded select-text">
+      {/* Team Code Display / Share Box */}
+      <div className="w-full bg-[#11111b] border border-[#00F0FF]/60 rounded p-2 text-center flex flex-col items-center gap-1 shadow-[0_0_10px_rgba(0,240,255,0.15)]">
+        <div className="flex items-center justify-center gap-2">
+          <span className="font-pixel text-xs text-[#00F0FF] font-bold tracking-widest">
             {teamCode}
-          </div>
+          </span>
           <button
             type="button"
             onClick={handleCopyCode}
-            className="px-2 py-1 bg-[#FEDC02]/20 hover:bg-[#FEDC02]/40 text-[#FEDC02] border border-[#FEDC02] text-[9px] font-pixel rounded cursor-pointer transition-all"
-            title="Copy Team Code"
+            className="font-pixel text-[8px] px-1.5 py-0.5 bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF] rounded hover:bg-[#00F0FF] hover:text-black transition-all cursor-pointer"
           >
-            {copied ? "✓" : "📋"}
+            {copied ? "COPIED!" : "COPY"}
           </button>
         </div>
-      </div>
-
-      {/* 3. SCAN & QR CODE */}
-      <div className="flex flex-col items-center gap-1 my-1">
-        <span className="font-pixel text-[9px] sm:text-[10px] text-[#FEDC02] tracking-wider uppercase">
-          SCAN TO ENTER
+        <span className="font-pixel text-[7px] text-white/50 uppercase">
+          {profile?.team?.memberCount || 1}/5 Operatives Joined
         </span>
-        <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-white p-1.5 rounded shadow-md border-2 border-black">
-          <QrCode className="w-full h-full" />
-        </div>
       </div>
 
-      {/* 4. SWITCH / REGISTER BUTTON */}
+      {/* Action Button */}
       <button
         type="button"
-        onClick={() => router.push("/select-mode")}
+        onClick={() => router.push("/slots")}
         className="w-full max-w-[150px] py-1.5 px-3 bg-[#E5349E] hover:bg-[#ff4db7] text-white font-pixel text-[9px] sm:text-[10px] rounded border-2 border-[#ff7beb] shadow-[0_3px_0_#9c187d] transition-all hover:scale-102 active:translate-y-[1px] uppercase tracking-wider text-center cursor-pointer mt-1"
       >
-        CHANGE MODE / TEAM
+        ARENA SLOTS
       </button>
     </div>
   );

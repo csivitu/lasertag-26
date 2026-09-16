@@ -51,12 +51,14 @@ export function SlotGrid({
               time={slot.time}
               seatsLabel={
                 isSelected
-                  ? "Selected Slot"
+                  ? "Selected"
                   : isFull
                   ? "Fully Booked"
-                  : `${slot.capacity} Seats`
+                  : `${slot.capacity} Open`
               }
               state={isSelected ? "booked" : state}
+              redNeeded={slot.red?.needed ?? 5}
+              blueNeeded={slot.blue?.needed ?? 5}
               onClick={
                 isFull || isLoading
                   ? undefined

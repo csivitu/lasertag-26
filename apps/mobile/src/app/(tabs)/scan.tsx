@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,38 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
-import { QrCode, CheckCircle, AlertCircle, RefreshCw, Search } from "lucide-react-native";
+import {
+  QrCode,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Search,
+  Users,
+  User,
+  Clock,
+} from "lucide-react-native";
 import { THEME } from "@/constants/theme";
 import { apiFetch } from "@/lib/api";
+
+interface WaitingTeam {
+  teamCode: string;
+  teamName: string;
+  slot: string;
+  side: string;
+  arrivedCount: number;
+  totalMembers: number;
+  arrivalStatus: string;
+  members: Array<{ id: string; name: string; regNo: string; checkedInAt: string }>;
+}
+
+interface WaitingSolo {
+  id: string;
+  name: string;
+  regNo: string;
+  slot: string;
+  side: string;
+  checkedInAt: string;
+}
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -23,8 +52,40 @@ export default function ScanScreen() {
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
+    name?: string;
+    regNo?: string;
+    isTeam?: boolean;
     teamName?: string;
+    arrivedCount?: number;
+    totalTeamCount?: number;
+    arrivalMessage?: string;
+    slot?: string;
+    side?: string;
   } | null>(null);
+
+  // Live waiting queue
+  const [waitingTeams, setWaitingTeams] = useState<WaitingTeam[]>([]);
+  const [waitingSolos, setWaitingSolos] = useState<WaitingSolo[]>([]);
+  const [queueLoading, setQueueLoading] = useState(false);
+
+  const fetchWaitlist = async () => {
+    try {
+      setQueueLoading(true);
+      const res = await apiFetch<any>("/verification/waiting-queue");
+      if (res.success && res.data) {
+        setWaitingTeams(res.data.teams || []);
+        setWaitingSolos(res.data.solos || []);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setQueueLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWaitlist();
+  }, []);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     if (scanned || loading) return;
@@ -44,11 +105,22 @@ export default function ScanScreen() {
     });
 
     if (res.success) {
+      const d = res.data;
       setResult({
         success: true,
-        message: res.data?.message || "Participant Check-In Verified!",
-        teamName: res.data?.teamName || res.data?.team?.name,
+        message: (res as any).message || "Participant Check-In Verified!",
+        name: d?.name || d?.user?.name,
+        regNo: d?.regNo || d?.user?.regNo,
+        isTeam: d?.isTeam,
+        teamName: d?.teamName || d?.team?.name,
+        arrivedCount: d?.arrivedCount,
+        totalTeamCount: d?.totalTeamCount,
+        arrivalMessage: d?.arrivalMessage,
+        slot: d?.slot,
+        side: d?.side,
       });
+      // Refresh live waitlist
+      fetchWaitlist();
     } else {
       setResult({
         success: false,
@@ -72,6 +144,8 @@ export default function ScanScreen() {
   if (!permission) {
     return <View style={styles.container} />;
   }
+
+  const totalWaiting = waitingTeams.reduce((acc, t) => acc + t.arrivedCount, 0) + waitingSolos.length;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -137,29 +211,75 @@ export default function ScanScreen() {
               result.success ? styles.resultSuccess : styles.resultError,
             ]}
           >
-            {result.success ? (
-              <CheckCircle size={28} color={THEME.colors.accent} />
-            ) : (
-              <AlertCircle size={28} color={THEME.colors.danger} />
-            )}
-            <View style={styles.resultDetails}>
+            <View style={styles.resultHeaderRow}>
+              {result.success ? (
+                <CheckCircle size={24} color={THEME.colors.accent} />
+              ) : (
+                <AlertCircle size={24} color={THEME.colors.danger} />
+              )}
               <Text
                 style={[
                   styles.resultTitle,
                   { color: result.success ? THEME.colors.accent : THEME.colors.danger },
                 ]}
               >
-                {result.success ? "CHECK-IN VERIFIED" : "CHECK-IN FAILED"}
+                {result.success ? "VERIFIED & ADDED TO WAITLIST" : "CHECK-IN FAILED"}
               </Text>
-              <Text style={styles.resultMessage}>{result.message}</Text>
-              {result.teamName && (
-                <Text style={styles.resultTeam}>Team: {result.teamName}</Text>
-              )}
+
+              <TouchableOpacity style={styles.resetBtn} onPress={resetScanner}>
+                <RefreshCw size={16} color={THEME.colors.textPrimary} />
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.resetBtn} onPress={resetScanner}>
-              <RefreshCw size={16} color={THEME.colors.textPrimary} />
-            </TouchableOpacity>
+            <View style={styles.resultDetails}>
+              {result.name && (
+                <Text style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Operative: </Text>
+                  <Text style={styles.detailValue}>{result.name}</Text>
+                </Text>
+              )}
+              {result.regNo && (
+                <Text style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Reg No: </Text>
+                  <Text style={styles.detailValue}>{result.regNo}</Text>
+                </Text>
+              )}
+
+              {/* Team or Solo Distinction */}
+              {result.isTeam ? (
+                <View style={styles.teamStatusBox}>
+                  <Text style={styles.teamNameLabel}>TEAM: {result.teamName}</Text>
+                  <Text style={styles.arrivalStatusBadge}>
+                    🎯 {result.arrivalMessage || `${result.arrivedCount} has arrived (${result.arrivedCount}/${result.totalTeamCount})`}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.soloStatusBox}>
+                  <Text style={styles.soloBadgeText}>👤 SOLO OPERATIVE ARRIVED</Text>
+                </View>
+              )}
+
+              {result.slot && (
+                <Text style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Slot: </Text>
+                  <Text style={styles.detailValue}>{result.slot}</Text>
+                </Text>
+              )}
+              {result.side && (
+                <Text style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Side: </Text>
+                  <Text
+                    style={[
+                      styles.detailValue,
+                      { color: result.side.toLowerCase() === "red" ? "#FF0055" : THEME.colors.accent },
+                    ]}
+                  >
+                    {result.side.toUpperCase()}
+                  </Text>
+                </Text>
+              )}
+              <Text style={styles.resultMessage}>{result.message}</Text>
+            </View>
           </View>
         )}
 
@@ -187,6 +307,84 @@ export default function ScanScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Verified & Waiting List Arena Queue */}
+        <View style={styles.queueCard}>
+          <View style={styles.queueHeader}>
+            <View style={styles.queueHeaderLeft}>
+              <Clock size={16} color={THEME.colors.accent} />
+              <Text style={styles.queueTitle}>
+                ARENA WAITLIST ({totalWaiting} ARRIVED)
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={fetchWaitlist}
+              disabled={queueLoading}
+              style={styles.queueRefreshBtn}
+            >
+              {queueLoading ? (
+                <ActivityIndicator size="small" color={THEME.colors.accent} />
+              ) : (
+                <RefreshCw size={14} color={THEME.colors.textPrimary} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Teams Waiting */}
+          {waitingTeams.length > 0 && (
+            <View style={styles.queueSection}>
+              <Text style={styles.queueSectionTitle}>TEAMS WAITING</Text>
+              {waitingTeams.map((t) => (
+                <View key={t.teamCode} style={styles.queueTeamCard}>
+                  <View style={styles.queueTeamTop}>
+                    <View style={styles.teamBadgeRow}>
+                      <Users size={14} color="#00F0FF" />
+                      <Text style={styles.queueTeamName}>{t.teamName}</Text>
+                    </View>
+                    <Text style={styles.queueArrivalBadge}>
+                      {t.arrivalStatus}
+                    </Text>
+                  </View>
+                  <Text style={styles.queueMetaText}>
+                    Slot: {t.slot} | Side: {t.side}
+                  </Text>
+                  <View style={styles.queueMembersList}>
+                    {t.members.map((m) => (
+                      <Text key={m.id} style={styles.queueMemberItem}>
+                        • {m.name} ({m.regNo}) - Arrived
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Solos Waiting */}
+          {waitingSolos.length > 0 && (
+            <View style={styles.queueSection}>
+              <Text style={styles.queueSectionTitle}>SOLO OPERATIVES</Text>
+              {waitingSolos.map((s) => (
+                <View key={s.id} style={styles.queueSoloCard}>
+                  <View style={styles.teamBadgeRow}>
+                    <User size={14} color="#FEDC02" />
+                    <Text style={styles.queueSoloName}>{s.name}</Text>
+                    <Text style={styles.soloTag}>SOLO</Text>
+                  </View>
+                  <Text style={styles.queueMetaText}>
+                    Reg: {s.regNo} | Slot: {s.slot} | Side: {s.side}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {waitingTeams.length === 0 && waitingSolos.length === 0 && !queueLoading && (
+            <Text style={styles.emptyQueueText}>
+              No verified participants currently waiting in the arena queue.
+            </Text>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -200,70 +398,40 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.md,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: THEME.colors.border,
-    backgroundColor: THEME.colors.surface,
+    gap: 8,
   },
   headerTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: THEME.colors.textPrimary,
-  },
-  scrollContent: {
-    padding: THEME.spacing.lg,
-    gap: THEME.spacing.lg,
-  },
-  permissionCard: {
-    padding: 24,
-    backgroundColor: THEME.colors.surface,
-    borderWidth: 1,
-    borderColor: THEME.colors.border,
-    borderRadius: 20,
-    alignItems: "center",
-    gap: 12,
-  },
-  permissionTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: THEME.colors.textPrimary,
   },
-  permissionDesc: {
-    fontSize: 12,
-    color: THEME.colors.textMuted,
-    textAlign: "center",
-  },
-  permissionBtn: {
-    backgroundColor: THEME.colors.accent,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  permissionBtnText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#09090B",
+  scrollContent: {
+    padding: 16,
+    gap: 16,
   },
   cameraContainer: {
     height: 300,
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: THEME.colors.border,
+    backgroundColor: THEME.colors.surface,
     position: "relative",
   },
   overlay: {
-    flex: 1,
-    backgroundColor: "rgba(9, 9, 11, 0.6)",
-    alignItems: "center",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: "center",
-    gap: 16,
+    alignItems: "center",
   },
   reticleBox: {
-    width: 180,
-    height: 180,
+    width: 200,
+    height: 200,
     position: "relative",
   },
   corner: {
@@ -297,110 +465,294 @@ const styles = StyleSheet.create({
     borderRightWidth: 3,
   },
   reticleText: {
+    marginTop: 16,
+    color: THEME.colors.textPrimary,
     fontSize: 12,
     fontWeight: "600",
-    color: THEME.colors.textPrimary,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: "rgba(0,0,0,0.6)",
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 8,
   },
-  resultBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    padding: 16,
+  permissionCard: {
     backgroundColor: THEME.colors.surface,
+    padding: 24,
+    borderRadius: 16,
+    alignItems: "center",
+    gap: 12,
     borderWidth: 1,
     borderColor: THEME.colors.border,
-    borderRadius: 16,
   },
-  resultText: {
-    fontSize: 13,
+  permissionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
     color: THEME.colors.textPrimary,
   },
-  resultCard: {
+  permissionDesc: {
+    fontSize: 13,
+    color: THEME.colors.textMuted,
+    textAlign: "center",
+    lineHeight: 18,
+  },
+  permissionBtn: {
+    marginTop: 8,
+    backgroundColor: THEME.colors.accent,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  permissionBtnText: {
+    color: THEME.colors.bg,
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  resultBox: {
+    backgroundColor: THEME.colors.surface,
+    padding: 16,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  resultText: {
+    color: THEME.colors.textMuted,
+    fontSize: 14,
+  },
+  resultCard: {
     padding: 16,
-    borderRadius: 16,
-    gap: 14,
+    borderRadius: 12,
     borderWidth: 1,
+    gap: 8,
   },
   resultSuccess: {
-    backgroundColor: THEME.colors.accentBg,
+    backgroundColor: "rgba(34, 197, 94, 0.1)",
     borderColor: THEME.colors.accent,
   },
   resultError: {
-    backgroundColor: "rgba(244, 63, 94, 0.1)",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
     borderColor: THEME.colors.danger,
   },
-  resultDetails: {
-    flex: 1,
-    gap: 2,
+  resultHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   resultTitle: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
-  resultMessage: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: THEME.colors.textPrimary,
-  },
-  resultTeam: {
-    fontSize: 11,
-    color: THEME.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: "700",
+    flex: 1,
   },
   resetBtn: {
+    padding: 4,
+  },
+  resultDetails: {
+    marginTop: 4,
+    gap: 6,
+  },
+  detailRow: {
+    fontSize: 13,
+  },
+  detailLabel: {
+    color: THEME.colors.textMuted,
+    fontWeight: "600",
+  },
+  detailValue: {
+    color: THEME.colors.textPrimary,
+    fontWeight: "700",
+  },
+  teamStatusBox: {
     padding: 8,
+    backgroundColor: "rgba(0, 240, 255, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 240, 255, 0.3)",
+    borderRadius: 8,
+    marginVertical: 4,
+    gap: 4,
+  },
+  teamNameLabel: {
+    color: "#00F0FF",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  arrivalStatusBadge: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  soloStatusBox: {
+    padding: 6,
+    backgroundColor: "rgba(254, 220, 2, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(254, 220, 2, 0.3)",
+    borderRadius: 8,
+    marginVertical: 4,
+  },
+  soloBadgeText: {
+    color: "#FEDC02",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  resultMessage: {
+    fontSize: 12,
+    color: THEME.colors.textMuted,
+    marginTop: 4,
   },
   manualCard: {
     backgroundColor: THEME.colors.surface,
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: THEME.colors.border,
-    borderRadius: 16,
-    padding: 16,
     gap: 12,
   },
   manualTitle: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
     color: THEME.colors.textPrimary,
   },
   manualInputRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
   },
   inputWrapper: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: THEME.colors.bg,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: THEME.colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
   },
   searchIcon: {
     marginRight: 6,
   },
   textInput: {
     flex: 1,
-    height: 40,
-    fontSize: 12,
     color: THEME.colors.textPrimary,
+    fontSize: 13,
+    paddingVertical: 8,
   },
   verifyBtn: {
     backgroundColor: THEME.colors.accent,
-    justifyContent: "center",
     paddingHorizontal: 16,
-    borderRadius: 12,
+    justifyContent: "center",
+    borderRadius: 8,
   },
   verifyBtnText: {
-    fontSize: 12,
+    color: THEME.colors.bg,
     fontWeight: "700",
-    color: "#09090B",
+    fontSize: 13,
+  },
+  queueCard: {
+    backgroundColor: THEME.colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: THEME.colors.border,
+    gap: 12,
+  },
+  queueHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: THEME.colors.border,
+    paddingBottom: 8,
+  },
+  queueHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  queueTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: THEME.colors.textPrimary,
+  },
+  queueRefreshBtn: {
+    padding: 4,
+  },
+  queueSection: {
+    gap: 8,
+  },
+  queueSectionTitle: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: THEME.colors.textMuted,
+    letterSpacing: 1,
+  },
+  queueTeamCard: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    padding: 10,
+    gap: 4,
+  },
+  queueTeamTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  teamBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  queueTeamName: {
+    color: "#00F0FF",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  queueArrivalBadge: {
+    color: "#22C55E",
+    fontWeight: "700",
+    fontSize: 11,
+    backgroundColor: "rgba(34, 197, 94, 0.1)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  queueMetaText: {
+    fontSize: 11,
+    color: THEME.colors.textMuted,
+  },
+  queueMembersList: {
+    marginTop: 4,
+    gap: 2,
+  },
+  queueMemberItem: {
+    fontSize: 11,
+    color: THEME.colors.textPrimary,
+  },
+  queueSoloCard: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    padding: 10,
+    gap: 4,
+  },
+  queueSoloName: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  soloTag: {
+    color: "#FEDC02",
+    fontSize: 10,
+    fontWeight: "700",
+    backgroundColor: "rgba(254, 220, 2, 0.15)",
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  emptyQueueText: {
+    color: THEME.colors.textMuted,
+    fontSize: 12,
+    textAlign: "center",
+    paddingVertical: 12,
   },
 });

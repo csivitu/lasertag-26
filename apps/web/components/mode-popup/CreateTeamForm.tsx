@@ -7,6 +7,7 @@ import { BaseFields } from "./BaseFields";
 import { PixelButton } from "../hero/PixelButton";
 import { INPUT_BORDER_SVG, PINK_INPUT_BORDER_SVG, borderBg } from "./modePopupDecor";
 import { useSession, apiBaseUrl } from "@/lib/auth-client";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const labelStyle: CSSProperties = {
   fontFamily: "var(--ft-pixel), monospace",
@@ -52,6 +53,7 @@ interface CreateTeamFormProps {
 export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const { profile, refetch } = useUserProfile();
   const [fullName, setFullName] = useState("");
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [emailId, setEmailId] = useState("");
@@ -63,15 +65,19 @@ export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
   const prefilled = useRef(false);
 
   useEffect(() => {
-    if (prefilled.current || !session?.user) return;
-    prefilled.current = true;
-    if (session.user.name) {
-      setFullName(session.user.name);
+    if (prefilled.current) return;
+    if (profile) {
+      prefilled.current = true;
+      if (profile.name) setFullName(profile.name);
+      if (profile.regNo) setRegistrationNumber(profile.regNo);
+      if (profile.email) setEmailId(profile.email);
+      if (profile.phone) setPhoneNumber(profile.phone);
+    } else if (session?.user) {
+      prefilled.current = true;
+      if (session.user.name) setFullName(session.user.name);
+      if (session.user.email) setEmailId(session.user.email);
     }
-    if (session.user.email) {
-      setEmailId(session.user.email);
-    }
-  }, [session]);
+  }, [session, profile]);
 
   // Generated once when the component mounts; frozen for the session.
   const teamCode = useMemo(() => generateCode(), []);
@@ -97,7 +103,8 @@ export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
     e.preventDefault();
     setError("");
 
-    if (!session?.user?.id) {
+    const leaderId = profile?.id || session?.user?.id;
+    if (!leaderId) {
       setError("Please sign in before creating a squad.");
       return;
     }
@@ -131,9 +138,12 @@ export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          leader_id: session.user.id,
+          leader_id: leaderId,
           team_code: teamCode,
           name: teamName.trim(),
+          fullName: fullName.trim(),
+          regNo: registrationNumber.trim(),
+          phone: phoneNumber.trim(),
         }),
       });
 
@@ -141,6 +151,8 @@ export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || data.message || "Failed to create team in arena database");
       }
+
+      await refetch?.();
 
       const teamPayload = {
         teamCode,
@@ -204,7 +216,7 @@ export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
           </p>
           <PixelButton
             label="PROCEED TO SLOT BOOKING →"
-            onClick={() => router.push("/slot-booking")}
+            onClick={() => router.push("/slots")}
             labelClassName="text-[12px] lg:text-[14px]"
           />
           <button
@@ -285,8 +297,8 @@ export function CreateTeamForm({ onClose }: CreateTeamFormProps) {
               label={status === "submitting" ? "CREATING..." : "CREATE TEAM"}
               interaction="simple"
               className="w-[240px]"
-            labelClassName="text-[12px] lg:text-[14px]"
-            disabled={status === "submitting"}
+              labelClassName="text-[12px] lg:text-[14px]"
+              disabled={status === "submitting"}
             />
           </div>
         )}
