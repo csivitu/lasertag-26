@@ -29,9 +29,9 @@ function createRateLimiter({ windowMs, max, message }: RateLimitOptions) {
   };
 }
 
-/** Password-only staff login: 20 attempts per 10 minutes, then 429. */
+/** Password-only staff login: 20 attempts per minute per IP, then 429. */
 export const loginRateLimit = createRateLimiter({
-  windowMs: 10 * 60 * 1000,
+  windowMs: 60 * 1000,
   max: 20,
   message: "Too many login attempts, try again later",
 });
