@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
-import XLSX from "xlsx";
+import * as XLSX from "xlsx";
 
 import { ValidationError } from "../errors";
 import {
