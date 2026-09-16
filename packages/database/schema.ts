@@ -137,7 +137,38 @@ export const bookings = pgTable(
   ]
 );
 
-// 6. Drizzle ORM Relations
+// 6. Verified Participants Allowlist
+// The official paid list lives here — reg numbers and/or emails uploaded by a
+// super admin (file import or pasted text) BEFORE participants sign up.
+// A participant counts as verified when their signed-up reg number or login
+// email appears in this table (or their user.paid flag is already set).
+// Unique indexes treat NULLs as distinct, so reg-only and email-only rows
+// coexist; the check constraint guarantees at least one identifier.
+export const verifiedParticipants = pgTable(
+  'verified_participants',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    // Uppercased + trimmed at write time; matched case-insensitively.
+    regNumber: text('reg_number'),
+    // Lowercased + trimmed at write time; matched case-insensitively.
+    email: text('email'),
+    name: text('name'),
+    // import | paste | manual
+    source: text('source').notNull().default('import'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('verified_participants_reg_number_uidx').on(table.regNumber),
+    uniqueIndex('verified_participants_email_uidx').on(table.email),
+    index('verified_participants_created_at_idx').on(table.createdAt),
+    check(
+      'verified_participants_has_identifier',
+      sql`reg_number IS NOT NULL OR email IS NOT NULL`
+    ),
+  ]
+);
+
+// 7. Drizzle ORM Relations
 export const slotsRelations = relations(slots, ({ many }) => ({
   bookings: many(bookings),
 }));
