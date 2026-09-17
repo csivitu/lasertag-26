@@ -43,6 +43,13 @@
       "when": 1789619244528,
       "tag": "0005_add-user-reg-number",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": 7,
+      "when": 1789619395855,
+      "tag": "0006_capacity-guard",
+      "breakpoints": true
     }
   ]
 }
