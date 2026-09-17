@@ -27,8 +27,8 @@ export const publicRegistrationsRouter = Router();
  */
 publicRegistrationsRouter.post(
   "/solo",
-  bookingRateLimit,
   requireAuth,
+  bookingRateLimit,
   validate(soloRegistrationSchema),
   asyncHandler(createSoloRegistration),
 );
@@ -39,8 +39,8 @@ publicRegistrationsRouter.post(
  */
 publicRegistrationsRouter.post(
   "/:reservation_id/confirm",
-  bookingRateLimit,
   requireAuth,
+  bookingRateLimit,
   validate(confirmRegistrationSchema),
   asyncHandler(confirmRegistration),
 );
