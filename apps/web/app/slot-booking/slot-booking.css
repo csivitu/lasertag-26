@@ -52,17 +52,8 @@
 }
 
 .slot-booking-screen {
-  padding: clamp(20px, 3.2vh, 58px) clamp(14px, 6vw, 100px) clamp(14px, 2.6vh, 34px);
+  padding: clamp(10px, 1.8vh, 22px) clamp(14px, 6vw, 100px) 0;
   gap: clamp(10px, 1.8vh, 22px);
-}
-
-/* Pull only the navbar full-bleed so it matches select-mode.
-   Content keeps the original section gutters, so slots grid and
-   button sizes are untouched. */
-.slot-booking-screen > header {
-  margin-top: calc(-1 * clamp(20px, 3.2vh, 58px));
-  margin-left: calc(-1 * clamp(14px, 6vw, 100px));
-  margin-right: calc(-1 * clamp(14px, 6vw, 100px));
 }
 
 .slot-current-row {
@@ -350,14 +341,8 @@
 
 @media (max-width: 767px) {
   .slot-booking-screen {
-    padding: 30px 28px 22px;
+    padding: 16px 28px 0;
     gap: 16px;
-  }
-
-  .slot-booking-screen > header {
-    margin-top: -30px;
-    margin-left: -28px;
-    margin-right: -28px;
   }
 
   .slot-title {
@@ -471,13 +456,8 @@
 
 @media (max-height: 720px) and (min-width: 768px) {
   .slot-booking-screen {
-    padding-bottom: 12px;
-    padding-top: 18px;
+    padding: 10px clamp(14px, 6vw, 100px) 0;
     gap: 12px;
-  }
-
-  .slot-booking-screen > header {
-    margin-top: -18px;
   }
 
   .slot-title {

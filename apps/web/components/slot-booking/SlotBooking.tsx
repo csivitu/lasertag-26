@@ -283,17 +283,18 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
   // }
 
   return (
-    <section className="slot-booking-screen relative flex min-h-screen flex-col items-center justify-between pb-8 bg-[var(--color-ink)] select-none">
+    <main className="relative isolate min-h-screen w-full overflow-x-hidden bg-[#08080d] text-white flex flex-col justify-between pb-8 select-none">
       {/* Starfield BG */}
       <Starfield />
 
       {/* Top Retro Navigation Header */}
       <HeroHeader />
 
-      {/* ── SLOT BOOKING title ── */}
-      <div className="relative z-10 text-center leading-none mt-2">
-        <h1 className="slot-title m-0">SLOT BOOKING</h1>
-      </div>
+      <div className="slot-booking-screen relative z-10 flex flex-1 flex-col items-center justify-between w-full">
+        {/* ── SLOT BOOKING title ── */}
+        <div className="relative z-10 text-center leading-none mt-2">
+          <h1 className="slot-title m-0">SLOT BOOKING</h1>
+        </div>
 
       {/* ── Current booking badge + single date (side-by-side on desktop) ── */}
       <div className="slot-current-row relative z-10 my-2">
@@ -383,6 +384,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
           labelClassName="text-[clamp(11px,1.2vw,14px)] cursor-pointer"
         />
       </div>
+    </div>
 
       {/* Auth Modal */}
       <AuthModal
@@ -431,6 +433,6 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
           onSaved={() => refetchProfile()}
         />
       )}
-    </section>
+    </main>
   );
 }
