@@ -19,6 +19,7 @@ interface BookingEmailParams {
   userId: string;
   userName: string;
   userEmail: string;
+  regNumber: string | null;
   type: "individual" | "team";
   teamCode: string | null;
   qrToken: string;
@@ -106,6 +107,42 @@ interface DispatchOptions {
   extraVars: Record<string, string>;
 }
 
+/**
+ * Template variable mapping, shared by solo and team sends. The templates
+ * expect `user_name` / `registrationNumber` — historically the mailer passed
+ * `name` and no reg number at all, which rendered as literal {{...}}
+ * placeholders in inboxes. regNumber falls back to "N/A" for legacy rows
+ * that predate the onboarding gate.
+ */
+export function buildConfirmationVariables(input: {
+  userName: string;
+  regNumber: string | null;
+  bookingId: string;
+  bookingType: string;
+  teamCode: string | null;
+  slotDate: string;
+  slotTime: string;
+  passUrl: string;
+  qrToken: string;
+  extraVars: Record<string, string>;
+}): Record<string, string> {
+  return {
+    // Template-facing keys (must match {{...}} in the .html templates).
+    user_name: input.userName,
+    registrationNumber: input.regNumber ?? "N/A",
+    slotDate: input.slotDate,
+    slotTime: input.slotTime,
+    qrToken: input.qrToken,
+    // Legacy keys, kept for compatibility.
+    name: input.userName,
+    bookingId: input.bookingId,
+    bookingType: input.bookingType,
+    teamCode: input.teamCode ?? "N/A",
+    passUrl: input.passUrl,
+    ...input.extraVars,
+  };
+}
+
 async function sendSoloEmail(
   params: BookingEmailParams,
   template: string,
@@ -117,8 +154,9 @@ async function sendSoloEmail(
     to: params.userEmail,
     subject: opts.subject,
     template,
-    variables: {
-      name: params.userName,
+    variables: buildConfirmationVariables({
+      userName: params.userName,
+      regNumber: params.regNumber,
       bookingId: params.bookingId,
       bookingType: "Solo Mission",
       teamCode: "N/A",
@@ -126,8 +164,8 @@ async function sendSoloEmail(
       slotTime: params.newSlot.slotTime,
       passUrl: params.passUrl,
       qrToken: params.qrToken,
-      ...opts.extraVars,
-    },
+      extraVars: opts.extraVars,
+    }),
     attachments: [
       {
         filename: `arena-pass-${params.qrToken}.png`,
@@ -155,6 +193,7 @@ async function sendTeamEmails(
       id: user.id,
       name: user.name,
       email: user.email,
+      regNumber: user.regNumber,
     })
     .from(teamMembers)
     .innerJoin(user, eq(teamMembers.userId, user.id))
@@ -175,8 +214,9 @@ async function sendTeamEmails(
         to: member.email,
         subject: opts.subject,
         template,
-        variables: {
-          name: member.name,
+        variables: buildConfirmationVariables({
+          userName: member.name,
+          regNumber: member.regNumber,
           bookingId: params.bookingId,
           bookingType: "Team Battle",
           teamCode: params.teamCode!,
@@ -184,8 +224,8 @@ async function sendTeamEmails(
           slotTime: params.newSlot.slotTime,
           passUrl: params.passUrl,
           qrToken: memberQrToken,
-          ...opts.extraVars,
-        },
+          extraVars: opts.extraVars,
+        }),
         attachments: [
           {
             filename: `arena-pass-${memberQrToken}.png`,

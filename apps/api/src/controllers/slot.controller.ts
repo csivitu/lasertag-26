@@ -490,6 +490,7 @@ export const slotController = {
       userId: user_id,
       userName: targetUser.name,
       userEmail: targetUser.email,
+      regNumber: targetUser.regNumber,
       type,
       teamCode: type === "team" ? (team_code ?? null) : null,
       qrToken: assignedQrToken,
