@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import multer from "multer";
 
 import {
+  countAllowlistEntries,
   isIdentityAllowlisted,
   listAllowlistEntries,
   paidImportQueries,
@@ -41,7 +42,8 @@ export const verifyPayments = async () => {
  * Bulk-verifies participants from an uploaded xlsx/csv list.
  * Every row is stored in the verified-participants allowlist (skipped when
  * already there), and any already-signed-up match is flipped to paid.
- * Additive only: nothing is ever unmarked. `?dryRun=true` previews.
+ * Additive only: nothing is ever unmarked, updated, or deleted — already
+ * listed rows are left untouched. `?dryRun=true` previews.
  */
 export const importPaidList = async (req: Request, res: Response) => {
   if (!req.file) {
@@ -54,11 +56,20 @@ export const importPaidList = async (req: Request, res: Response) => {
     dryRun,
     source: "import",
   });
+  // Fresh total so the UI count updates in the same round-trip (best-effort:
+  // a count failure must never fail the import itself).
+  let totalVerified: number | undefined;
+  try {
+    totalVerified = await countAllowlistEntries();
+  } catch {
+    totalVerified = undefined;
+  }
 
   res.json({
     message: dryRun ? "Dry run — nothing was written." : "Paid list imported.",
     dryRun,
     filename: req.file.originalname,
+    totalVerified,
     ...result,
   });
 };
@@ -78,19 +89,37 @@ export const importPastedList = async (
     dryRun,
     source: "paste",
   });
+  let totalVerified: number | undefined;
+  try {
+    totalVerified = await countAllowlistEntries();
+  } catch {
+    totalVerified = undefined;
+  }
 
   res.json({
     message: dryRun ? "Dry run — nothing was written." : "Pasted list imported.",
     dryRun,
+    totalVerified,
     ...result,
   });
 };
 
-/** Newest-first allowlist slice for the admin verification screen. */
+/**
+ * Newest-first allowlist slice for the admin verification screen.
+ * Supports `?q=` (reg number / email / name), `?limit=` (1–500) and
+ * `?offset=`. Returns `{ data, total, limit, offset }` — `total` is the
+ * DB-side count for `q`, so the UI total stays correct past the fetch cap.
+ * Read-only and additive-safe: never mutates anything.
+ */
 export const listAllowlist = async (req: Request, res: Response) => {
-  const limit = Math.min(Math.max(Number(req.query.limit) || 200, 1), 500);
-  const entries = await listAllowlistEntries(limit);
-  res.json({ data: entries });
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 500);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+  const q = typeof req.query.q === "string" ? req.query.q : "";
+  const [entries, total] = await Promise.all([
+    listAllowlistEntries(limit, offset, q),
+    countAllowlistEntries(q),
+  ]);
+  res.json({ data: entries, total, limit, offset });
 };
 
 /**

@@ -197,4 +197,59 @@ describe("importVerifiedEntries", () => {
     expect(result.invalid).toHaveLength(1);
     expect(deps.insertAllowlistEntry).not.toHaveBeenCalled();
   });
+
+  test("dedupes repeated identities within one upload without extra writes", async () => {
+    const deps = makeDeps();
+    const dupes: VerifiedEntry[] = [
+      { rowNumber: 2, regNumber: "23BCE1234", email: null, name: "Alicia" },
+      { rowNumber: 3, regNumber: "23bce1234", email: null, name: "Alicia again" },
+      { rowNumber: 4, regNumber: "23BCE1234", email: null, name: "Alicia third" },
+    ];
+    const result = await importVerifiedEntries(dupes, deps, { dryRun: false, source: "import" });
+
+    expect(deps.insertAllowlistEntry).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ total: 3, allowlisted: 1, alreadyListed: 2 });
+    expect(result.failed).toHaveLength(0);
+  });
+
+  test("isolates a single-row DB failure — the rest of the upload still applies", async () => {
+    const deps = makeDeps({
+      insertAllowlistEntry: mock(async (entry: {
+        regNumber: string | null;
+        email: string | null;
+        name: string | null;
+        source: string;
+      }) => {
+        if (entry.regNumber === "23BCEBAD") throw new Error("boom");
+        return { id: "allow-1", regNumber: entry.regNumber, email: entry.email };
+      }),
+    });
+    const mixed: VerifiedEntry[] = [
+      { rowNumber: 2, regNumber: "23BCE0001", email: null, name: "Good One" },
+      { rowNumber: 3, regNumber: "23BCEBAD", email: null, name: "Bad Row" },
+      { rowNumber: 4, regNumber: "23BCE0002", email: null, name: "Good Two" },
+    ];
+    const result = await importVerifiedEntries(mixed, deps, { dryRun: false, source: "import" });
+
+    expect(result).toMatchObject({ total: 3, allowlisted: 2 });
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0]).toMatchObject({ rowNumber: 3, value: "23BCEBAD" });
+  });
+
+  test("re-uploading the same list stores nothing new (additive only)", async () => {
+    const deps = makeDeps({
+      findAllowlisted: mock(async () => ({ id: "allow-9", regNumber: "23BCE1234", email: null })),
+      findUserByRegNumber: mock(async () => ({ id: "user-1", paid: true })),
+    });
+    const same: VerifiedEntry[] = [
+      { rowNumber: 2, regNumber: "23BCE1234", email: null, name: "Alicia" },
+      { rowNumber: 3, regNumber: "23BCE1234", email: null, name: "Alicia" },
+    ];
+    const result = await importVerifiedEntries(same, deps, { dryRun: false, source: "import" });
+
+    expect(deps.insertAllowlistEntry).not.toHaveBeenCalled();
+    expect(deps.setUserPaid).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ allowlisted: 0, alreadyListed: 2, newlyPaid: 0 });
+    expect(result.failed).toHaveLength(0);
+  });
 });

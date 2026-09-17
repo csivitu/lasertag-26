@@ -45,6 +45,14 @@ export interface InvalidEntry {
   reason: string;
 }
 
+/** A row that could not be stored/marked despite retries — never aborts the run. */
+export interface FailedEntry {
+  rowNumber: number;
+  value: string | null;
+  name: string | null;
+  reason: string;
+}
+
 export interface VerifiedImportResult {
   total: number;
   /** New rows stored in the allowlist (skipped when dry-running). */
@@ -56,6 +64,8 @@ export interface VerifiedImportResult {
   /** Signed-up users that were already paid. */
   alreadyPaid: number;
   invalid: InvalidEntry[];
+  /** Rows that failed with a DB error (isolated — the rest still applied). */
+  failed: FailedEntry[];
 }
 
 /** Hard cap so a bad upload can't spin the server. */
@@ -224,7 +234,12 @@ export function parsePastedList(text: string): VerifiedEntry[] {
 /**
  * Stores every entry in the verified-participants allowlist (skipping ones
  * already there) and flips any already-signed-up matching user to paid.
- * Additive only: nothing is ever unmarked or deleted.
+ * Additive only: nothing is ever unmarked or deleted, and existing rows are
+ * never updated — if already listed, the row is left untouched.
+ *
+ * Row-by-row and fault-isolated: each row is verified individually and a
+ * single DB error lands in `failed` while the rest of the run continues, so
+ * a 300+ row upload always applies every storable row.
  */
 export async function importVerifiedEntries(
   rows: VerifiedEntry[],
@@ -238,10 +253,20 @@ export async function importVerifiedEntries(
     newlyPaid: 0,
     alreadyPaid: 0,
     invalid: [],
+    failed: [],
   };
 
+  // In-file dedupe: same normalized identity twice in one upload counts the
+  // second as already-listed without extra DB round-trips or double paid flips.
+  const seenInFile = new Set<string>();
+
   for (const row of rows) {
-    if (row.regNumber === null && row.email === null) {
+    // Defensive re-normalize: entries normally arrive normalized from the
+    // parsers, but each row is verified on its own so casing/whitespace can
+    // never split one identity into two.
+    const regNumber = normalizeRegNumber(row.regNumber);
+    const email = normalizeEmail(row.email);
+    if (regNumber === null && email === null) {
       result.invalid.push({
         rowNumber: row.rowNumber,
         value: row.name,
@@ -251,38 +276,59 @@ export async function importVerifiedEntries(
       continue;
     }
 
-    const listed = await deps.findAllowlisted(row.regNumber, row.email);
-    if (listed) {
+    const identityKey = regNumber
+      ? `REG:${regNumber}`
+      : `EMAIL:${email}`;
+    if (seenInFile.has(identityKey)) {
       result.alreadyListed += 1;
-    } else if (!options.dryRun) {
-      await deps.insertAllowlistEntry({
-        regNumber: row.regNumber,
-        email: row.email,
-        name: row.name,
-        source: options.source,
-      });
-      result.allowlisted += 1;
-    } else {
-      result.allowlisted += 1;
-    }
-
-    let found: VerifiedUser | undefined;
-    if (row.regNumber) {
-      found = await deps.findUserByRegNumber(row.regNumber);
-    }
-    if (!found && row.email) {
-      found = await deps.findUserByEmail(row.email);
-    }
-    if (!found) continue;
-
-    if (found.paid) {
-      result.alreadyPaid += 1;
       continue;
     }
-    if (!options.dryRun) {
-      await deps.setUserPaid(found.id, true);
+
+    try {
+      const listed = await deps.findAllowlisted(regNumber, email);
+      if (listed) {
+        result.alreadyListed += 1;
+        seenInFile.add(identityKey);
+      } else if (!options.dryRun) {
+        await deps.insertAllowlistEntry({
+          regNumber,
+          email,
+          name: row.name,
+          source: options.source,
+        });
+        result.allowlisted += 1;
+        seenInFile.add(identityKey);
+      } else {
+        result.allowlisted += 1;
+        seenInFile.add(identityKey);
+      }
+
+      let found: VerifiedUser | undefined;
+      if (regNumber) {
+        found = await deps.findUserByRegNumber(regNumber);
+      }
+      if (!found && email) {
+        found = await deps.findUserByEmail(email);
+      }
+      if (!found) continue;
+
+      if (found.paid) {
+        result.alreadyPaid += 1;
+        continue;
+      }
+      if (!options.dryRun) {
+        await deps.setUserPaid(found.id, true);
+      }
+      result.newlyPaid += 1;
+    } catch (err) {
+      // Isolate this row — everything else in the upload still applies.
+      result.failed.push({
+        rowNumber: row.rowNumber,
+        value: regNumber ?? email,
+        name: row.name,
+        reason: err instanceof Error ? err.message : "Row failed to store.",
+      });
     }
-    result.newlyPaid += 1;
   }
 
   return result;

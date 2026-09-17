@@ -58,7 +58,9 @@ interface ImportSummary {
   alreadyListed: number;
   newlyPaid: number;
   alreadyPaid: number;
+  totalVerified?: number;
   invalid: { rowNumber: number; value: string | null; name: string | null; reason: string }[];
+  failed: { rowNumber: number; value: string | null; name: string | null; reason: string }[];
 }
 
 export default function VerificationPage() {
@@ -84,12 +86,14 @@ export default function VerificationPage() {
   const [pastePreview, setPastePreview] = useState<ImportSummary | null>(null);
   const [pasteResult, setPasteResult] = useState<ImportSummary | null>(null);
 
-  // Allowlist state
+  // Allowlist state (server-driven: search + total survive past the fetch cap)
   const [allowlist, setAllowlist] = useState<
     { id: string; regNumber: string | null; email: string | null; name: string | null; source: string }[]
   >([]);
   const [allowlistLoading, setAllowlistLoading] = useState(false);
   const [allowPage, setAllowPage] = useState(1);
+  const [allowTotal, setAllowTotal] = useState(0);
+  const [allowSearch, setAllowSearch] = useState("");
   const [page, setPage] = useState(1);
 
   const fetchPayments = async () => {
@@ -155,9 +159,19 @@ export default function VerificationPage() {
   const safePage = Math.min(page, totalPages);
   const pagedPayments = filteredPayments.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  const allowTotalPages = Math.max(1, Math.ceil(allowlist.length / PAGE_SIZE));
+  const allowTotalPages = Math.max(1, Math.ceil(allowTotal / PAGE_SIZE));
   const safeAllowPage = Math.min(allowPage, allowTotalPages);
-  const pagedAllowlist = allowlist.slice((safeAllowPage - 1) * PAGE_SIZE, safeAllowPage * PAGE_SIZE);
+  const pagedAllowlist = allowlist;
+
+  const applyImportSuccess = (data: ImportSummary) => {
+    // Prefer the server's fresh total; fall back to a local refetch below.
+    if (typeof data.totalVerified === "number") setAllowTotal(data.totalVerified);
+    const failedNote =
+      data.failed && data.failed.length > 0
+        ? ` ${data.failed.length} row${data.failed.length === 1 ? "" : "s"} failed (listed below) — everything else applied.`
+        : "";
+    return failedNote;
+  };
 
   const runImport = async (dryRun: boolean) => {
     const file = fileRef.current?.files?.[0];
@@ -184,24 +198,47 @@ export default function VerificationPage() {
     } else {
       setImportResult(res.data);
       setPreview(null);
+      const failedNote = applyImportSuccess(res.data);
       setSuccess(
         `Stored ${res.data.allowlisted} new + ${res.data.alreadyListed} already-listed identities; ` +
-        `${res.data.newlyPaid} participant${res.data.newlyPaid === 1 ? "" : "s"} marked paid (${res.data.alreadyPaid} already paid).`
+        `${res.data.newlyPaid} participant${res.data.newlyPaid === 1 ? "" : "s"} marked paid (${res.data.alreadyPaid} already paid).` +
+        (typeof res.data.totalVerified === "number" ? ` Total verified: ${res.data.totalVerified}.` : "") +
+        failedNote
       );
       fetchPayments();
-      fetchAllowlist();
+      fetchAllowlist(1, allowSearch);
+      setAllowPage(1);
     }
   };
 
-  const fetchAllowlist = async () => {
+  const fetchAllowlist = async (pageArg?: number, searchArg?: string) => {
     setAllowlistLoading(true);
-    const res = await apiFetch<{ data?: { id: string; regNumber: string | null; email: string | null; name: string | null; source: string }[] }>("/admin/payments/allowlist?limit=500");
+    const p = pageArg ?? allowPage;
+    const q = searchArg ?? allowSearch;
+    const offset = (Math.max(1, p) - 1) * PAGE_SIZE;
+    const res = await apiFetch<{ data?: { id: string; regNumber: string | null; email: string | null; name: string | null; source: string }[]; total?: number }>(
+      `/admin/payments/allowlist?limit=${PAGE_SIZE}&offset=${offset}${q.trim() ? `&q=${encodeURIComponent(q.trim())}` : ""}`
+    );
     if (res.success && res.data) {
-      const list = Array.isArray(res.data) ? res.data : res.data.data ?? [];
-      setAllowlist(list);
+      if (Array.isArray(res.data)) {
+        // Back-compat: very old API shape returned a bare array.
+        setAllowlist(res.data as unknown as { id: string; regNumber: string | null; email: string | null; name: string | null; source: string }[]);
+      } else {
+        setAllowlist(res.data.data ?? []);
+        if (typeof res.data.total === "number") setAllowTotal(res.data.total);
+      }
     }
     setAllowlistLoading(false);
   };
+
+  // Debounced server search — works past the fetch cap.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setAllowPage(1);
+      fetchAllowlist(1, allowSearch);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [allowSearch]);
 
   const runPaste = async (dryRun: boolean) => {
     if (!pasteText.trim()) {
@@ -226,12 +263,16 @@ export default function VerificationPage() {
       setPasteResult(res.data);
       setPastePreview(null);
       setPasteText("");
+      const failedNote = applyImportSuccess(res.data);
       setSuccess(
         `Stored ${res.data.allowlisted} new + ${res.data.alreadyListed} already-listed identities; ` +
-        `${res.data.newlyPaid} participant${res.data.newlyPaid === 1 ? "" : "s"} marked paid.`
+        `${res.data.newlyPaid} participant${res.data.newlyPaid === 1 ? "" : "s"} marked paid.` +
+        (typeof res.data.totalVerified === "number" ? ` Total verified: ${res.data.totalVerified}.` : "") +
+        failedNote
       );
       fetchPayments();
-      fetchAllowlist();
+      fetchAllowlist(1, allowSearch);
+      setAllowPage(1);
     }
   };
 
@@ -332,11 +373,27 @@ export default function VerificationPage() {
         )}
 
         {importResult && !preview && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-mono">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-mono space-y-1">
             <p className="text-emerald-400 font-bold">
               Applied: {importResult.allowlisted} stored · {importResult.alreadyListed} already listed ·{" "}
               {importResult.newlyPaid} newly paid · {importResult.alreadyPaid} already paid
+              {typeof importResult.totalVerified === "number" ? ` · total verified: ${importResult.totalVerified}` : ""}
             </p>
+            {importResult.failed && importResult.failed.length > 0 && (
+              <div className="pt-1">
+                <p className="text-amber-300">{importResult.failed.length} rows failed (everything else applied):</p>
+                <ul className="mt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                  {importResult.failed.slice(0, 20).map((f) => (
+                    <li key={f.rowNumber} className="text-[#71717A]">
+                      row {f.rowNumber}: {f.value || f.name || "?"} — {f.reason}
+                    </li>
+                  ))}
+                  {importResult.failed.length > 20 && (
+                    <li className="text-[#71717A]">…and {importResult.failed.length - 20} more</li>
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -390,28 +447,59 @@ export default function VerificationPage() {
         )}
 
         {pasteResult && !pastePreview && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-mono">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-mono space-y-1">
             <p className="text-emerald-400 font-bold">
               Applied: {pasteResult.allowlisted} stored · {pasteResult.alreadyListed} already listed ·{" "}
               {pasteResult.newlyPaid} newly paid
+              {typeof pasteResult.totalVerified === "number" ? ` · total verified: ${pasteResult.totalVerified}` : ""}
             </p>
+            {pasteResult.failed && pasteResult.failed.length > 0 && (
+              <div className="pt-1">
+                <p className="text-amber-300">{pasteResult.failed.length} values failed (everything else applied):</p>
+                <ul className="mt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                  {pasteResult.failed.slice(0, 20).map((f) => (
+                    <li key={f.rowNumber} className="text-[#71717A]">
+                      row {f.rowNumber}: {f.value || f.name || "?"} — {f.reason}
+                    </li>
+                  ))}
+                  {pasteResult.failed.length > 20 && (
+                    <li className="text-[#71717A]">…and {pasteResult.failed.length - 20} more</li>
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Allowlist snapshot */}
+      {/* Allowlist snapshot (server search + total — additive only, rows never deleted) */}
       <div className="bg-[#141417] border border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
-        <div className="px-6 py-3.5 border-b border-[#27272A] flex items-center justify-between">
+        <div className="px-6 py-3.5 border-b border-[#27272A] flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
           <h2 className="text-xs font-bold text-[#FAFAFA] uppercase tracking-wider">
-            Verified list {allowlist.length > 0 && <span className="text-[#71717A]">({allowlist.length})</span>}
+            Verified list <span className="text-[#71717A]">({allowTotal})</span>{" "}
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 normal-case">
+              additive only — uploads never delete
+            </span>
           </h2>
-          <button
-            onClick={fetchAllowlist}
-            disabled={allowlistLoading}
-            className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 disabled:opacity-50"
-          >
-            {allowlistLoading ? "Loading..." : "Refresh"}
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-[#71717A] absolute left-2.5 top-2.5" />
+              <input
+                type="text"
+                placeholder="Search reg no, email, name..."
+                value={allowSearch}
+                onChange={(e) => setAllowSearch(e.target.value)}
+                className="bg-[#09090B] border border-[#27272A] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#FAFAFA] placeholder:text-[#71717A] focus:outline-none focus:border-[#3F3F46] w-56"
+              />
+            </div>
+            <button
+              onClick={() => fetchAllowlist(safeAllowPage, allowSearch)}
+              disabled={allowlistLoading}
+              className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 disabled:opacity-50"
+            >
+              {allowlistLoading ? "Loading..." : "Refresh"}
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-xs text-[#FAFAFA]">
@@ -433,7 +521,9 @@ export default function VerificationPage() {
             ) : allowlist.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-6 text-center text-[#71717A]">
-                  Nothing verified yet — upload or paste a list above.
+                  {allowSearch.trim()
+                    ? `No verified entries match "${allowSearch.trim()}".`
+                    : "Nothing verified yet — upload or paste a list above."}
                 </td>
               </tr>
             ) : (
@@ -449,7 +539,14 @@ export default function VerificationPage() {
           </tbody>
         </table>
         </div>
-        <Pager page={safeAllowPage} totalPages={allowTotalPages} onPage={setAllowPage} />
+        <Pager
+          page={safeAllowPage}
+          totalPages={allowTotalPages}
+          onPage={(p) => {
+            setAllowPage(p);
+            fetchAllowlist(p, allowSearch);
+          }}
+        />
       </div>
 
       {/* Control Bar: Search + Filter Tabs */}

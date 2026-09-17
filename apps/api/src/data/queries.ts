@@ -280,8 +280,34 @@ export async function isIdentityAllowlisted(
 /** Newest-first allowlist slice for the admin verification screen. */
 export async function markUserPaid(userId: string): Promise<void> {
   await db.update(user).set({ paid: true }).where(eq(user.id, userId));
-}export async function listAllowlistEntries(limit = 200) {
+}
+
+/**
+ * Shared `ilike` filter for the allowlist search box (reg number / email /
+ * name). Empty query matches everything. Additive-only surface — read-only.
+ */
+function allowlistSearchCondition(q: string) {
+  const needle = q.trim();
+  if (!needle) return undefined;
+  const pattern = `%${needle}%`;
+  return or(
+    ilike(verifiedParticipants.regNumber, pattern),
+    ilike(verifiedParticipants.email, pattern),
+    ilike(verifiedParticipants.name, pattern),
+  );
+}
+
+export async function countAllowlistEntries(q = "") {
+  const [row] = await db
+    .select({ value: count() })
+    .from(verifiedParticipants)
+    .where(allowlistSearchCondition(q));
+  return row?.value ?? 0;
+}
+
+export async function listAllowlistEntries(limit = 200, offset = 0, q = "") {
   const capped = Math.min(Math.max(limit, 1), 500);
+  const safeOffset = Math.max(offset, 0);
   return db
     .select({
       id: verifiedParticipants.id,
@@ -292,8 +318,10 @@ export async function markUserPaid(userId: string): Promise<void> {
       createdAt: verifiedParticipants.createdAt,
     })
     .from(verifiedParticipants)
+    .where(allowlistSearchCondition(q))
     .orderBy(sql`${verifiedParticipants.createdAt} DESC`)
-    .limit(capped);
+    .limit(capped)
+    .offset(safeOffset);
 }
 
 /** Only what admin login needs to decide whether to attempt sign-in at all. */
