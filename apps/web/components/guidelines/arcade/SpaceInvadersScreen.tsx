@@ -174,11 +174,12 @@ export function SpaceInvadersScreen() {
   const bulletIdCounterRef = useRef<number>(0);
   const particleIdCounterRef = useRef<number>(0);
 
-  // Visibility and off-screen sleep tracking (sleeps after 30s off-screen)
+  // Visibility and off-screen sleep tracking (sleeps after 4s if unplayed, 30s if active)
   const shouldRunRef = useRef<boolean>(false);
   const sleepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const gameLoopRef = useRef<(() => void) | null>(null);
+  const hasBeenPlayedRef = useRef<boolean>(false);
 
   // Synchronize ref with state
   useEffect(() => {
@@ -236,6 +237,7 @@ export function SpaceInvadersScreen() {
     fleetStepTimerRef.current = 0;
     waveNumberRef.current = 1;
     invulnerableUntilRef.current = 0;
+    hasBeenPlayedRef.current = true;
     setGameStatus('playing');
     gameStatusRef.current = 'playing';
   }, []);
@@ -286,6 +288,7 @@ export function SpaceInvadersScreen() {
     invulnerableUntilRef.current = 0;
     keysPressedRef.current.left = false;
     keysPressedRef.current.right = false;
+    hasBeenPlayedRef.current = false;
     setGameStatus('idle');
     gameStatusRef.current = 'idle';
   }, []);
@@ -299,6 +302,7 @@ export function SpaceInvadersScreen() {
     }
 
     if (gameStatusRef.current === 'idle') {
+      hasBeenPlayedRef.current = true;
       setGameStatus('playing');
       gameStatusRef.current = 'playing';
       return;
@@ -399,32 +403,24 @@ export function SpaceInvadersScreen() {
     firePlayerBullet();
   };
 
-  // IntersectionObserver: sleep loop until Guidelines is near.
-  // When leaving Guidelines, allow a 30s grace period before sleeping so player progress isn't interrupted.
+  // Distance-based wake/sleep:
+  // - Starts loop when within 250px of viewport
+  // - When leaving beyond 200px: stops IMMEDIATELY if unplayed (no delay); allows 30s grace if actively played
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    const observer = new IntersectionObserver(
+    const enterObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // Entered Guidelines view: cancel any pending sleep timer
+          // Approaching: within 250px of viewport
           if (sleepTimeoutRef.current) {
             clearTimeout(sleepTimeoutRef.current);
             sleepTimeoutRef.current = null;
           }
           shouldRunRef.current = true;
-          // Wake up loop if it was asleep
           if (animationFrameIdRef.current === null && gameLoopRef.current) {
             animationFrameIdRef.current = requestAnimationFrame(gameLoopRef.current);
-          }
-        } else {
-          // Left Guidelines view: sleep after 30s off-screen
-          if (shouldRunRef.current && !sleepTimeoutRef.current) {
-            sleepTimeoutRef.current = setTimeout(() => {
-              shouldRunRef.current = false;
-              sleepTimeoutRef.current = null;
-            }, 30000);
           }
         }
       },
@@ -434,9 +430,55 @@ export function SpaceInvadersScreen() {
       }
     );
 
-    observer.observe(el);
+    const leaveObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          // Left beyond 200px from viewport
+          const isPlayed = hasBeenPlayedRef.current || gameStatusRef.current === 'playing';
+
+          if (!isPlayed) {
+            // Not played: stop immediately on distance
+            if (sleepTimeoutRef.current) {
+              clearTimeout(sleepTimeoutRef.current);
+              sleepTimeoutRef.current = null;
+            }
+            shouldRunRef.current = false;
+            if (animationFrameIdRef.current !== null) {
+              cancelAnimationFrame(animationFrameIdRef.current);
+              animationFrameIdRef.current = null;
+            }
+          } else {
+            // Actively played: 30s grace period
+            if (shouldRunRef.current && !sleepTimeoutRef.current) {
+              sleepTimeoutRef.current = setTimeout(() => {
+                shouldRunRef.current = false;
+                if (animationFrameIdRef.current !== null) {
+                  cancelAnimationFrame(animationFrameIdRef.current);
+                  animationFrameIdRef.current = null;
+                }
+                sleepTimeoutRef.current = null;
+              }, 30000);
+            }
+          }
+        } else {
+          // Re-entered within 200px: cancel any pending active-game sleep timer
+          if (sleepTimeoutRef.current) {
+            clearTimeout(sleepTimeoutRef.current);
+            sleepTimeoutRef.current = null;
+          }
+        }
+      },
+      {
+        rootMargin: '200px',
+        threshold: 0,
+      }
+    );
+
+    enterObserver.observe(el);
+    leaveObserver.observe(el);
     return () => {
-      observer.disconnect();
+      enterObserver.disconnect();
+      leaveObserver.disconnect();
       if (sleepTimeoutRef.current) {
         clearTimeout(sleepTimeoutRef.current);
       }
