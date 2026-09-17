@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle, ChevronLeft, ChevronRight, EyeOff } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { getStaffRole, type StaffRole } from "@/lib/auth";
@@ -42,6 +43,7 @@ const istTimeFormat = new Intl.DateTimeFormat("en-US", {
 });
 
 export default function SlotsPage() {
+  const router = useRouter();
   const [slots, setSlots] = useState<SlotItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submittingSingle, setSubmittingSingle] = useState(false);
@@ -111,7 +113,11 @@ export default function SlotsPage() {
   );
 
   useEffect(() => {
-    getStaffRole().then(setRole);
+    getStaffRole().then((r) => {
+      setRole(r);
+      // Plain admins have no slot-manager access — bounce to check-in.
+      if (r !== null && r !== "super_admin") router.replace("/checkin");
+    });
     void fetchSlots();
   }, []);
 
@@ -387,6 +393,9 @@ export default function SlotsPage() {
   const totalPages = Math.max(1, Math.ceil(filteredSlots.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const pagedSlots = filteredSlots.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Plain admins bounce to check-in (see effect above) — render nothing meanwhile.
+  if (role !== null && role !== "super_admin") return null;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

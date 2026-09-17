@@ -18,11 +18,13 @@ import {
   X,
 } from "lucide-react";
 
+import { getStaffRole, type StaffRole } from "@/lib/auth";
+
 const NAV_MAIN = [
   { name: "Overview", href: "/analytics", icon: LayoutDashboard },
   { name: "Solo Users", href: "/users", icon: UserSearch },
-  { name: "Verification", href: "/verification", icon: ShieldCheck },
-  { name: "Slot Manager", href: "/slots", icon: CalendarDays },
+  { name: "Verification", href: "/verification", icon: ShieldCheck, superOnly: true },
+  { name: "Slot Manager", href: "/slots", icon: CalendarDays, superOnly: true },
   { name: "Check-In Station", href: "/checkin", icon: QrCode },
   // DEPRECATED: team feature disabled — uncomment to restore.
   // { name: "Team & Roster", href: "/teams", icon: Users },
@@ -39,6 +41,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [role, setRole] = useState<StaffRole | null>(null);
+
+  useEffect(() => {
+    getStaffRole().then(setRole);
+  }, []);
+
+  // Plain admins never see super-admin workstations.
+  const visibleNav = NAV_MAIN.filter((item) => !("superOnly" in item) || role === "super_admin");
 
   useEffect(() => {
     try {
@@ -154,7 +164,7 @@ export function Sidebar() {
               Workstations
             </div>
             <div className="space-y-1">
-              {NAV_MAIN.map((item) => {
+              {visibleNav.map((item) => {
                 const Icon = item.icon;
                 const isActive =
                   pathname === item.href || (pathname === "/" && item.href === "/analytics");

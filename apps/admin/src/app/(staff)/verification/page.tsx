@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, XCircle, Search, RefreshCw, ShieldCheck, Upload, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
+import { getStaffRole } from "@/lib/auth";
 
 const PAGE_SIZE = 10;
 
@@ -60,7 +62,9 @@ interface ImportSummary {
 }
 
 export default function VerificationPage() {
+  const router = useRouter();
   const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "paid" | "unpaid">("all");
   const [search, setSearch] = useState("");
@@ -102,6 +106,11 @@ export default function VerificationPage() {
   };
 
   useEffect(() => {
+    getStaffRole().then((r) => {
+      // Plain admins have no verification access — bounce to check-in.
+      if (r !== "super_admin") router.replace("/checkin");
+      else setIsSuperAdmin(true);
+    });
     fetchPayments();
     fetchAllowlist();
   }, []);
@@ -225,6 +234,9 @@ export default function VerificationPage() {
       fetchAllowlist();
     }
   };
+
+  // Plain admins bounce to check-in (see effect above) — render nothing meanwhile.
+  if (!isSuperAdmin) return null;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

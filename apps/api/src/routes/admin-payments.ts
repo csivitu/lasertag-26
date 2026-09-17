@@ -20,9 +20,9 @@ import {
 
 export const adminPaymentsRouter = Router();
 
-adminPaymentsRouter.post("/verify", verifyPayments);
-// Verification-list writes stay super-admin only; reads keep the admin gate.
-adminPaymentsRouter.get("/", listPayments);
+adminPaymentsRouter.post("/verify", requireSuperAdmin, verifyPayments);
+// Verification workstation is super-admin only (reads and writes).
+adminPaymentsRouter.get("/", requireSuperAdmin, listPayments);
 adminPaymentsRouter.post("/import", requireSuperAdmin, paidListUpload, importPaidList);
 adminPaymentsRouter.post(
   "/import-text",
@@ -30,6 +30,6 @@ adminPaymentsRouter.post(
   validate(pasteImportSchema),
   importPastedList,
 );
-adminPaymentsRouter.get("/allowlist", listAllowlist);
-adminPaymentsRouter.get("/:registration_id", validate(getPaymentDetailsSchema), getPaymentDetails);
-adminPaymentsRouter.patch("/:registration_id", validate(updatePaymentSchema), updatePaymentStatus);
+adminPaymentsRouter.get("/allowlist", requireSuperAdmin, listAllowlist);
+adminPaymentsRouter.get("/:registration_id", requireSuperAdmin, validate(getPaymentDetailsSchema), getPaymentDetails);
+adminPaymentsRouter.patch("/:registration_id", requireSuperAdmin, validate(updatePaymentSchema), updatePaymentStatus);
