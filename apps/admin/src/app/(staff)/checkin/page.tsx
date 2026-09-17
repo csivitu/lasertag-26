@@ -9,12 +9,12 @@ import {
   User,
   RotateCcw,
   CameraOff,
+  Zap,
 } from "lucide-react";
 import {
   Html5Qrcode,
-  Html5QrcodeScanner,
   Html5QrcodeScannerState,
-  Html5QrcodeScanType,
+  type CameraDevice,
 } from "html5-qrcode";
 import { apiFetch } from "@/lib/api-client";
 
@@ -64,8 +64,12 @@ export default function CheckinPage() {
   const [isPaused, setIsPaused] = useState(false);
   const [cameraState, setCameraState] = useState<CameraState>("idle");
   const [camError, setCamError] = useState<string | null>(null);
+  const [cameras, setCameras] = useState<CameraDevice[]>([]);
+  const [cameraId, setCameraId] = useState<string>("");
+  const [torchOn, setTorchOn] = useState(false);
+  const [torchSupported, setTorchSupported] = useState(false);
 
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const isPausedRef = useRef(false);
   const inflightRef = useRef(false);
   const lastPayloadRef = useRef<{ text: string; at: number } | null>(null);
@@ -73,8 +77,10 @@ export default function CheckinPage() {
 
   const handleResumeScanning = () => {
     // Explicit staffer intent = new player: clear the duplicate-payload guard
-    // so a still-visible QR can be scanned immediately.
+    // so a still-visible QR can be scanned immediately, and drop the last
+    // verdict card so only the next result shows.
     lastPayloadRef.current = null;
+    setResult(null);
     try {
       if (
         scannerRef.current &&
@@ -149,14 +155,67 @@ export default function CheckinPage() {
   }, [result, error, submitting]);
 
   // Scanner is created on an explicit tap (user gesture), which is what
-  // mobile browsers require before granting camera access.
+  // mobile browsers require before granting camera access. Uses the lean
+  // Html5Qrcode core (no Scanner widget chrome) with our own compact controls.
+  const scanConfig = (w: number, h: number) => {
+    const side = Math.max(200, Math.min(320, Math.floor(Math.min(w || 320, h || 320) - 24)));
+    return { width: side, height: side };
+  };
+
+  const onDecode = (owner: Html5Qrcode) => (decodedText: string) => {
+    // Structural duplicate guard: the same payload re-decoded within the
+    // window is the same player still in frame — not a new scan.
+    const now = Date.now();
+    const last = lastPayloadRef.current;
+    if (last && last.text === decodedText && now - last.at < DUPLICATE_WINDOW_MS) {
+      return;
+    }
+    lastPayloadRef.current = { text: decodedText, at: now };
+    if (inflightRef.current) return;
+
+    // Pause unconditionally: gating this on an exact scanner state is
+    // what let rapid successive frames through as duplicate scans.
+    isPausedRef.current = true;
+    setIsPaused(true);
+    try {
+      owner.pause();
+    } catch (err) {
+      console.warn("Could not pause scanner on detection:", err);
+    }
+
+    void handleCheckIn(decodedText);
+  };
+
+  const detectTorch = (owner: Html5Qrcode) => {
+    try {
+      const caps = owner.getRunningTrackCapabilities();
+      setTorchSupported("torch" in caps && Boolean(caps.torch));
+    } catch {
+      setTorchSupported(false);
+    }
+  };
+
+  const launch = async (owner: Html5Qrcode, deviceId: string) => {
+    await owner.start(
+      { deviceId: { exact: deviceId } },
+      { fps: 10, qrbox: scanConfig, videoConstraints: { facingMode: "environment" } },
+      onDecode(owner),
+      () => {
+        // per-frame scan errors can be ignored
+      }
+    );
+    setTorchOn(false);
+    detectTorch(owner);
+  };
+
   const startCamera = async () => {
     if (scannerRef.current || cameraState === "starting" || cameraState === "live") return;
     setCameraState("starting");
     setCamError(null);
+    let list: CameraDevice[];
     try {
-      const cameras = await Html5Qrcode.getCameras();
-      if (!cameras || cameras.length === 0) {
+      list = await Html5Qrcode.getCameras();
+      if (!list || list.length === 0) {
         setCameraState("denied");
         setCamError("No camera found on this device. Use manual lookup below.");
         return;
@@ -168,60 +227,61 @@ export default function CheckinPage() {
       );
       return;
     }
-
-    const side = Math.min(window.innerWidth - 32, 340);
-    const box = Math.max(200, side);
-    const scanner = new Html5QrcodeScanner(
-      "qr-reader",
-      {
-        fps: 10,
-        qrbox: { width: box, height: box },
-        videoConstraints: { facingMode: "environment" },
-        showTorchButtonIfSupported: true,
-        rememberLastUsedCamera: true,
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-      },
-      /* verbose= */ false
-    );
-
-    scanner.render(
-      (decodedText) => {
-        // Structural duplicate guard: the same payload re-decoded within the
-        // window is the same player still in frame — not a new scan.
-        const now = Date.now();
-        const last = lastPayloadRef.current;
-        if (last && last.text === decodedText && now - last.at < DUPLICATE_WINDOW_MS) {
-          return;
-        }
-        lastPayloadRef.current = { text: decodedText, at: now };
-        if (inflightRef.current) return;
-
-        // Pause unconditionally: gating this on an exact scanner state is
-        // what let rapid successive frames through as duplicate scans.
-        isPausedRef.current = true;
-        setIsPaused(true);
-        try {
-          scanner.pause(true);
-        } catch (err) {
-          console.warn("Could not pause scanner on detection:", err);
-        }
-
-        void handleCheckIn(decodedText);
-      },
-      () => {
-        // per-frame scan errors can be ignored
-      }
-    );
-
-    scannerRef.current = scanner;
+    setCameras(list);
+    const preferred =
+      list.find((c) => /back|rear|environment/i.test(c.label)) ?? list[list.length - 1];
+    setCameraId(preferred.id);
+    const owner = new Html5Qrcode("qr-reader", false);
+    try {
+      await launch(owner, preferred.id);
+    } catch {
+      setCameraState("denied");
+      setCamError("Could not start the camera. Use manual lookup below or try again.");
+      return;
+    }
+    scannerRef.current = owner;
     setCameraState("live");
+  };
+
+  const switchCamera = async (deviceId: string) => {
+    const owner = scannerRef.current;
+    if (!owner || deviceId === cameraId) return;
+    setCameraId(deviceId);
+    try {
+      await owner.stop();
+      await launch(owner, deviceId);
+      if (isPausedRef.current) {
+        try {
+          owner.pause();
+        } catch {
+          // scanning continues — harmless.
+        }
+      }
+    } catch (err) {
+      console.warn("Could not switch camera:", err);
+    }
+  };
+
+  const toggleTorch = async () => {
+    const owner = scannerRef.current;
+    if (!owner) return;
+    const next = !torchOn;
+    try {
+      await owner.applyVideoConstraints({
+        advanced: [{ torch: next } as unknown as MediaTrackConstraintSet],
+      });
+      setTorchOn(next);
+    } catch {
+      setTorchSupported(false);
+    }
   };
 
   useEffect(() => {
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
-        scannerRef.current = null;
+      const owner = scannerRef.current;
+      scannerRef.current = null;
+      if (owner) {
+        owner.stop().catch(console.error);
       }
     };
   }, []);
@@ -237,22 +297,54 @@ export default function CheckinPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start pb-28 md:pb-0">
         {/* WebCam QR Reader */}
         <div className="order-1 md:col-start-1 md:row-start-1 bg-[#141417] border border-[#27272A] p-5 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold text-[#FAFAFA] tracking-tight flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold text-[#FAFAFA] tracking-tight flex items-center gap-2 shrink-0">
               <Camera className="w-4 h-4 text-emerald-400" />
-              WebCam QR Reader
+              QR Reader
             </h2>
             {cameraState === "live" &&
               (isPaused ? (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-mono font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span> SCANNER PAUSED
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span> PAUSED
                 </span>
               ) : (
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-mono font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> READY TO SCAN
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-mono font-semibold flex items-center gap-1 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> SCANNING
                 </span>
               ))}
           </div>
+
+          {cameraState === "live" && (
+            <div className="flex items-center gap-2">
+              <select
+                aria-label="Camera"
+                value={cameraId}
+                onChange={(e) => void switchCamera(e.target.value)}
+                className="min-w-0 flex-1 bg-[#09090B] border border-[#27272A] rounded-lg px-2 py-1.5 text-[11px] font-mono text-[#A1A1AA] focus:outline-none focus:border-[#3F3F46] truncate"
+              >
+                {cameras.map((c, i) => (
+                  <option key={c.id} value={c.id}>
+                    {(c.label || `Camera ${i + 1}`).slice(0, 42)}
+                  </option>
+                ))}
+              </select>
+              {torchSupported && (
+                <button
+                  type="button"
+                  onClick={() => void toggleTorch()}
+                  aria-label="Toggle torch"
+                  aria-pressed={torchOn}
+                  className={`shrink-0 p-1.5 rounded-lg border transition-all cursor-pointer ${
+                    torchOn
+                      ? "bg-amber-400/20 border-amber-400/50 text-amber-300"
+                      : "bg-[#09090B] border-[#27272A] text-[#71717A] hover:text-[#FAFAFA]"
+                  }`}
+                >
+                  <Zap className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
 
           {cameraState === "idle" && (
             <button
