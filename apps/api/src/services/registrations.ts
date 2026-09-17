@@ -22,6 +22,7 @@ import {
   cancelRegistration as dbCancelRegistration,
   findRegistrationForScan,
   markUserCheckedIn,
+  markUserRowCheckedIn,
 } from "../data/queries";
 // ==========================================
 // Types
@@ -346,6 +347,8 @@ export const registrationService = {
       };
     }
     const updatedBooking = await markUserCheckedIn(result.booking.id);
+    // Keep the user row in agreement with the booking stamp.
+    await markUserRowCheckedIn(result.user.id);
     return {
       alreadyCheckedIn: false,
       user: {

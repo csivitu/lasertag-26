@@ -1,6 +1,6 @@
 import { db } from "@lasertag-26/database";
 import { bookings, slots, user } from "@lasertag-26/database/schema";
-import { eq, or } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { NotFoundError } from "../errors";
 
 export const verificationController = {
@@ -94,6 +94,11 @@ export const verificationController = {
       .from(user)
       .where(or(eq(user.id, identifier), eq(user.qrToken, identifier)));
 
+    // When the identifier names a specific booking, only that row is ever
+    // stamped — never the user's whole history (cancelled/superseded rows
+    // must not count as attended).
+    let matchedBookingId: string | null = null;
+
     if (!targetUser) {
       const [booking] = await db
         .select()
@@ -106,6 +111,7 @@ export const verificationController = {
         );
 
       if (booking) {
+        matchedBookingId = booking.id;
         const [foundUser] = await db
           .select()
           .from(user)
@@ -135,7 +141,9 @@ export const verificationController = {
       .where(eq(user.id, targetUser.id))
       .returning();
 
-    // Also update booking check-in state
+    // Also update booking check-in state — scoped to the scanned booking,
+    // or to active bookings only when a user identifier was scanned.
+    // Cancelled/superseded history rows are never stamped.
     await db
       .update(bookings)
       .set({
@@ -143,11 +151,12 @@ export const verificationController = {
         checkedInAt: now,
       })
       .where(
-        or(
-          eq(bookings.id, identifier),
-          eq(bookings.qrToken, identifier),
-          eq(bookings.userId, targetUser.id),
-        ),
+        matchedBookingId
+          ? eq(bookings.id, matchedBookingId)
+          : and(
+              eq(bookings.userId, targetUser.id),
+              inArray(bookings.status, ["reserved", "confirmed"]),
+            ),
       );
 
     return {

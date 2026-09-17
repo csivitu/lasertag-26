@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import { randomBytes } from "node:crypto";
 
 import { db } from "@lasertag-26/database";
 import { bookings, user, teamMembers } from "@lasertag-26/database/schema";
@@ -161,7 +162,7 @@ async function sendTeamEmails(
 
   const emailResults = await Promise.all(
     teamUsers.map(async (member) => {
-      const memberQrToken = `QR-${params.bookingId}-${member.id.slice(0, 6)}`;
+      const memberQrToken = `QR-${randomBytes(16).toString("hex")}`;
 
       await db
         .update(user)

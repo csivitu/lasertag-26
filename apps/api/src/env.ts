@@ -28,13 +28,16 @@ const envSchema = z.object({
     z.coerce.number().int().positive().default(3001),
   ),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  // better-auth signs session cookies with this.
+  // better-auth signs session cookies with this. No production default: a
+  // hardcoded fallback here would let anyone forge sessions for any user.
   BETTER_AUTH_SECRET: z.preprocess(
     emptyToUndefined,
-    z
-      .string()
-      .min(32, "BETTER_AUTH_SECRET must be at least 32 characters")
-      .default("lasertag_dev_secret_key_32_characters_minimum_length_required"),
+    process.env.NODE_ENV === "production"
+      ? z.string({ error: "BETTER_AUTH_SECRET is required in production" }).min(32, "BETTER_AUTH_SECRET must be at least 32 characters")
+      : z
+          .string()
+          .min(32, "BETTER_AUTH_SECRET must be at least 32 characters")
+          .default("lasertag_dev_secret_key_32_characters_minimum_length_required"),
   ),
   BETTER_AUTH_URL: z.preprocess(
     emptyToUndefined,
@@ -54,9 +57,13 @@ const envSchema = z.object({
     emptyToUndefined,
     z.string().default("superadmin@lasertag.local"),
   ),
+  // Staff passwords select the account at login — public defaults would hand
+  // both roles to anyone reading the repo. Required in production.
   SUPER_ADMIN_PASSWORD: z.preprocess(
     emptyToUndefined,
-    z.string().default("super30admin"),
+    process.env.NODE_ENV === "production"
+      ? z.string({ error: "SUPER_ADMIN_PASSWORD is required in production" }).min(8, "SUPER_ADMIN_PASSWORD must be at least 8 characters")
+      : z.string().default("super30admin"),
   ),
   ADMIN_EMAIL: z.preprocess(
     emptyToUndefined,
@@ -64,7 +71,9 @@ const envSchema = z.object({
   ),
   ADMIN_PASSWORD: z.preprocess(
     emptyToUndefined,
-    z.string().default("admin12345"),
+    process.env.NODE_ENV === "production"
+      ? z.string({ error: "ADMIN_PASSWORD is required in production" }).min(8, "ADMIN_PASSWORD must be at least 8 characters")
+      : z.string().default("admin12345"),
   ),
   RESET_STAFF_PASSWORDS: z.preprocess(
     emptyToUndefined,

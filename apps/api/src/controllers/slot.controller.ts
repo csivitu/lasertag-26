@@ -1,6 +1,7 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
 import { asc, eq, and, inArray, lt, gt } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 
 import { claimSlotSeat, isIdentityAllowlisted, releaseSlotSeat } from "../data/queries";
 import { HttpError as AppError } from "../errors";
@@ -46,6 +47,11 @@ async function isAllowlistedSafe(targetUser: {
   } catch {
     return false;
   }
+}
+
+/** Unpredictable pass token: 128 bits of entropy, QR- prefix retained. */
+function generateQrToken(): string {
+  return `QR-${randomBytes(16).toString("hex")}`;
 }
 
 /** Postgres unique-violation, unwrapped through driver error nesting. */
@@ -339,7 +345,7 @@ export const slotController = {
         await releaseSlotSeat(prev.slotId);
       }
 
-      const qrToken = prev.qrToken || `QR-${prev.id}`;
+      const qrToken = prev.qrToken || generateQrToken();
 
       const [updatedBooking] = await db
         .update(bookings)
@@ -379,7 +385,7 @@ export const slotController = {
         activeBooking = await moveBookingToSlot(prevBooking);
       } else {
         const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        const qrToken = `QR-${bookingId}`;
+        const qrToken = generateQrToken();
 
         const [newBooking] = await db
           .insert(bookings)
@@ -433,7 +439,16 @@ export const slotController = {
       }
     }
 
-    const assignedQrToken = activeBooking.qrToken || `QR-${activeBooking.id}`;
+    // Legacy rows may carry a null token: mint one and persist it so the
+    // scanner lookup (by bookings.qr_token) matches what the pass shows.
+    let assignedQrToken = activeBooking.qrToken;
+    if (!assignedQrToken) {
+      assignedQrToken = generateQrToken();
+      await db
+        .update(bookings)
+        .set({ qrToken: assignedQrToken })
+        .where(eq(bookings.id, activeBooking.id));
+    }
 
     // Ensure user record also holds the qrToken for instant scanner lookups
     await db
