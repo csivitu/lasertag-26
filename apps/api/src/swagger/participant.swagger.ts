@@ -41,13 +41,13 @@ export const participantPaths = {
     post: {
       summary: "Reserve a slot",
       description:
-        "type must be 'individual' or 'team'; team_code is required when type is 'team'.",
+        "Requires a signed-in session cookie; identity comes from the session, never the body. type must be 'individual' or 'team'; team_code is required when type is 'team'.",
       tags: ["Slots"],
-      security: [],
       parameters: [pathParam("slot_id", "slots.id")],
       responses: {
         201: ok("The created booking"),
         400: responses.badRequest,
+        401: responses.error("Not signed in"),
         404: responses.error("Slot not found"),
         409: responses.error("Slot is full, or the user already has a booking"),
       },

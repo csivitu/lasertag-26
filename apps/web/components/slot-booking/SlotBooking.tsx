@@ -230,7 +230,6 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
 
     try {
       await reserveSlot(booking.id, {
-        userId: session.user.id,
         type,
         teamCode,
       });

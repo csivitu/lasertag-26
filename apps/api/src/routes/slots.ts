@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from "express";
 
 import { slotController } from "../controllers/slot.controller";
+import { requireAuth } from "../middlewares/auth.middleware";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { bookingRateLimit } from "../middlewares/rateLimit";
 import { validateRequest } from "../middlewares/validate";
@@ -27,12 +28,14 @@ publicSlotsRouter.get(
 
 publicSlotsRouter.post(
   "/:slot_id/reserve",
+  requireAuth,
   bookingRateLimit,
   validateRequest(reserveSlotSchema),
-  asyncHandler(async (req: Request<{ slot_id: string }, unknown, { user_id: string; type: "individual" | "team"; team_code?: string }>, res: Response): Promise<void> => {
+  asyncHandler(async (req: Request<{ slot_id: string }, unknown, { type: "individual" | "team"; team_code?: string }>, res: Response): Promise<void> => {
     const newBooking = await slotController.reserveSlot({
       slot_id: req.params.slot_id,
-      user_id: req.body.user_id,
+      // Identity from the verified session, never the client body.
+      user_id: req.user!.id,
       type: req.body.type,
       team_code: req.body.team_code,
     });

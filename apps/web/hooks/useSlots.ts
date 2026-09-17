@@ -150,7 +150,6 @@ export function useSlots() {
   const reserveSlot = async (
     slotId: string,
     options?: {
-      userId?: string;
       type?: "individual" | "team";
       teamCode?: string;
     }
@@ -158,14 +157,13 @@ export function useSlots() {
     setIsLoading(true);
     setError(null);
     try {
-      if (options?.userId && options?.type) {
+      if (options?.type) {
         const postReserve = () =>
           fetch(`${apiBaseUrl}/slots/${slotId}/reserve`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({
-              user_id: options.userId,
               type: options.type,
               team_code: options.teamCode,
             }),

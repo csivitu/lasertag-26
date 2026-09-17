@@ -179,7 +179,8 @@ export const slotController = {
     return deletedSlot;
   },
 
-  async reserveSlot(input: ReserveSlotInput) {
+  // Identity comes from the session (wired in routes/slots.ts), never the body.
+  async reserveSlot(input: ReserveSlotInput & { user_id: string }) {
     const { slot_id, user_id, type, team_code } = input;
 
     const [targetSlot] = await db
