@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import type { CSSProperties } from "react";
 import { useUserProfile, UserProfileProvider } from "@/hooks/useUserProfile";
 import { ProfileSolo } from "@/components/profile/profile-solo/ProfileSolo";
 // DEPRECATED: team feature disabled — solo-only flow.
@@ -9,6 +9,24 @@ import { Starfield } from "@/components/hero/Starfield";
 import { HeroHeader } from "@/components/hero/HeroHeader";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { ModeRequiredModal } from "@/components/mode-popup/ModeRequiredModal";
+import { PixelButton } from "@/components/hero/PixelButton";
+import {
+  MODAL_BORDER_SVG,
+  borderBg,
+} from "@/components/mode-popup/modePopupDecor";
+
+const cardStyle: CSSProperties = {
+  position: "relative",
+  background: borderBg(MODAL_BORDER_SVG),
+  padding: "40px 36px 32px",
+  width: "100%",
+  maxWidth: "28rem",
+  boxSizing: "border-box",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "20px",
+};
 
 function ProfileContent() {
   const { profile, isLoading: profileLoading } = useUserProfile();
@@ -73,28 +91,22 @@ function ProfileContent() {
       <div className="relative isolate min-h-screen flex flex-col items-center justify-between bg-[#08080d] text-white pb-12 text-center">
         <Starfield />
         <HeroHeader />
-        <div className="relative z-10 max-w-lg p-8 border-2 border-[#FEDC02] bg-[#0c0c14]/95 rounded-2xl shadow-[0_0_40px_rgba(254,220,2,0.25)] flex flex-col items-center gap-6 my-auto mx-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#FEDC02]/15 border-2 border-[#FEDC02] text-2xl">
-            🎟️
-          </div>
-
-          <h2
-            className="font-heading text-2xl text-[#FEDC02] uppercase tracking-wider"
-            style={{ textShadow: "-2px 0 0 #E5349E" }}
-          >
+        <div style={cardStyle} className="relative z-10 my-auto mx-4">
+          <h2 className="font-pixel text-[#FEDC02] text-center uppercase text-[clamp(14px,2.4vw,19px)] leading-relaxed tracking-[0.08em]">
             SLOT BOOKING REQUIRED
           </h2>
 
-          <p className="font-pixel text-xs text-white/80 leading-relaxed max-w-md">
-            OPERATIVE, YOU HAVE REGISTERED YOUR COMBAT PROTOCOL, BUT YOU MUST BOOK AN ARENA TIME SLOT TO SECURE YOUR DIGITAL BATTLE PASS.
+          <p className="font-body text-center text-[15px] leading-relaxed text-white/80">
+            Operative, you have registered your combat protocol, but you must book an arena time slot to secure your digital battle pass.
           </p>
 
-          <Link
+          <PixelButton
+            label="BOOK A SLOT NOW →"
             href="/slot-booking"
-            className="font-pixel text-xs py-3.5 px-7 bg-[#FEDC02] text-black font-bold border-2 border-white hover:bg-[#ffe733] rounded-lg uppercase tracking-wider transition-all hover:scale-105 cursor-pointer shadow-[0_3px_0_#9c8400]"
-          >
-            BOOK A SLOT NOW →
-          </Link>
+            interaction="simple"
+            className="w-[280px]"
+            labelClassName="text-[13px]"
+          />
         </div>
       </div>
     );
