@@ -7,7 +7,7 @@ const API_BASE_URL = "/api";
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<{ success: boolean; data?: T; message?: string; error?: string }> {
+): Promise<{ success: boolean; data?: T; message?: string; error?: string; status?: number }> {
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   
   const headers = new Headers(options.headers || {});
@@ -38,6 +38,7 @@ export async function apiFetch<T>(
       return {
         success: false,
         error: errMsg ?? `HTTP Error ${res.status}`,
+        status: res.status,
       };
     }
 
@@ -45,11 +46,13 @@ export async function apiFetch<T>(
       success: typeof json.success === "boolean" ? json.success : true,
       data: (json.data ?? json) as T | undefined,
       message: typeof json.message === "string" ? json.message : undefined,
+      status: res.status,
     };
   } catch (err: unknown) {
     return {
       success: false,
       error: err instanceof Error ? err.message : "Failed to communicate with API server.",
+      status: 0,
     };
   }
 }

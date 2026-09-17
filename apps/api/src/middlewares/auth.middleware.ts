@@ -82,13 +82,14 @@ const getSession: GetSession = async (args) => {
 };
 
 /**
- * Staff session reader: same as getSession, but accepts the `staff.*` cookie
- * namespace (translated back before better-auth sees it). Participant
- * session cookies are invisible here, and vice versa — the two sessions
- * cannot roam across apps even when sharing one cookie jar.
+ * Staff session reader: reads the standard better-auth session cookie.
+ * Browsers holding a pre-revamp `staff.*` cookie are still accepted via a
+ * fallback translation, so the rollout doesn't log everyone out mid-shift.
  */
 const getStaffSession: GetSession = async (args) => {
   const { auth } = await import("../auth");
+  const session = await auth.api.getSession(args);
+  if (session) return session;
   return auth.api.getSession({ headers: staffSessionHeaders(args.headers) });
 };
 

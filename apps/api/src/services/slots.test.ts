@@ -17,15 +17,16 @@ const baseSlot: Slot = {
   endTime: new Date("2026-03-14T10:00:00.000Z"),
   capacity: 10,
   totalCapacity: 10,
+  isHidden: false,
 };
 
 function makeDeps(overrides: Partial<SlotsDeps> = {}): SlotsDeps {
   return {
     listSlots: mock(async () => [baseSlot]),
     findSlot: mock(async () => baseSlot),
-    countBookings: mock(async () => 0),
+    countActiveBookings: mock(async () => 0),
     insertSlots: mock(async (values: SlotInput[]) =>
-      values.map((v, i) => ({ id: `id-${i}`, ...v, totalCapacity: 10 })),
+      values.map((v, i) => ({ id: `id-${i}`, isHidden: false, ...v, totalCapacity: 10 })),
     ),
     applyUpdate: mock(async (_id: string, patch: SlotPatch) => ({ ...baseSlot, ...patch })),
     removeSlot: mock(async () => {}),
@@ -126,7 +127,7 @@ describe("makeSlotsService", () => {
   });
 
   test("update: 409s with bookingCount/requestedCapacity when capacity drops below bookings", async () => {
-    const deps = makeDeps({ countBookings: mock(async () => 8) });
+    const deps = makeDeps({ countActiveBookings: mock(async () => 8) });
     const service = makeSlotsService(deps);
 
     try {
@@ -140,7 +141,7 @@ describe("makeSlotsService", () => {
   });
 
   test("update: succeeds when capacity equals the booking count", async () => {
-    const deps = makeDeps({ countBookings: mock(async () => 8) });
+    const deps = makeDeps({ countActiveBookings: mock(async () => 8) });
     const service = makeSlotsService(deps);
 
     const updated = await service.update(baseSlot.id, { capacity: 8 });
@@ -148,21 +149,21 @@ describe("makeSlotsService", () => {
   });
 
   test("update: never counts bookings when capacity is raised", async () => {
-    const countBookings = mock(async () => 0);
-    const deps = makeDeps({ countBookings });
+    const countActiveBookings = mock(async () => 0);
+    const deps = makeDeps({ countActiveBookings });
     const service = makeSlotsService(deps);
 
     await service.update(baseSlot.id, { capacity: 12 });
-    expect(countBookings).not.toHaveBeenCalled();
+    expect(countActiveBookings).not.toHaveBeenCalled();
   });
 
   test("update: never counts bookings when capacity is unchanged", async () => {
-    const countBookings = mock(async () => 0);
-    const deps = makeDeps({ countBookings });
+    const countActiveBookings = mock(async () => 0);
+    const deps = makeDeps({ countActiveBookings });
     const service = makeSlotsService(deps);
 
     await service.update(baseSlot.id, { startTime: new Date("2026-03-14T09:30:00.000Z") });
-    expect(countBookings).not.toHaveBeenCalled();
+    expect(countActiveBookings).not.toHaveBeenCalled();
   });
 
   test("update: 404s on an unknown id and never calls applyUpdate", async () => {
@@ -174,7 +175,7 @@ describe("makeSlotsService", () => {
   });
 
   test("remove: 409s when the slot has bookings, and never deletes", async () => {
-    const deps = makeDeps({ countBookings: mock(async () => 3) });
+    const deps = makeDeps({ countActiveBookings: mock(async () => 3) });
     const service = makeSlotsService(deps);
 
     try {
@@ -188,16 +189,16 @@ describe("makeSlotsService", () => {
   });
 
   test("remove: 404s on an unknown id before checking bookings", async () => {
-    const countBookings = mock(async () => 0);
-    const deps = makeDeps({ findSlot: mock(async () => undefined), countBookings });
+    const countActiveBookings = mock(async () => 0);
+    const deps = makeDeps({ findSlot: mock(async () => undefined), countActiveBookings });
     const service = makeSlotsService(deps);
 
     await expect(service.remove("missing")).rejects.toBeInstanceOf(NotFoundError);
-    expect(countBookings).not.toHaveBeenCalled();
+    expect(countActiveBookings).not.toHaveBeenCalled();
   });
 
   test("remove: succeeds when there are no bookings", async () => {
-    const deps = makeDeps({ countBookings: mock(async () => 0) });
+    const deps = makeDeps({ countActiveBookings: mock(async () => 0) });
     const service = makeSlotsService(deps);
 
     await service.remove(baseSlot.id);

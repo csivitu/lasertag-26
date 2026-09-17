@@ -1,13 +1,14 @@
 import { eq } from "drizzle-orm";
 import { db } from "@lasertag-26/database";
 import { user } from "@lasertag-26/database/schema";
-import { NotFoundError } from "../errors";
+import { NotFoundError, ConflictError } from "../errors";
 import {
   findUserById,
   findActiveRegistrationWithSlotForUser,
   findTeamForUser,
   isIdentityAllowlisted,
   markUserPaid,
+  paidImportQueries,
 } from "../data/queries";
 import type { UpdateMyDetailsInput } from "../validations/users.validation";
 
@@ -43,6 +44,7 @@ export type UserProfileDto = {
     qrToken: string | null;
     confirmedAt: Date | null;
     cancelledAt: Date | null;
+    slotChangeCount: number;
     slot: {
       id: string;
       startTime: Date;
@@ -148,6 +150,7 @@ export const userService = {
             qrToken: activeReg.booking.qrToken,
             confirmedAt: activeReg.booking.confirmedAt,
             cancelledAt: activeReg.booking.cancelledAt,
+            slotChangeCount: activeReg.booking.slotChangeCount ?? 0,
             slot: slotDetails,
           }
         : null,
@@ -161,12 +164,26 @@ export const userService = {
       throw new NotFoundError("User not found");
     }
 
+    // Reg numbers are unique per player (case-insensitive). Saving someone
+    // else's number would corrupt paid-verification and check-in matching,
+    // so reject with a plain-language message the popup shows as-is.
+    const regNumber =
+      input.reg_number !== undefined ? input.reg_number.toUpperCase() : undefined;
+    if (regNumber !== undefined) {
+      const holder = await paidImportQueries.findUserByRegNumber(regNumber);
+      if (holder && holder.id !== userId) {
+        throw new ConflictError(
+          "This registration number is already registered. Please check your registration number and try again, or contact us for help.",
+        );
+      }
+    }
+
     const [updated] = await db
       .update(user)
       .set({
         ...(input.name !== undefined ? { name: input.name } : {}),
         ...(input.phone !== undefined ? { phNumber: input.phone } : {}),
-        ...(input.reg_number !== undefined ? { regNumber: input.reg_number } : {}),
+        ...(regNumber !== undefined ? { regNumber } : {}),
       })
       .where(eq(user.id, userId))
       .returning();

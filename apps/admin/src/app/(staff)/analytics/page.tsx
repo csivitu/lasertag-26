@@ -7,20 +7,26 @@ import {
   TrendingUp,
   CalendarDays,
   QrCode,
-  Users,
   Clock,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
+import { getStaffRole } from "@/lib/auth";
+
+interface SlotSummary {
+  id: string;
+  startTime?: string;
+}
 
 export default function AnalyticsPage() {
-  const [slots, setSlots] = useState<any[]>([]);
+  const [slots, setSlots] = useState<SlotSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    const res = await apiFetch<any>("/slots");
+    const res = await apiFetch<SlotSummary[] | { slots: SlotSummary[] }>("/slots");
     if (res.success && res.data) {
       const list = Array.isArray(res.data)
         ? res.data
@@ -37,6 +43,7 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchData();
+    getStaffRole().then((r) => setIsSuperAdmin(r === "super_admin"));
   }, []);
 
   const slotList = Array.isArray(slots) ? slots : [];
@@ -104,16 +111,18 @@ export default function AnalyticsPage() {
         <div className="lg:col-span-2 space-y-4">
           <h2 className="text-sm font-semibold text-[#FAFAFA] tracking-tight">Quick Workstations</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link
-              href="/slots"
-              className="p-5 bg-[#141417] border border-[#27272A] hover:border-[#3F3F46] rounded-2xl space-y-2 group transition-all"
-            >
-              <div className="w-8 h-8 rounded-xl bg-[#09090B] border border-[#27272A] flex items-center justify-center text-emerald-400 group-hover:border-[#3F3F46]">
-                <CalendarDays className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-[#FAFAFA]">Slot Manager</h3>
-              <p className="text-xs text-[#71717A]">Create 30-min single slots or batch generate time windows</p>
-            </Link>
+            {isSuperAdmin && (
+              <Link
+                href="/slots"
+                className="p-5 bg-[#141417] border border-[#27272A] hover:border-[#3F3F46] rounded-2xl space-y-2 group transition-all"
+              >
+                <div className="w-8 h-8 rounded-xl bg-[#09090B] border border-[#27272A] flex items-center justify-center text-emerald-400 group-hover:border-[#3F3F46]">
+                  <CalendarDays className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-[#FAFAFA]">Slot Manager</h3>
+                <p className="text-xs text-[#71717A]">Create 30-min single slots or batch generate time windows</p>
+              </Link>
+            )}
 
             <Link
               href="/checkin"
@@ -124,17 +133,6 @@ export default function AnalyticsPage() {
               </div>
               <h3 className="text-sm font-bold text-[#FAFAFA]">Check-In Station</h3>
               <p className="text-xs text-[#71717A]">Scan participant QR codes or search by registration ID</p>
-            </Link>
-
-            <Link
-              href="/teams"
-              className="p-5 bg-[#141417] border border-[#27272A] hover:border-[#3F3F46] rounded-2xl space-y-2 group transition-all"
-            >
-              <div className="w-8 h-8 rounded-xl bg-[#09090B] border border-[#27272A] flex items-center justify-center text-emerald-400 group-hover:border-[#3F3F46]">
-                <Users className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-[#FAFAFA]">Team & Roster</h3>
-              <p className="text-xs text-[#71717A]">Inspect registered teams and check-in statuses</p>
             </Link>
           </div>
         </div>

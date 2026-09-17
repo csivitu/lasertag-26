@@ -230,7 +230,6 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
 
     try {
       await reserveSlot(booking.id, {
-        userId: session.user.id,
         type,
         teamCode,
       });
@@ -256,7 +255,9 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
       // so say so plainly instead of surfacing the raw DB message.
       const msg = /slot is full|fully booked/i.test(raw)
         ? "THAT SLOT JUST FILLED — PLEASE PICK ANOTHER SLOT."
-        : raw;
+        : /slot change limit/i.test(raw)
+          ? "YOU HAVE USED ALL 3 SLOT CHANGES — PLEASE CONTACT US FOR HELP."
+          : raw;
       setReserveError(msg);
     } finally {
       setIsReserving(false);
@@ -331,21 +332,10 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         </div>
       )}
 
-      {/* ── Date switcher (hidden when only one date has slots) ── */}
-      {(isLoading || dates.length > 1) && (
+      {/* ── Date switcher (only once loaded, and only when multiple dates have slots) ── */}
+      {!isLoading && dates.length > 1 && (
         <div className="relative z-10 w-full">
-          <DateSwitcher
-            dates={
-              dates.length > 0
-                ? dates
-                : [
-                    { day: "18", month: "SEPT", active: selectedDay === "18" },
-                    { day: "19", month: "SEPT", active: selectedDay === "19" },
-                    { day: "20", month: "SEPT", active: selectedDay === "20" },
-                  ]
-            }
-            onSelect={selectDate}
-          />
+          <DateSwitcher dates={dates} onSelect={selectDate} />
         </div>
       )}
       {/* ── Slot grid (greyed out until verified) ── */}
@@ -362,6 +352,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
               ? selectedSlot
               : undefined
           }
+          bookedSlotId={profile?.activeRegistration?.slotId}
           slots={slots}
           isLoading={isLoading}
           onPageChange={selectPage}

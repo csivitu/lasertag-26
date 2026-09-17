@@ -34,6 +34,7 @@ export type CreateSlotInput = {
   startTime: string | Date;
   endTime: string | Date;
   capacity: number;
+  isHidden?: boolean;
 };
 
 /**
@@ -95,10 +96,6 @@ export const reserveSlotSchema = z.object({
   }),
   body: z
     .object({
-      user_id: z
-        .string()
-        .trim()
-        .min(1, "user_id and type (individual/team) are required fields."),
       type: z.enum(["individual", "team"], {
         message: 'type must be either "individual" or "team".',
       }),

@@ -1,16 +1,11 @@
 /**
- * Staff session cookie isolation.
+ * LEGACY staff session cookie isolation (pre-revamp).
  *
- * Participant and staff sessions share one better-auth instance (and, on
- * localhost, one cookie jar across ports — cookies are host-scoped). Without
- * this, a staff login in the admin panel would also authenticate the holder
- * as that staff user on the participant web app, and vice versa.
- *
- * Fix: staff flows use a `staff.*` cookie namespace. better-auth itself only
- * knows `better-auth.*`, so we translate at the admin boundary —
- * outgoing Set-Cookie on login/logout, incoming Cookie header on every
- * staff-guarded request. Participant flows never see or send `staff.*`
- * cookies, and staff guards never read `better-auth.*` ones.
+ * New logins set plain better-auth.* cookies and the staff guard reads them
+ * directly (single-domain deployment: one host, first-party cookies, role
+ * enforced by requireAdmin). These helpers remain only so logout and the
+ * session reader can still accept `staff.*` cookies held by browsers that
+ * logged in before the revamp. Do not use for new flows.
  */
 const AUTH_COOKIE_PREFIX = "better-auth.";
 export const STAFF_COOKIE_PREFIX = "staff.";

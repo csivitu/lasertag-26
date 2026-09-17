@@ -1,134 +1,202 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LaserTag 2026: Slot Booking Confirmation</title>
+  <title>Slot Booking Confirmed for LaserTag @Gravitas’26</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0a0a0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #e4e4e7;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0a0a0f; padding: 32px 16px;">
+
+<body style="margin:0; padding:0; background-color:#0B0B0B; color:#EDEDED;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0B0B0B; color:#EDEDED; padding:20px;">
     <tr>
       <td align="center">
-        <!-- Main Card -->
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background-color: #101018; border: 2px solid #27273a; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
-          <!-- Header Banner -->
+
+        <table width="680" cellpadding="0" cellspacing="0" align="center"
+          style="background-color:#0B0B0B; color:#EDEDED; border:1px solid #ffffff; border-radius:28px; overflow:hidden; margin:0 auto;">
+
+          <!-- Banner -->
           <tr>
-            <td align="center" style="background: linear-gradient(135deg, #181829 0%, #0d0d17 100%); padding: 32px 24px; border-bottom: 3px solid #FEDC02;">
-              <div style="display: inline-block; font-family: monospace; font-size: 12px; font-weight: bold; color: #00F0FF; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">
-                &bull; LASERTAG 2026 ARENA ACCESS &bull;
-              </div>
-              <h1 style="margin: 0; font-size: 26px; font-weight: 900; color: #FEDC02; letter-spacing: 1px; text-transform: uppercase;">
-                MISSION CONFIRMED
-              </h1>
-              <p style="margin: 8px 0 0; font-size: 13px; color: #a1a1aa; font-family: monospace;">
-                BOOKING REF: <span style="color: #ffffff; font-weight: bold;">{{bookingId}}</span>
-              </p>
+            <td style="padding:40px 40px 25px;">
+              <table width="600" cellpadding="0" cellspacing="0" role="presentation" align="center">
+                <tr>
+                  <td style="border-radius:10px; overflow:hidden;">
+                    <img
+                      src="https://drive.usercontent.google.com/download?id=15zsoj3x1RGN1U667L4PsHrwTXf94kehU&export=view"
+                      width="600"
+                      height="auto"
+                      alt="Banner"
+                      style="display:block; width:100%; max-width:600px; border:0; outline:none;"
+                    />
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
-          <!-- Body Content -->
+          <!-- Content -->
           <tr>
-            <td style="padding: 28px 24px;">
-              <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.5; color: #ffffff;">
-                Greetings, <strong style="color: #FEDC02;">{{name}}</strong>!
+            <td style="padding:10px 40px 35px;
+                     font-family:Arial, Helvetica, sans-serif;
+                     color:#EDEDED;
+                     line-height:1.7;">
+
+              <p style="font-size:15px; margin:12px 0;">
+                Hello {{user_name}},
               </p>
-              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #d4d4d8;">
-                Your battle slot for <strong>LaserTag 2026</strong> has been locked and confirmed in the arena grid. Prepare your loadout and review your battle schedule below.
+
+              <p style="font-size:18px; font-weight:bold; color:#FF4D2D; margin:16px 0 12px 0; text-transform:uppercase; letter-spacing:1px;">
+                MISSION CONFIRMED
               </p>
 
-              <!-- Slot Details Table -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #14141f; border: 1px solid #27273a; border-radius: 8px; margin-bottom: 24px;">
-                <tr>
-                  <td style="padding: 14px 18px; border-bottom: 1px solid #222233; color: #a1a1aa; font-size: 12px; font-family: monospace; text-transform: uppercase;">
-                    MISSION MODE
-                  </td>
-                  <td align="right" style="padding: 14px 18px; border-bottom: 1px solid #222233; color: #00F0FF; font-size: 13px; font-weight: bold; font-family: monospace;">
-                    {{bookingType}}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 14px 18px; border-bottom: 1px solid #222233; color: #a1a1aa; font-size: 12px; font-family: monospace; text-transform: uppercase;">
-                    TEAM CODE
-                  </td>
-                  <td align="right" style="padding: 14px 18px; border-bottom: 1px solid #222233; color: #ffffff; font-size: 13px; font-weight: bold; font-family: monospace;">
-                    {{teamCode}}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 14px 18px; border-bottom: 1px solid #222233; color: #a1a1aa; font-size: 12px; font-family: monospace; text-transform: uppercase;">
-                    SCHEDULED DATE
-                  </td>
-                  <td align="right" style="padding: 14px 18px; border-bottom: 1px solid #222233; color: #FEDC02; font-size: 13px; font-weight: bold;">
-                    {{slotDate}}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 14px 18px; color: #a1a1aa; font-size: 12px; font-family: monospace; text-transform: uppercase;">
-                    TIME WINDOW
-                  </td>
-                  <td align="right" style="padding: 14px 18px; color: #34d399; font-size: 13px; font-weight: bold; font-family: monospace;">
-                    {{slotTime}}
-                  </td>
-                </tr>
-              </table>
+              <p style="font-size:15px; margin:12px 0;">
+                Your LaserTag slot has been successfully booked and confirmed. Your battle plan is locked in.
+              </p>
 
-              <!-- QR Code Arena Pass Ticket -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px; background-color: #0c0c14; border: 2px dashed #00F0FF; border-radius: 8px;">
-                <tr>
-                  <td align="center" style="padding: 20px;">
-                    <div style="font-size: 13px; font-weight: bold; color: #00F0FF; font-family: monospace; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;">
-                      &#9889; OFFICIAL ARENA ACCESS QR CODE &#9889;
-                    </div>
-                    <!-- QR Image Container -->
-                    <div style="display: inline-block; padding: 12px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);">
-                      <img src="cid:qrTicketCode" alt="LaserTag Arena Entry QR Code" width="180" height="180" style="display: block; width: 180px; height: 180px; margin: 0 auto; border: 0;" />
-                    </div>
-                    <div style="margin-top: 14px; font-size: 12px; color: #a1a1aa; font-family: monospace;">
-                      TICKET / PASS ID: <strong style="color: #FEDC02;">{{qrToken}}</strong>
-                    </div>
-                    <div style="margin-top: 4px; font-size: 11px; color: #71717a; font-family: monospace;">
-                      Present this QR code on your mobile device at arena check-in
-                    </div>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Action CTA -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 26px;">
-                <tr>
-                  <td align="center">
-                    <a href="{{passUrl}}" target="_blank" style="display: inline-block; background-color: #FEDC02; color: #000000; font-family: monospace; font-size: 14px; font-weight: 900; text-decoration: none; padding: 14px 28px; border-radius: 6px; letter-spacing: 1.5px; text-transform: uppercase; box-shadow: 0 4px 0 #9c8400;">
-                      VIEW DIGITAL BATTLE PASS &rarr;
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Rules & Guidelines Box -->
-              <div style="background-color: #09090f; border-left: 3px solid #E5349E; padding: 14px 18px; border-radius: 4px;">
-                <div style="font-size: 12px; font-weight: bold; color: #E5349E; text-transform: uppercase; font-family: monospace; margin-bottom: 6px;">
-                  ⚠️ ARENA PROTOCOLS
-                </div>
-                <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #a1a1aa; line-height: 1.6;">
-                  <li>Report at the arena check-in counter at least <strong>15 minutes prior</strong>.</li>
-                  <li>Show your <strong>Digital QR Pass</strong> on your mobile screen for entry.</li>
-                  <li>Flat closed-toe footwear mandatory for tactical arena gameplay.</li>
-                </ul>
+              <div style="margin:20px 0 16px 0; background-color:#141419; border:1px solid #2A2A35; border-radius:12px; padding:18px 24px;">
+                <p style="font-size:15px; font-weight:bold; margin:0 0 12px 0; color:#ffffff; border-bottom:1px solid #2A2A35; padding-bottom:8px;">
+                  Booking Details:
+                </p>
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:14px; font-family:Arial, Helvetica, sans-serif; color:#EDEDED;">
+                  <tr>
+                    <td style="padding:6px 0; color:#AAAAAA; width:40%;">Date:</td>
+                    <td style="padding:6px 0; color:#FFFFFF; font-weight:bold;">{{slotDate}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#AAAAAA;">Slot:</td>
+                    <td style="padding:6px 0; color:#FF4D2D; font-weight:bold;">{{slotTime}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#AAAAAA;">Registration Number:</td>
+                    <td style="padding:6px 0; color:#FFFFFF; font-weight:bold;">{{registrationNumber}}</td>
+                  </tr>
+                </table>
               </div>
+
+              <!-- Arena Pass Ticket -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin:20px 0 24px 0; background-color:#0c0c14; border:2px dashed #FF4D2D; border-radius:12px;">
+                <tr>
+                  <td align="center" style="padding:20px;">
+                    <div style="font-size:13px; font-weight:bold; color:#FF4D2D; font-family:monospace; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px;">
+                      ⚡ OFFICIAL ARENA ACCESS QR CODE ⚡
+                    </div>
+                    <div style="display:inline-block; padding:12px; background-color:#ffffff; border-radius:8px;">
+                      <img src="cid:qrTicketCode" alt="LaserTag Arena Entry QR Code" width="180" height="180" style="display:block; width:180px; height:180px; margin:0 auto; border:0;" />
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="font-size:15px; margin:16px 0 20px 0;">
+                Inform your squad, recalibrate your strategy, and make sure everyone arrives on time. The arena won't wait for latecomers.
+              </p>
+
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td align="center" style="padding: 18px 20px; background-color: #08080d; border-top: 1px solid #1f1f2e;">
-              <p style="margin: 0; font-size: 11px; color: #71717a; font-family: monospace;">
-                LASERTAG 2026 // FROM PIXELS TO PEW PEW &bull; AUTOMATED TRANSMISSION
+            <td style="padding:0 40px 30px;
+                     font-family:Arial, Helvetica, sans-serif;
+                     color:#EDEDED;
+                     line-height:1.7;">
+
+              <p style="font-size:14px; margin:18px 0;">
+                <strong>Regards,<br>CSI-VIT</strong>
               </p>
+
             </td>
           </tr>
+
+          <!-- Connect With Us -->
+          <tr>
+            <td align="center" style="padding:0;">
+
+              <!-- Full-width divider -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation"
+                    style="border-top:1px solid #333;">
+                <tr>
+                  <td align="center" style="padding:20px 0 30px;">
+
+                    <p style="
+                      font-family:Arial, Helvetica, sans-serif;
+                      font-size:13px;
+                      margin:0 0 12px;
+                      text-align:center;
+                      color:#ffffff;
+                    ">
+                      Connect with us:
+                    </p>
+
+                    <!-- Centered icons -->
+                    <table cellpadding="0" cellspacing="0" role="presentation"
+                          align="center" style="margin:0 auto;">
+                      <tr>
+
+                        <td align="center" style="padding:0 8px;">
+                          <a href="https://instagram.com/csivitu">
+                            <img
+                              src="https://drive.google.com/uc?export=view&id=1iULTXYJ4aw9MvmfZ4Yxr2iloMnYS2B_2"
+                              width="26"
+                              height="26"
+                              alt="Instagram"
+                              style="display:block; border:0;"
+                            />
+                          </a>
+                        </td>
+
+                        <td align="center" style="padding:0 8px;">
+                          <a href="https://twitter.com/csivitu">
+                            <img
+                              src="https://drive.google.com/uc?export=view&id=1G-dfeeeDTokFHjeWvoP-a1bMaE-MGx6E"
+                              width="22"
+                              height="22"
+                              alt="Twitter"
+                              style="display:block; border:0;"
+                            />
+                          </a>
+                        </td>
+
+                        <td align="center" style="padding:0 8px;">
+                          <a href="https://github.com/csivitu">
+                            <img
+                              src="https://drive.google.com/uc?export=view&id=1v5gmOFGGYWgdvCFHZVhpWqGOHYS2MZhZ"
+                              width="28"
+                              height="28"
+                              alt="GitHub"
+                              style="display:block; border:0;"
+                            />
+                          </a>
+                        </td>
+
+                        <td align="center" style="padding:0 8px;">
+                          <a href="https://linkedin.com/company/csivitu">
+                            <img
+                              src="https://drive.google.com/uc?export=view&id=1VFs0D9NiCahCuNLa2Hf43_7rXWHXhyDw"
+                              width="26"
+                              height="26"
+                              alt="LinkedIn"
+                              style="display:block; border:0;"
+                            />
+                          </a>
+                        </td>
+
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
         </table>
+
       </td>
     </tr>
   </table>
+
 </body>
+
 </html>

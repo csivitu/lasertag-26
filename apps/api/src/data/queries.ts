@@ -1,4 +1,4 @@
-import { and, count, eq, gt, ilike, ne, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, gt, ilike, ne, or, sql } from "drizzle-orm";
 import {
   db,
   bookings,
@@ -36,13 +36,7 @@ export const slotQueries: SlotsDeps = {
     return row;
   },
 
-  countBookings: async (slotId) => {
-    const [row] = await db
-      .select({ value: count() })
-      .from(bookings)
-      .where(eq(bookings.slotId, slotId));
-    return row?.value ?? 0;
-  },
+  countActiveBookings: (slotId) => countActiveBookingsForSlot(slotId),
 
   // New slots open with total = remaining; the claim/trigger pair keeps
   // total_capacity = capacity + active bookings from here on.
@@ -333,10 +327,14 @@ export async function findUserById(userId: string) {
 }
 
 export async function findActiveRegistrationForUser(userId: string) {
+  // Newest first + LIMIT 1: deterministic even if duplicate active rows
+  // somehow exist (the partial unique index normally prevents that).
   const [row] = await db
     .select()
     .from(bookings)
-    .where(and(eq(bookings.userId, userId), ne(bookings.status, "cancelled")));
+    .where(and(eq(bookings.userId, userId), ne(bookings.status, "cancelled")))
+    .orderBy(desc(bookings.confirmedAt))
+    .limit(1);
   return row;
 }
 
@@ -348,7 +346,9 @@ export async function findActiveRegistrationWithSlotForUser(userId: string) {
     })
     .from(bookings)
     .innerJoin(slots, eq(bookings.slotId, slots.id))
-    .where(and(eq(bookings.userId, userId), ne(bookings.status, "cancelled")));
+    .where(and(eq(bookings.userId, userId), ne(bookings.status, "cancelled")))
+    .orderBy(desc(bookings.confirmedAt))
+    .limit(1);
 
   return row;
 }
@@ -440,6 +440,20 @@ export async function markUserCheckedIn(bookingId: string) {
       checkedInAt: new Date(),
     })
     .where(eq(bookings.id, bookingId))
+    .returning();
+
+  return updated;
+}
+
+/** Mirrors the booking stamp onto the user row so both check-in columns agree. */
+export async function markUserRowCheckedIn(userId: string) {
+  const [updated] = await db
+    .update(user)
+    .set({
+      isCheckedIn: true,
+      checkedInAt: new Date(),
+    })
+    .where(eq(user.id, userId))
     .returning();
 
   return updated;

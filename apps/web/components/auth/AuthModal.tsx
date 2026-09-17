@@ -205,6 +205,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {errorMsg}
           </p>
         )}
+
+        <p className="text-white text-[13px] font-body font-bold tracking-[0.08em] mt-4 text-center">
+          (Register with your VIT email only)
+        </p>
       </div>
     </div>
   );

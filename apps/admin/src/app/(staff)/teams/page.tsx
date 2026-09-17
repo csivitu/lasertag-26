@@ -1,21 +1,50 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Search, QrCode, X, Calendar, Clock, Ticket, CheckCircle2, AlertCircle, ChevronRight, Shield } from "lucide-react";
+import { Users, Search, X, Calendar, Clock, Ticket, CheckCircle2, ChevronRight, Shield } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
+import { usePoll } from "@/lib/use-poll";
+
+interface TeamMember {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+}
+
+interface TeamBooking {
+  id?: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  type?: string | null;
+}
+
+interface TeamItem {
+  id: string;
+  teamCode?: string | null;
+  name?: string | null;
+  checkedIn?: boolean;
+  status?: string | null;
+  members?: TeamMember[];
+  bookings?: TeamBooking[];
+  leader?: { name?: string | null; email?: string | null } | null;
+}
 
 export default function TeamsPage() {
-  const [teams, setTeams] = useState<any[]>([]);
+  const [teams, setTeams] = useState<TeamItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState<any | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<TeamItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  const fetchTeams = async () => {
-    setLoading(true);
+  const fetchTeams = async (signal?: AbortSignal, silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
-    const res = await apiFetch<any>("/teams");
+    const res = await apiFetch<{ teams?: TeamItem[] } | TeamItem[]>("/teams", {
+      ...(signal ? { signal } : {}),
+    });
+    // Aborted poll — leave existing state untouched.
+    if (signal?.aborted) return;
     if (res.success && res.data) {
       const list = Array.isArray(res.data)
         ? res.data
@@ -26,34 +55,33 @@ export default function TeamsPage() {
 
       // Keep selectedTeam synced if open
       if (selectedTeam) {
-        const updated = list.find((t: any) => t.id === selectedTeam.id || t.teamCode === selectedTeam.teamCode);
+        const updated = list.find((t: TeamItem) => t.id === selectedTeam.id || t.teamCode === selectedTeam.teamCode);
         if (updated) setSelectedTeam(updated);
       }
     } else {
       setTeams([]);
       setError(res.error || "Failed to load registered teams.");
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
+  // Background poll: silent, visible-tab only, aborted on unmount/overlap.
+  const { refreshing, refreshNow } = usePoll((signal) => fetchTeams(signal, true));
+
   useEffect(() => {
-    fetchTeams();
-    const interval = setInterval(() => {
-      fetchTeams();
-    }, 5000);
-    return () => clearInterval(interval);
+    void fetchTeams();
   }, []);
 
   const handleToggleCheckin = async (teamId: string, currentStatus: boolean) => {
     setActionSuccess(null);
-    const res = await apiFetch<any>(`/teams/${teamId}/checkin`, {
+    const res = await apiFetch<unknown>(`/teams/${teamId}/checkin`, {
       method: "PATCH",
       body: JSON.stringify({ checkedIn: !currentStatus }),
     });
 
     if (res.success) {
       setActionSuccess(`Check-in status updated successfully.`);
-      fetchTeams();
+      void fetchTeams(undefined, true);
     } else {
       setError(res.error || "Failed to update venue check-in status.");
     }
@@ -80,11 +108,11 @@ export default function TeamsPage() {
           </p>
         </div>
         <button
-          onClick={fetchTeams}
-          disabled={loading}
+          onClick={() => void refreshNow()}
+          disabled={loading || refreshing}
           className="flex items-center gap-2 px-3 py-1.5 bg-[#141417] border border-[#27272A] rounded-xl text-xs text-[#FAFAFA] hover:border-[#3F3F46] transition-all"
         >
-          <Users className={`w-3.5 h-3.5 text-emerald-400 ${loading ? "animate-spin" : ""}`} />
+          <Users className={`w-3.5 h-3.5 text-emerald-400 ${loading || refreshing ? "animate-spin" : ""}`} />
           <span>Reload Teams</span>
         </button>
       </div>
@@ -180,7 +208,7 @@ export default function TeamsPage() {
                       Roster ({team.members.length} Members):
                     </p>
                     <p className="text-xs text-[#A1A1AA] truncate font-mono">
-                      {team.members.map((m: any) => m.name || m.email).join(", ")}
+                      {team.members.map((m: TeamMember) => m.name || m.email).join(", ")}
                     </p>
                   </div>
                 )}
@@ -285,7 +313,7 @@ export default function TeamsPage() {
 
                 {selectedTeam.members && selectedTeam.members.length > 0 ? (
                   <div className="divide-y divide-[#27272A]">
-                    {selectedTeam.members.map((m: any, i: number) => (
+                    {selectedTeam.members.map((m: TeamMember, i: number) => (
                       <div key={m.id || i} className="py-2 flex items-center justify-between text-xs font-mono">
                         <div>
                           <p className="font-semibold text-[#FAFAFA]">
@@ -312,7 +340,7 @@ export default function TeamsPage() {
 
                 {selectedTeam.bookings && selectedTeam.bookings.length > 0 ? (
                   <div className="space-y-2.5">
-                    {selectedTeam.bookings.map((bkg: any, i: number) => {
+                    {selectedTeam.bookings.map((bkg: TeamBooking, i: number) => {
                       const startFormatted = bkg.startTime
                         ? new Date(bkg.startTime).toLocaleString("en-US", {
                             timeZone: "Asia/Kolkata",

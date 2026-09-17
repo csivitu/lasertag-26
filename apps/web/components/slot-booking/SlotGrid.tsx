@@ -8,6 +8,7 @@ interface SlotGridProps {
   activeDay: string;
   currentPage: number;
   selectedSlot?: number;
+  bookedSlotId?: string;
   slots: Slot[];
   isLoading: boolean;
   onPageChange: (page: number) => void;
@@ -18,6 +19,7 @@ export function SlotGrid({
   activeDay,
   currentPage,
   selectedSlot,
+  bookedSlotId,
   slots,
   isLoading,
   onPageChange,
@@ -37,6 +39,7 @@ export function SlotGrid({
       <div className="slot-grid">
         {visibleSlots.map((slot) => {
           const isSelected = selectedSlot === slot.index;
+          const isBookedSlot = bookedSlotId === slot.id;
           const state: SlotState =
             slot.capacity === 0
               ? "full"
@@ -52,11 +55,13 @@ export function SlotGrid({
               seatsLabel={
                 isSelected
                   ? "Selected Slot"
-                  : isFull
-                  ? "Fully Booked"
-                  : `${slot.capacity} Seats`
+                  : isBookedSlot
+                    ? "BOOKED SLOT"
+                    : isFull
+                      ? "Fully Booked"
+                      : `${slot.capacity} Seats`
               }
-              state={isSelected ? "booked" : state}
+              state={isSelected ? "booked" : isBookedSlot ? "bookedslot" : state}
               onClick={
                 isFull || isLoading
                   ? undefined

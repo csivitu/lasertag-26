@@ -3,14 +3,16 @@ import type { slots } from "@lasertag-26/database";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 
 export type Slot = typeof slots.$inferSelect;
-export type SlotInput = { startTime: Date; endTime: Date; capacity: number };
+export type SlotInput = { startTime: Date; endTime: Date; capacity: number; isHidden?: boolean };
 export type SlotPatch = Partial<SlotInput>;
 
 /** Everything this service needs from the database, and nothing more. */
 export interface SlotsDeps {
   listSlots(): Promise<Slot[]>;
   findSlot(id: string): Promise<Slot | undefined>;
-  countBookings(slotId: string): Promise<number>;
+  // Active bookings only: cancelled rows no longer occupy seats, so guards
+  // built on the all-rows count would block valid deletes and reductions.
+  countActiveBookings(slotId: string): Promise<number>;
   insertSlots(values: SlotInput[]): Promise<Slot[]>;
   applyUpdate(id: string, patch: SlotPatch): Promise<Slot>;
   removeSlot(id: string): Promise<void>;
@@ -89,7 +91,7 @@ export function makeSlotsService(deps: SlotsDeps) {
       // Only a reduction can overbook a slot, so skip the count query when
       // capacity is unchanged or going up.
       if (patch.capacity !== undefined && patch.capacity < existing.capacity) {
-        assertCapacityFitsBookings(patch.capacity, await deps.countBookings(id));
+        assertCapacityFitsBookings(patch.capacity, await deps.countActiveBookings(id));
       }
 
       return deps.applyUpdate(id, patch);
@@ -99,7 +101,7 @@ export function makeSlotsService(deps: SlotsDeps) {
     async remove(id: string): Promise<void> {
       await requireSlot(id);
 
-      const bookingCount = await deps.countBookings(id);
+      const bookingCount = await deps.countActiveBookings(id);
       if (bookingCount > 0) {
         throw new ConflictError("Cannot delete a slot with existing bookings", {
           bookingCount,

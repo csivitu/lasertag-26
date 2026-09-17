@@ -19,6 +19,7 @@ function createRateLimiter({ windowMs, max, message }: RateLimitOptions) {
     const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
 
     if (recent.length >= max) {
+      res.set("Retry-After", String(Math.ceil(windowMs / 1000)));
       res.status(429).json({ error: message });
       return;
     }

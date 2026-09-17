@@ -35,6 +35,7 @@ mock.module("../data/queries", () => ({
   cancelRegistration: mock(),
   findRegistrationForScan: mock(),
   markUserCheckedIn: mock(),
+  markUserRowCheckedIn: mock(async () => ({})),
 }));
 
 const findSlotByIdMock = queries.findSlotById as QueryMock<typeof queries.findSlotById>;
@@ -67,8 +68,11 @@ const findRegistrationForScanMock = queries.findRegistrationForScan as QueryMock
 const markUserCheckedInMock = queries.markUserCheckedIn as QueryMock<
   typeof queries.markUserCheckedIn
 >;
+const markUserRowCheckedInMock = queries.markUserRowCheckedIn as QueryMock<
+  typeof queries.markUserRowCheckedIn
+>;
 
-const m = { findSlotById: findSlotByIdMock, countActiveBookingsForSlot: countActiveBookingsForSlotMock, claimSlotSeat: claimSlotSeatMock, releaseSlotSeat: releaseSlotSeatMock, findUserById: findUserByIdMock, findActiveRegistrationForUser: findActiveRegistrationForUserMock, createSoloRegistration: createSoloRegistrationMock, findRegistrationWithUserAndSlot: findRegistrationWithUserAndSlotMock, confirmRegistration: confirmRegistrationMock, cancelRegistration: cancelRegistrationMock, findRegistrationForScan: findRegistrationForScanMock, markUserCheckedIn: markUserCheckedInMock };
+const m = { findSlotById: findSlotByIdMock, countActiveBookingsForSlot: countActiveBookingsForSlotMock, claimSlotSeat: claimSlotSeatMock, releaseSlotSeat: releaseSlotSeatMock, findUserById: findUserByIdMock, findActiveRegistrationForUser: findActiveRegistrationForUserMock, createSoloRegistration: createSoloRegistrationMock, findRegistrationWithUserAndSlot: findRegistrationWithUserAndSlotMock, confirmRegistration: confirmRegistrationMock, cancelRegistration: cancelRegistrationMock, findRegistrationForScan: findRegistrationForScanMock, markUserCheckedIn: markUserCheckedInMock, markUserRowCheckedIn: markUserRowCheckedInMock };
 
 const queryMocks = [
   findSlotByIdMock,
@@ -83,6 +87,7 @@ const queryMocks = [
   cancelRegistrationMock,
   findRegistrationForScanMock,
   markUserCheckedInMock,
+  markUserRowCheckedInMock,
 ];
 
 const mockSlot = {
@@ -91,6 +96,7 @@ const mockSlot = {
   endTime: new Date("2026-10-01T11:00:00Z"),
   capacity: 10,
   totalCapacity: 10,
+  isHidden: false,
 };
 
 const mockUser = {
@@ -799,6 +805,7 @@ describe("registrationService.scanRegistration", () => {
 
     const result = await registrationService.scanRegistration("abc123qrtokenhex");
     expect(queries.markUserCheckedIn).toHaveBeenCalledWith(mockConfirmedBooking.id);
+    expect(queries.markUserRowCheckedIn).toHaveBeenCalledWith(mockUser.id);
     expect(result.user.checkedInAt).toEqual(checkedInAt);
   });
 

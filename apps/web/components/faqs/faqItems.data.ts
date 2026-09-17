@@ -10,7 +10,7 @@ export const faqItems: FaqEntry[] = [
   {
     question: "What if my slot clashes?",
     answer:
-      "Worry not, shift your booking anytime once the portal's live.",
+      "Worry not, shift your booking anytime.",
     color: "pink",
   },
   {
@@ -34,7 +34,7 @@ export const faqItems: FaqEntry[] = [
   {
     question: "What if I arrive late?",
     answer:
-      "We'll try to sneak you into the next round, but no guarantees.",
+      "Miss your slot, miss your shot. No rescheduling.",
     color: "yellow",
   },
   {

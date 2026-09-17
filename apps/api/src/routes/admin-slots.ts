@@ -18,9 +18,10 @@ import {
 
 export const slotsRouter = Router();
 
-slotsRouter.get("/", listSlots);
-// Super admin only: create + delete. Both roles can list, patch, verify/scan.
+slotsRouter.get("/", requireSuperAdmin, listSlots);
+// Super admin only: list, create, update, delete. Plain admins have no
+// slot-manager access (frontend hides the page; this enforces it).
 slotsRouter.post("/", requireSuperAdmin, validate(createSlotSchema), createSlot);
 slotsRouter.post("/bulk", requireSuperAdmin, validate(bulkCreateSlotsSchema), createSlots);
-slotsRouter.patch("/:slot_id", validate(patchSlotSchema), updateSlot);
+slotsRouter.patch("/:slot_id", requireSuperAdmin, validate(patchSlotSchema), updateSlot);
 slotsRouter.delete("/:slot_id", requireSuperAdmin, validate(slotIdSchema), deleteSlot);

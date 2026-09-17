@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle, ChevronLeft, ChevronRight, EyeOff } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { getStaffRole, type StaffRole } from "@/lib/auth";
+import { usePoll } from "@/lib/use-poll";
+
+const PAGE_SIZE = 10;
 
 interface SlotItem {
   id: string;
   startTime: string;
   endTime: string;
   capacity: number;
+  isHidden?: boolean;
 }
 
 const EVENT_DATES = [
@@ -18,7 +23,27 @@ const EVENT_DATES = [
   { label: "20th Sep", val: "2026-09-20" },
 ];
 
+// Module-scope formatters: constructing Intl.DateTimeFormat per row per
+// render was a measurable cost on every poll re-render.
+const ARENA_TIME_ZONE = "Asia/Kolkata";
+const istDateKeyFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ARENA_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const istDateTimeFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: ARENA_TIME_ZONE,
+  dateStyle: "short",
+  timeStyle: "short",
+});
+const istTimeFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: ARENA_TIME_ZONE,
+  timeStyle: "short",
+});
+
 export default function SlotsPage() {
+  const router = useRouter();
   const [slots, setSlots] = useState<SlotItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submittingSingle, setSubmittingSingle] = useState(false);
@@ -32,6 +57,7 @@ export default function SlotsPage() {
   const canManageSlots = role === "super_admin";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deletingSelected, setDeletingSelected] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Default date
   const defaultDateStr = "2026-09-18";
@@ -40,16 +66,22 @@ export default function SlotsPage() {
   const [singleDate, setSingleDate] = useState(defaultDateStr);
   const [singleStartTime, setSingleStartTime] = useState("14:00");
   const [singleEndTime, setSingleEndTime] = useState("14:30");
+  const [singleIsHidden, setSingleIsHidden] = useState(false);
 
   // Bulk Slots Form State
   const [bulkDate, setBulkDate] = useState(defaultDateStr);
   const [bulkStartTime, setBulkStartTime] = useState("14:00");
   const [bulkEndTime, setBulkEndTime] = useState("18:00");
   const [slotDurationMins, setSlotDurationMins] = useState(30);
+  const [bulkIsHidden, setBulkIsHidden] = useState(false);
 
-  const fetchSlots = async () => {
-    setLoading(true);
-    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/admin/slots");
+  const fetchSlots = async (signal?: AbortSignal, silent = false) => {
+    if (!silent) setLoading(true);
+    const res = await apiFetch<SlotItem[] | { slots: SlotItem[] }>("/admin/slots", {
+      ...(signal ? { signal } : {}),
+    });
+    // Aborted poll — leave existing state untouched.
+    if (signal?.aborted) return;
     if (res.success && res.data) {
       const list = Array.isArray(res.data)
         ? res.data
@@ -70,16 +102,23 @@ export default function SlotsPage() {
     } else {
       setSlots([]);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
+  // Background poll: silent, visible-tab only, aborted on unmount/overlap.
+  // Skipped while a mutation is in flight; mutations refetch explicitly.
+  const { refreshing, refreshNow } = usePoll(
+    (signal) => fetchSlots(signal, true),
+    { paused: submittingSingle || submittingBulk || deletingSelected },
+  );
+
   useEffect(() => {
-    getStaffRole().then(setRole);
-    fetchSlots();
-    const interval = setInterval(() => {
-      fetchSlots();
-    }, 5000);
-    return () => clearInterval(interval);
+    getStaffRole().then((r) => {
+      setRole(r);
+      // Plain admins have no slot-manager access — bounce to check-in.
+      if (r !== null && r !== "super_admin") router.replace("/checkin");
+    });
+    void fetchSlots();
   }, []);
 
   // Auto-set single end time when start time or duration changes
@@ -103,7 +142,6 @@ export default function SlotsPage() {
   // IST is UTC+5:30 with no DST, so this offset is exact.
   // (The old helper suffixed Z onto IST wall time, storing 10:00 IST as
   // 10:00 UTC — which every IST display then showed as 3:30 PM.)
-  const ARENA_TIME_ZONE = "Asia/Kolkata";
   const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
 
   const istToUtcIso = (dateStr: string, timeStr: string) => {
@@ -112,13 +150,7 @@ export default function SlotsPage() {
     return new Date(Date.UTC(y, mo - 1, d, h, mi) - IST_OFFSET_MS).toISOString();
   };
 
-  const istDateKey = (iso: string) =>
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: ARENA_TIME_ZONE,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date(iso));
+  const istDateKey = (iso: string) => istDateKeyFormat.format(new Date(iso));
 
   // Count slots for a specific date (for 100/day limit check)
   const getSlotCountForDate = (dateStr: string) => {
@@ -189,12 +221,13 @@ export default function SlotsPage() {
         startTime: startTimeUtc,
         endTime: endTimeUtc,
         capacity: 10,
+        isHidden: singleIsHidden,
       }),
     });
 
     if (res.success) {
       setSuccess("Slot created successfully.");
-      fetchSlots();
+      void fetchSlots(undefined, true);
     } else {
       setError(res.error || "Failed to create slot.");
     }
@@ -228,6 +261,7 @@ export default function SlotsPage() {
       startTime: item.start.toISOString(),
       endTime: item.end.toISOString(),
       capacity: 10,
+      isHidden: bulkIsHidden,
     }));
 
     // Batch endpoint expects a raw JSON array (see bulkCreateSlotsSchema).
@@ -238,7 +272,7 @@ export default function SlotsPage() {
 
     if (res.success) {
       setSuccess(`Successfully generated ${generated.length} slots for ${bulkDate}!`);
-      fetchSlots();
+      void fetchSlots(undefined, true);
       setSubmittingBulk(false);
       return;
     }
@@ -281,7 +315,7 @@ export default function SlotsPage() {
 
     if (res.success) {
       setSuccess("Slot deleted successfully.");
-      fetchSlots();
+      void fetchSlots(undefined, true);
     } else {
       setError(res.error || "Failed to delete slot.");
     }
@@ -321,24 +355,47 @@ export default function SlotsPage() {
     setDeletingSelected(false);
   };
 
-  const slotList = Array.isArray(slots) ? slots : [];
-  const bulkPreview = getBulkSlotsPreview();
+  const slotList = useMemo(() => (Array.isArray(slots) ? slots : []), [slots]);
+  const bulkPreview = useMemo(
+    () => getBulkSlotsPreview(),
+    [slots, bulkDate, bulkStartTime, bulkEndTime, slotDurationMins],
+  );
 
   // Extract unique dates (IST calendar days)
-  const uniqueDates = Array.from(
-    new Set(
-      slotList
-        .map((s) => (s.startTime ? istDateKey(s.startTime) : null))
-        .filter((d): d is string => d !== null)
-    )
-  ).sort();
+  const uniqueDates = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          slotList
+            .map((s) => (s.startTime ? istDateKey(s.startTime) : null))
+            .filter((d): d is string => d !== null)
+        )
+      ).sort(),
+    [slotList],
+  );
 
   // Filtered slots
-  const filteredSlots = slotList.filter((s) => {
-    if (!filterDate) return true;
-    if (!s.startTime) return false;
-    return istDateKey(s.startTime) === filterDate;
-  });
+  const filteredSlots = useMemo(
+    () =>
+      slotList.filter((s) => {
+        if (!filterDate) return true;
+        if (!s.startTime) return false;
+        return istDateKey(s.startTime) === filterDate;
+      }),
+    [slotList, filterDate],
+  );
+
+  // Reset to first page whenever the result set changes
+  useEffect(() => {
+    setPage(1);
+  }, [filterDate, slotList.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSlots.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedSlots = filteredSlots.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Plain admins bounce to check-in (see effect above) — render nothing meanwhile.
+  if (role !== null && role !== "super_admin") return null;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -351,11 +408,11 @@ export default function SlotsPage() {
           </p>
         </div>
         <button
-          onClick={fetchSlots}
-          disabled={loading}
+          onClick={() => void refreshNow()}
+          disabled={loading || refreshing}
           className="flex items-center gap-2 px-3 py-1.5 bg-[#141417] border border-[#27272A] rounded-xl text-xs text-[#FAFAFA] hover:border-[#3F3F46] transition-all"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading || refreshing ? "animate-spin" : ""}`} />
           <span>Reload</span>
         </button>
       </div>
@@ -448,6 +505,20 @@ export default function SlotsPage() {
                     required
                   />
                 </div>
+              </div>
+
+              {/* Hidden Slot Toggle */}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="singleIsHidden"
+                  checked={singleIsHidden}
+                  onChange={(e) => setSingleIsHidden(e.target.checked)}
+                  className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                />
+                <label htmlFor="singleIsHidden" className="text-xs text-[#A1A1AA] cursor-pointer flex items-center gap-1.5 select-none font-medium">
+                  <EyeOff className="w-3.5 h-3.5 text-amber-400" /> Mark as Hidden Slot (Admin Only)
+                </label>
               </div>
 
               <button
@@ -543,6 +614,20 @@ export default function SlotsPage() {
                 </select>
               </div>
 
+              {/* Bulk Hidden Toggle */}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="bulkIsHidden"
+                  checked={bulkIsHidden}
+                  onChange={(e) => setBulkIsHidden(e.target.checked)}
+                  className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                />
+                <label htmlFor="bulkIsHidden" className="text-xs text-[#A1A1AA] cursor-pointer flex items-center gap-1.5 select-none font-medium">
+                  <EyeOff className="w-3.5 h-3.5 text-amber-400" /> Mark All as Hidden Slots (Admin Only)
+                </label>
+              </div>
+
               {/* Bulk Generation Preview Box */}
               {bulkPreview.length > 0 && (
                 <div className="p-3 bg-[#09090B] border border-[#27272A] rounded-xl space-y-2">
@@ -555,7 +640,7 @@ export default function SlotsPage() {
                       <div key={idx} className="flex justify-between border-b border-[#27272A] pb-1">
                         <span>Slot {idx + 1}:</span>
                         <span className="text-[#FAFAFA]">
-                          {item.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })} - {item.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
+                          {istTimeFormat.format(item.start)} - {istTimeFormat.format(item.end)}
                         </span>
                       </div>
                     ))}
@@ -657,7 +742,7 @@ export default function SlotsPage() {
                   type="checkbox"
                   checked={selected.size === filteredSlots.length}
                   onChange={toggleSelectAll}
-                  className="w-4 h-4 accent-emerald-500 cursor-pointer"
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer [color-scheme:dark]"
                 />
                 Select all ({filteredSlots.length})
               </label>
@@ -695,20 +780,13 @@ export default function SlotsPage() {
             </div>
           ) : (
             <div className="space-y-2.5">
-              {filteredSlots.map((slot, idx) => {
+              {pagedSlots.map((slot, idx) => {
                 const startFormatted = slot.startTime
-                  ? new Date(slot.startTime).toLocaleString("en-US", {
-                      timeZone: "Asia/Kolkata",
-                      dateStyle: "short",
-                      timeStyle: "short",
-                    })
+                  ? istDateTimeFormat.format(new Date(slot.startTime))
                   : "N/A";
 
                 const endFormatted = slot.endTime
-                  ? new Date(slot.endTime).toLocaleTimeString("en-US", {
-                      timeZone: "Asia/Kolkata",
-                      timeStyle: "short",
-                    })
+                  ? istTimeFormat.format(new Date(slot.endTime))
                   : "N/A";
 
                 return (
@@ -722,14 +800,19 @@ export default function SlotsPage() {
                         checked={selected.has(slot.id)}
                         onChange={() => toggleSelect(slot.id)}
                         aria-label="Select slot"
-                        className="w-4 h-4 shrink-0 accent-emerald-500 cursor-pointer"
+                        className="w-4 h-4 shrink-0 accent-emerald-500 cursor-pointer [color-scheme:dark]"
                       />
                     )}
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="px-2.5 py-0.5 bg-[#09090B] border border-[#27272A] text-xs font-mono text-emerald-400 rounded-md font-semibold">
-                          Slot {idx + 1}
+                          Slot {(safePage - 1) * PAGE_SIZE + idx + 1}
                         </span>
+                        {slot.isHidden && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-xs font-mono text-amber-400 rounded-md font-semibold">
+                            <EyeOff className="w-3 h-3 text-amber-400" /> HIDDEN
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm font-semibold text-[#FAFAFA] flex items-center gap-2 mt-1">
                         <Clock className="w-3.5 h-3.5 text-[#A1A1AA]" />
@@ -749,6 +832,27 @@ export default function SlotsPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+          {filteredSlots.length > PAGE_SIZE && (
+            <div className="p-3 bg-[#141417] border border-[#27272A] rounded-2xl flex items-center justify-between">
+              <button
+                onClick={() => setPage(Math.max(1, safePage - 1))}
+                disabled={safePage <= 1}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" /> Prev
+              </button>
+              <span className="text-[11px] font-mono text-[#71717A]">
+                Page {safePage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                disabled={safePage >= totalPages}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+              >
+                Next <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
         </div>

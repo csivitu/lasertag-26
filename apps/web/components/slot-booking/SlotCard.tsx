@@ -1,4 +1,4 @@
-export type SlotState = "available" | "booked" | "few_seats" | "full";
+export type SlotState = "available" | "booked" | "bookedslot" | "few_seats" | "full";
 
 export interface SlotCardProps {
   time: string;
@@ -25,6 +25,12 @@ const stateConfig: Record<
     bg: svgBg("/slot-booking/slot-booked.svg"),
     timeColor: "#000000",
     labelColor: "#000000",
+  },
+  bookedslot: {
+    // Purple picked from globals.css theme (--color-btn-bevel).
+    bg: svgBg("/slot-booking/slot-booked-purple.svg"),
+    timeColor: "#ffffff",
+    labelColor: "#ffffff",
   },
   few_seats: {
     bg: svgBg("/slot-booking/slot-few.svg"),

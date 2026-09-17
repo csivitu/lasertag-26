@@ -25,6 +25,76 @@ export interface SendEmailResult {
   previewUrl?: string | false;
 }
 
+export const MAX_SEND_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 1000;
+
+/** Node/SMTP error codes that are worth retrying (blips, not rejections). */
+const TRANSIENT_ERROR_CODES = new Set([
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "EPIPE",
+  "EAI_AGAIN",
+  "ESOCKET",
+  "EHOSTUNREACH",
+  "ENOTFOUND",
+]);
+
+/**
+ * Classifies a send failure. Transient = the same send will probably succeed
+ * in a few seconds (dropped connection, greylisting 4xx). Permanent =
+ * retrying is pointless (bad address, 5xx bounce, auth errors).
+ */
+export function isTransientMailError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const { code, responseCode } = err as { code?: unknown; responseCode?: unknown };
+  if (typeof code === "string" && TRANSIENT_ERROR_CODES.has(code)) return true;
+  // Nodemailer SMTP errors carry the numeric SMTP reply code.
+  if (typeof responseCode === "number" && responseCode >= 400 && responseCode < 500) {
+    return true;
+  }
+  return false;
+}
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+export interface RetryOptions {
+  maxAttempts?: number;
+  baseDelayMs?: number;
+  /** Injected in tests so no real waiting happens. */
+  sleepFn?: (ms: number) => Promise<void>;
+}
+
+/**
+ * Runs one send with exponential-backoff retries on transient failures.
+ * Throws the last error when attempts run out or the failure is permanent.
+ */
+export async function sendWithRetry<T>(
+  send: () => Promise<T>,
+  opts: RetryOptions = {},
+): Promise<T> {
+  const maxAttempts = opts.maxAttempts ?? MAX_SEND_ATTEMPTS;
+  const baseDelayMs = opts.baseDelayMs ?? RETRY_BASE_DELAY_MS;
+  const wait = opts.sleepFn ?? sleep;
+
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await send();
+    } catch (err) {
+      lastError = err;
+      if (!isTransientMailError(err) || attempt === maxAttempts) throw err;
+      const delay = baseDelayMs * 2 ** (attempt - 1) + Math.floor(Math.random() * 250);
+      console.warn(
+        `[Mailer] Send attempt ${attempt}/${maxAttempts} failed transiently, retrying in ${delay}ms`,
+      );
+      await wait(delay);
+    }
+  }
+  throw lastError;
+}
+
 let cachedTransporter: Transporter | null = null;
 let isEthereal = false;
 
@@ -155,7 +225,10 @@ export const sendEmail = async (
     };
 
     const transporter = await getTransporter();
-    const info = await transporter.sendMail(mailOptions);
+    // Transient SMTP blips (dropped connection, greylisting) are retried
+    // inline with backoff; a final failure still resolves to null so booking
+    // flows are never blocked by email.
+    const info = await sendWithRetry(() => transporter.sendMail(mailOptions));
 
     console.info(`[Mailer] Email sent successfully to ${options.to} (Message ID: ${info.messageId})`);
 

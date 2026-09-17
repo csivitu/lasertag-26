@@ -28,6 +28,10 @@ export function PlayerPassTicket() {
   const slotDate = formatPassDate(rawDate);
   const slotTime = formatPassTime(rawTime);
   const qrToken = profile?.activeRegistration?.qrToken ?? null;
+  const changesLeft = Math.max(
+    0,
+    3 - (profile?.activeRegistration?.slotChangeCount ?? 0)
+  );
 
   return (
     <div className="w-full max-w-[1100px] mx-auto px-2">
@@ -86,8 +90,8 @@ export function PlayerPassTicket() {
               className="w-full"
               labelClassName="text-[11px] cursor-pointer"
             />
-            <p className="font-pixel text-[8px] tracking-wider text-white/50 uppercase text-center leading-relaxed">
-              (Max 3 slot changes allowed)
+            <p className="font-pixel text-[8px] tracking-wider text-white uppercase text-center leading-relaxed">
+              {changesLeft}/3 CHANGES LEFT
             </p>
           </div>
         </div>

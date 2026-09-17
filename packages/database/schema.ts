@@ -61,6 +61,7 @@ export const slots = pgTable(
     endTime: timestamp('end_time').notNull(),
     capacity: integer('capacity').notNull(),
     totalCapacity: integer('total_capacity').notNull().default(0),
+    isHidden: boolean('is_hidden').notNull().default(false),
   },
   (table) => [
     index('slots_start_time_idx').on(table.startTime),

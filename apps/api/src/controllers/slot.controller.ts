@@ -1,14 +1,41 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
 import { asc, eq, and, inArray, lt, gt } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 
 import { claimSlotSeat, isIdentityAllowlisted, releaseSlotSeat } from "../data/queries";
 import { HttpError as AppError } from "../errors";
 import { sendBookingConfirmationEmail, sendSlotChangeEmail } from "../services/mailer/booking-mailer";
 import type { CreateSlotInput, ReserveSlotInput } from "../validations/slot.validation";
 
-/** Max times one booking may move between slots. Same-slot re-books don't count. */
-const MAX_SLOT_CHANGES = 3;
+/** Max slot changes per user, lifetime. Same-slot re-books don't count. */
+export const MAX_SLOT_CHANGES = 3;
+
+export interface PastBooking {
+  slotId: string;
+  slotChangeCount: number;
+  cancelledAt: Date | null;
+}
+
+/**
+ * Pure: seed count for a fresh booking after cancel(s). Inherits the highest
+ * count the user ever reached; re-booking a DIFFERENT slot than the most
+ * recently held one consumes one change, same as a move. Returns null when
+ * the allowance is exhausted.
+ */
+export function computeRebookSeedCount(
+  history: PastBooking[],
+  targetSlotId: string,
+  maxChanges: number = MAX_SLOT_CHANGES,
+): number | null {
+  if (history.length === 0) return 0;
+  const used = Math.max(...history.map((b) => b.slotChangeCount ?? 0));
+  const recent = [...history].sort(
+    (a, b) => (b.cancelledAt?.getTime() ?? 0) - (a.cancelledAt?.getTime() ?? 0),
+  )[0];
+  const seed = used + (recent.slotId !== targetSlotId ? 1 : 0);
+  return seed > maxChanges ? null : seed;
+}
 
 /** Allowlist lookup that fails closed (false) instead of 500ing the booking. */
 async function isAllowlistedSafe(targetUser: {
@@ -20,6 +47,11 @@ async function isAllowlistedSafe(targetUser: {
   } catch {
     return false;
   }
+}
+
+/** Unpredictable pass token: 128 bits of entropy, QR- prefix retained. */
+function generateQrToken(): string {
+  return `QR-${randomBytes(16).toString("hex")}`;
 }
 
 /** Postgres unique-violation, unwrapped through driver error nesting. */
@@ -41,6 +73,7 @@ export const slotController = {
     const allSlots = await db
       .select()
       .from(slots)
+      .where(eq(slots.isHidden, false))
       .orderBy(asc(slots.startTime))
       .limit(limit)
       .offset(offset);
@@ -153,7 +186,8 @@ export const slotController = {
     return deletedSlot;
   },
 
-  async reserveSlot(input: ReserveSlotInput) {
+  // Identity comes from the session (wired in routes/slots.ts), never the body.
+  async reserveSlot(input: ReserveSlotInput & { user_id: string }) {
     const { slot_id, user_id, type, team_code } = input;
 
     const [targetSlot] = await db
@@ -163,6 +197,10 @@ export const slotController = {
 
     if (!targetSlot) {
       throw new AppError(404, "Slot not found.");
+    }
+
+    if (targetSlot.isHidden) {
+      throw new AppError(403, "This slot is not available for public booking.");
     }
 
     if (targetSlot.capacity <= 0) {
@@ -259,11 +297,32 @@ export const slotController = {
       );
     }
 
-    // Change-slot limit: a booking may move between slots at most
-    // MAX_SLOT_CHANGES times. Checked before claiming so a rejected change
-    // never consumes a seat. Re-booking the SAME slot is always allowed.
+    // Change-slot limit: a user may move between slots at most
+    // MAX_SLOT_CHANGES times, lifetime — not per booking row. Checked before
+    // claiming so a rejected change never consumes a seat. Re-booking the
+    // SAME slot is always allowed.
     if (needsSeat && prevBooking && (prevBooking.slotChangeCount ?? 0) >= MAX_SLOT_CHANGES) {
       throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+    }
+
+    // Cancel + rebook must not reset the allowance: a fresh booking inherits
+    // the highest count the user ever reached, and taking a different slot
+    // than last held consumes one change — same as a move.
+    let rebookSeedCount = 0;
+    if (!prevBooking) {
+      const history = await db
+        .select({
+          slotId: bookings.slotId,
+          slotChangeCount: bookings.slotChangeCount,
+          cancelledAt: bookings.cancelledAt,
+        })
+        .from(bookings)
+        .where(eq(bookings.userId, user_id));
+      const seed = computeRebookSeedCount(history, slot_id);
+      if (seed === null) {
+        throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+      }
+      rebookSeedCount = seed;
     }
 
     if (needsSeat) {
@@ -283,7 +342,7 @@ export const slotController = {
       const changedSlot = prev.slotId !== slot_id;
       // Enforced here too (not just pre-claim) so the race-recovery path
       // can't push a booking past the allowance either.
-      if (changedSlot && prev.slotChangeCount >= MAX_SLOT_CHANGES) {
+      if (changedSlot && (prev.slotChangeCount ?? 0) >= MAX_SLOT_CHANGES) {
         throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
       }
       // If slot changed, restore 1 capacity to the old slot (atomic).
@@ -291,7 +350,7 @@ export const slotController = {
         await releaseSlotSeat(prev.slotId);
       }
 
-      const qrToken = prev.qrToken || `QR-${prev.id}`;
+      const qrToken = prev.qrToken || generateQrToken();
 
       const [updatedBooking] = await db
         .update(bookings)
@@ -305,7 +364,7 @@ export const slotController = {
           confirmationEmailSent: false,
           // Same booking keeps its id and QR across moves; only real moves
           // consume from the change allowance.
-          slotChangeCount: changedSlot ? prev.slotChangeCount + 1 : prev.slotChangeCount,
+          slotChangeCount: changedSlot ? (prev.slotChangeCount ?? 0) + 1 : (prev.slotChangeCount ?? 0),
         })
         .where(eq(bookings.id, prev.id))
         .returning();
@@ -331,7 +390,7 @@ export const slotController = {
         activeBooking = await moveBookingToSlot(prevBooking);
       } else {
         const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        const qrToken = `QR-${bookingId}`;
+        const qrToken = generateQrToken();
 
         const [newBooking] = await db
           .insert(bookings)
@@ -345,6 +404,8 @@ export const slotController = {
             qrToken,
             confirmedAt: new Date(),
             confirmationEmailSent: false,
+            // Carry the lifetime count so cancel + rebook can't reset it.
+            slotChangeCount: rebookSeedCount,
           })
           .returning();
 
@@ -383,7 +444,16 @@ export const slotController = {
       }
     }
 
-    const assignedQrToken = activeBooking.qrToken || `QR-${activeBooking.id}`;
+    // Legacy rows may carry a null token: mint one and persist it so the
+    // scanner lookup (by bookings.qr_token) matches what the pass shows.
+    let assignedQrToken = activeBooking.qrToken;
+    if (!assignedQrToken) {
+      assignedQrToken = generateQrToken();
+      await db
+        .update(bookings)
+        .set({ qrToken: assignedQrToken })
+        .where(eq(bookings.id, activeBooking.id));
+    }
 
     // Ensure user record also holds the qrToken for instant scanner lookups
     await db
@@ -420,6 +490,7 @@ export const slotController = {
       userId: user_id,
       userName: targetUser.name,
       userEmail: targetUser.email,
+      regNumber: targetUser.regNumber,
       type,
       teamCode: type === "team" ? (team_code ?? null) : null,
       qrToken: assignedQrToken,
@@ -461,7 +532,9 @@ export const slotController = {
         }
       })();
     } else {
-      void sendBookingConfirmationEmail(emailParams);
+      void sendBookingConfirmationEmail(emailParams).catch((emailErr) => {
+        console.error("[Mailer] Background booking email dispatch error:", emailErr);
+      });
     }
 
     return activeBooking;
