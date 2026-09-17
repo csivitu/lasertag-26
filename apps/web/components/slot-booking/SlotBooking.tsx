@@ -333,21 +333,10 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
         </div>
       )}
 
-      {/* ── Date switcher (hidden when only one date has slots) ── */}
-      {(isLoading || dates.length > 1) && (
+      {/* ── Date switcher (only once loaded, and only when multiple dates have slots) ── */}
+      {!isLoading && dates.length > 1 && (
         <div className="relative z-10 w-full">
-          <DateSwitcher
-            dates={
-              dates.length > 0
-                ? dates
-                : [
-                    { day: "18", month: "SEPT", active: selectedDay === "18" },
-                    { day: "19", month: "SEPT", active: selectedDay === "19" },
-                    { day: "20", month: "SEPT", active: selectedDay === "20" },
-                  ]
-            }
-            onSelect={selectDate}
-          />
+          <DateSwitcher dates={dates} onSelect={selectDate} />
         </div>
       )}
       {/* ── Slot grid (greyed out until verified) ── */}

@@ -510,7 +510,9 @@ export const slotController = {
         }
       })();
     } else {
-      void sendBookingConfirmationEmail(emailParams);
+      void sendBookingConfirmationEmail(emailParams).catch((emailErr) => {
+        console.error("[Mailer] Background booking email dispatch error:", emailErr);
+      });
     }
 
     return activeBooking;
