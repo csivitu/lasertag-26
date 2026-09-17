@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, LogOut, RefreshCw } from "lucide-react";
+import { Activity, LogOut, Menu, RefreshCw } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { clearStaffRole, getStaffRole, type StaffRole } from "@/lib/auth";
+import { toggleAdminSidebar } from "./Sidebar";
 
 export function Header() {
   const router = useRouter();
@@ -31,14 +32,21 @@ export function Header() {
   };
 
   return (
-    <header className="h-14 bg-[#141417] border-b border-[#27272A] px-6 flex items-center justify-between sticky top-0 z-20">
+    <header className="h-14 bg-[#141417] border-b border-[#27272A] px-4 sm:px-6 flex items-center justify-between gap-2 sticky top-0 z-20">
       {/* Title / Breadcrumb Placeholder */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-mono text-[#71717A]">Workstation Console</span>
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          onClick={toggleAdminSidebar}
+          aria-label="Toggle menu"
+          className="lg:hidden p-1.5 -ml-1 rounded-lg text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] transition-colors shrink-0"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <span className="hidden sm:block text-xs font-mono text-[#71717A] truncate">Workstation Console</span>
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {role && (
           <span
             className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-bold border ${
@@ -62,10 +70,10 @@ export function Header() {
         <button
           onClick={checkStatus}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#09090B] border border-[#27272A] text-xs font-mono text-[#A1A1AA] hover:border-[#3F3F46] transition-colors"
+          className="hidden min-[420px]:flex items-center gap-2 px-3 py-1 rounded-full bg-[#09090B] border border-[#27272A] text-xs font-mono text-[#A1A1AA] hover:border-[#3F3F46] transition-colors"
         >
           <Activity className={`w-3.5 h-3.5 ${apiOnline ? "text-emerald-400" : "text-amber-500"}`} />
-          <span>API: {apiOnline === null ? "Checking..." : apiOnline ? "Online" : "Offline"}</span>
+          <span className="hidden md:inline">API: {apiOnline === null ? "Checking..." : apiOnline ? "Online" : "Offline"}</span>
           <RefreshCw className={`w-3 h-3 text-[#71717A] ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
