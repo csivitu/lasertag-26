@@ -50,6 +50,13 @@
       "when": 1789619395855,
       "tag": "0006_capacity-guard",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": 7,
+      "when": 1789619395856,
+      "tag": "0007_slot-change-count",
+      "breakpoints": true
     }
   ]
 }
