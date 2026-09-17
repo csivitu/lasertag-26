@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { anton, arcade, oxanium, pixelOperatorMono, pressStart } from "./fonts";
+import { VitEnforcement } from "@/components/auth/VitEnforcement";
 
 export const metadata: Metadata = {
     title: "LaserTag",
@@ -18,7 +19,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${arcade.variable} ${pressStart.variable} ${oxanium.variable} ${anton.variable} ${pixelOperatorMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <VitEnforcement />
+      </body>
     </html>
   );
 }

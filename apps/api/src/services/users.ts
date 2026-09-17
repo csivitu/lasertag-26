@@ -56,6 +56,49 @@ export type UserProfileDto = {
   } | null;
 };
 
+/** VIT student mailbox suffix. External participants use any other domain. */
+export const VIT_EMAIL_DOMAIN = "@vitstudent.ac.in";
+
+/** Shared external-participant marker. Many users hold it, so it is never unique-checked. */
+export const EXTERNAL_REG_NUMBER = "N/A";
+
+export function isVitEmailAddress(email: string | null | undefined): boolean {
+  return (email ?? "").trim().toLowerCase().endsWith(VIT_EMAIL_DOMAIN);
+}
+
+/**
+ * Pure reg-number transition rule (no DB): returns the normalized value to
+ * save, or throws a user-facing ConflictError.
+ *
+ * - Empty row: anything goes (first save).
+ * - "N/A" row: upgrades to a real reg, or stays N/A (externals only).
+ * - Real reg row: locked, same value only.
+ * - "N/A" is accepted only for non-VIT emails; uniqueness is checked by the
+ *   caller (skipped for "N/A", which is shared).
+ */
+export function resolveRegNumberUpdate(
+  existingRegNumber: string | null | undefined,
+  existingEmail: string | null | undefined,
+  inputRegNumber: string | undefined,
+): string | undefined {
+  if (inputRegNumber === undefined) return undefined;
+  const next = inputRegNumber.trim().toUpperCase();
+  const current = (existingRegNumber ?? "").trim().toUpperCase();
+  const currentLocked = current !== "" && current !== EXTERNAL_REG_NUMBER;
+  if (currentLocked && next !== current) {
+    throw new ConflictError(
+      "Your registration number is locked and cannot be changed. Please contact us for help.",
+    );
+  }
+  if (next === EXTERNAL_REG_NUMBER) {
+    if (isVitEmailAddress(existingEmail)) {
+      throw new ConflictError("VIT participants must save their registration number.");
+    }
+    return next;
+  }
+  return next;
+}
+
 export const userService = {
   async getUserProfile(userId: string): Promise<UserProfileDto> {
     const user = await findUserById(userId);
@@ -167,9 +210,12 @@ export const userService = {
     // Reg numbers are unique per player (case-insensitive). Saving someone
     // else's number would corrupt paid-verification and check-in matching,
     // so reject with a plain-language message the popup shows as-is.
-    const regNumber =
-      input.reg_number !== undefined ? input.reg_number.toUpperCase() : undefined;
-    if (regNumber !== undefined) {
+    const regNumber = resolveRegNumberUpdate(
+      existing.regNumber,
+      existing.email,
+      input.reg_number,
+    );
+    if (regNumber !== undefined && regNumber !== EXTERNAL_REG_NUMBER) {
       const holder = await paidImportQueries.findUserByRegNumber(regNumber);
       if (holder && holder.id !== userId) {
         throw new ConflictError(

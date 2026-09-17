@@ -10,6 +10,7 @@ import {
 } from "@/components/mode-popup/modePopupDecor";
 import { useSession } from "@/lib/auth-client";
 import { saveOnboardingDetails } from "@/lib/onboarding-details";
+import { EXTERNAL_REG_NUMBER, isVitEmail } from "@/lib/vit";
 
 const overlayStyle: CSSProperties = {
   position: "fixed",
@@ -77,8 +78,15 @@ export function DetailsRequiredModal({
   onSaved: () => void;
 }) {
   const { data: session } = useSession();
+  // External participants (non-VIT email) have no reg number: it is shown
+  // locked as N/A and only name + phone are collected.
+  const isExternal = !isVitEmail(session?.user?.email);
   const [fullName, setFullName] = useState(session?.user?.name ?? "");
   const [registrationNumber, setRegistrationNumber] = useState(regNumber ?? "");
+  // Reg is display-only: locked (greyed) for externals (N/A) and whenever a
+  // value was derived. Editable only as a fallback when nothing derived,
+  // otherwise VIT users without a parseable reg would hit a dead end.
+  const regLocked = isExternal || registrationNumber.trim() !== "";
   const [phoneNumber, setPhoneNumber] = useState(phone ?? "");
   const [status, setStatus] = useState<"idle" | "saving">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -107,7 +115,8 @@ export function DetailsRequiredModal({
     e.preventDefault();
     setErrorMsg("");
 
-    if (!fullName.trim() || !registrationNumber.trim() || !phoneNumber.trim()) {
+    const regToSave = isExternal ? EXTERNAL_REG_NUMBER : registrationNumber.trim();
+    if (!fullName.trim() || !regToSave || !phoneNumber.trim()) {
       setErrorMsg("Please fill in all fields to continue.");
       return;
     }
@@ -120,7 +129,7 @@ export function DetailsRequiredModal({
     const failure = await saveOnboardingDetails({
       fullName: fullName.trim(),
       phoneNumber: phoneNumber.trim(),
-      registrationNumber: registrationNumber.trim(),
+      registrationNumber: regToSave,
     });
     setStatus("idle");
 
@@ -133,15 +142,26 @@ export function DetailsRequiredModal({
 
   return (
     <div style={overlayStyle} role="dialog" aria-modal="true" aria-label="Details Required">
+      <style>{`
+        #details-name:is(:-webkit-autofill, :autofill),
+        #details-reg:is(:-webkit-autofill, :autofill),
+        #details-phone:is(:-webkit-autofill, :autofill) {
+          -webkit-text-fill-color: #ffffff;
+          box-shadow: 0 0 0 100vmax #0c0c14 inset;
+          caret-color: #ffffff;
+        }
+      `}</style>
       <div style={cardStyle}>
         <h2
           className="font-pixel text-center text-[#FEDC02] uppercase"
           style={{ fontSize: "18px", letterSpacing: "0.08em", marginBottom: "8px" }}
         >
-          operative details required
+          details required
         </h2>
         <p className="font-pixel text-center text-[11px] text-white/70 leading-relaxed mb-5">
-          ENTER YOUR REGISTRATION NUMBER AND PHONE NUMBER TO UNLOCK ARENA SLOT BOOKING.
+          {isExternal
+            ? "ENTER YOUR PHONE NUMBER TO UNLOCK ARENA SLOT BOOKING."
+            : "ENTER YOUR REGISTRATION NUMBER AND PHONE NUMBER TO UNLOCK ARENA SLOT BOOKING."}
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -162,15 +182,19 @@ export function DetailsRequiredModal({
 
           <div>
             <label style={labelStyle} htmlFor="details-reg">REGISTRATION NUMBER</label>
-            <div style={inputWrapStyle}>
+            <div style={regLocked ? { ...inputWrapStyle, opacity: 0.55 } : inputWrapStyle}>
               <input
                 id="details-reg"
                 type="text"
-                value={registrationNumber}
+                value={isExternal ? EXTERNAL_REG_NUMBER : registrationNumber}
                 onChange={(e) => setRegistrationNumber(e.target.value.toUpperCase())}
                 placeholder="23BCE1234"
                 style={inputStyle}
                 autoComplete="off"
+                disabled={regLocked}
+                readOnly={regLocked}
+                aria-disabled={regLocked}
+                title={regLocked ? "Registration number is locked" : undefined}
               />
             </div>
           </div>

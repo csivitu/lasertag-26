@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { signIn } from "@/lib/auth-client";
 import { markHasAccount } from "@/lib/auth-mode";
+import { VIT_DOMAINS, clearExternalSignin, markExternalSignin } from "@/lib/vit";
 import {
   MODAL_BORDER_SVG,
   borderBg,
@@ -31,7 +32,7 @@ const overlayStyle: CSSProperties = {
 const cardStyle: CSSProperties = {
   position: "relative",
   background: borderBg(MODAL_BORDER_SVG),
-  padding: "40px 36px 32px",
+  padding: "40px 36px 40px",
   width: "100%",
   maxWidth: "420px",
   // Compact popup — content only, card itself never scrolls
@@ -118,14 +119,23 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   if (!isOpen) return null;
 
-  async function handleGoogleAuth() {
+  async function handleGoogleAuth(external = false) {
     setErrorMsg("");
     setStatus("loading");
     try {
       markHasAccount();
+      if (external) {
+        markExternalSignin();
+      } else {
+        clearExternalSignin();
+      }
       await signIn.social({
         provider: "google",
         callbackURL: window.location.origin,
+        // VIT path: Google filters the account chooser to the hosted domain
+        // right at OAuth. External path omits it. VitEnforcement verifies
+        // the email domain after sign-in either way.
+        ...(external ? {} : { additionalParams: { hd: VIT_DOMAINS[0] } }),
       });
     } catch (err: unknown) {
       setStatus("error");
@@ -172,7 +182,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
         <button
           type="button"
-          onClick={handleGoogleAuth}
+          onClick={() => handleGoogleAuth()}
           disabled={status === "loading"}
           className="w-full flex items-center justify-center gap-2.5 sm:gap-3 py-3 sm:py-3.5 px-4 rounded border border-white/25 bg-white/10 hover:bg-white/15 transition-colors text-white font-body font-bold text-[13px] sm:text-base tracking-[0.08em] cursor-pointer disabled:opacity-60"
         >
@@ -206,9 +216,17 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </p>
         )}
 
-        <p className="text-white text-[13px] font-body font-bold tracking-[0.08em] mt-4 text-center">
+        <p className="text-white text-[13px] font-body font-bold tracking-[0.08em] mt-2 text-center">
           (Register with your VIT email only)
         </p>
+        <button
+          type="button"
+          onClick={() => handleGoogleAuth(true)}
+          disabled={status === "loading"}
+          className="mt-8 text-center font-body text-xs tracking-[0.08em] text-white/50 hover:text-[#FEDC02] transition-colors cursor-pointer disabled:opacity-60"
+        >
+          External Participant?
+        </button>
       </div>
     </div>
   );
