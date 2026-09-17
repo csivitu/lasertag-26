@@ -1,5 +1,9 @@
 import { dots, sparkles, VIEWBOX_H, VIEWBOX_W } from "./starfield.data";
 
+const PHASES = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+const dotsByPhase = PHASES.map((p) => dots.filter((d) => d[4] === p));
+const sparklesByPhase = PHASES.map((p) => sparkles.filter((s) => s[5] === p));
+
 export interface StarfieldProps {
   fixed?: boolean;
 }
@@ -11,7 +15,7 @@ export function Starfield({ fixed = false }: StarfieldProps) {
       viewBox={`0 0 ${VIEWBOX_W} ${VIEWBOX_H}`}
       preserveAspectRatio="xMidYMid slice"
       shapeRendering="crispEdges"
-      className={`pointer-events-none z-0 size-full ${
+      className={`pointer-events-none z-0 size-full transform-gpu will-change-transform ${
         fixed ? "fixed inset-0 [contain:strict]" : "absolute inset-0"
       }`}
     >
@@ -347,33 +351,31 @@ export function Starfield({ fixed = false }: StarfieldProps) {
           <path d="M12.9354 22.9144L12.9042 22.9228C12.8094 22.8834 12.843 22.9084 12.7826 22.8047C12.7677 22.6442 12.7894 22.5972 12.9339 22.5369C12.935 22.6551 12.9404 22.7987 12.9354 22.9144Z" fill="#9B2965" fillOpacity="0.737255"/>
         </symbol>
       </defs>
-      <g>
-        {dots.map(([x, y, s, c, p], i) => (
-          <rect
-            key={`dot-${i}`}
-            className={`hero-star hero-star-p${p}`}
-            x={x}
-            y={y}
-            width={s}
-            height={s}
-            fill={c}
-            transform={`rotate(45 ${x + s / 2} ${y + s / 2})`}
-          />
-        ))}
-      </g>
-      <g>
-        {sparkles.map(([x, y, w, h, shape, p], i) => (
-          <use
-            key={`spark-${i}`}
-            className={`hero-star hero-star-p${p}`}
-            href={`#hero-spark-${shape}`}
-            x={x}
-            y={y}
-            width={w}
-            height={h}
-          />
-        ))}
-      </g>
+      {PHASES.map((p) => (
+        <g key={`phase-${p}`} className={`hero-star hero-star-p${p}`}>
+          {dotsByPhase[p].map(([x, y, s, c], i) => (
+            <rect
+              key={`dot-${p}-${i}`}
+              x={x}
+              y={y}
+              width={s}
+              height={s}
+              fill={c}
+              transform={`rotate(45 ${x + s / 2} ${y + s / 2})`}
+            />
+          ))}
+          {sparklesByPhase[p].map(([x, y, w, h, shape], i) => (
+            <use
+              key={`spark-${p}-${i}`}
+              href={`#hero-spark-${shape}`}
+              x={x}
+              y={y}
+              width={w}
+              height={h}
+            />
+          ))}
+        </g>
+      ))}
     </svg>
   );
 }
