@@ -34,6 +34,7 @@ export type CreateSlotInput = {
   startTime: string | Date;
   endTime: string | Date;
   capacity: number;
+  isHidden?: boolean;
 };
 
 /**

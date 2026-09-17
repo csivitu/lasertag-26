@@ -3,7 +3,7 @@ import type { slots } from "@lasertag-26/database";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 
 export type Slot = typeof slots.$inferSelect;
-export type SlotInput = { startTime: Date; endTime: Date; capacity: number };
+export type SlotInput = { startTime: Date; endTime: Date; capacity: number; isHidden?: boolean };
 export type SlotPatch = Partial<SlotInput>;
 
 /** Everything this service needs from the database, and nothing more. */

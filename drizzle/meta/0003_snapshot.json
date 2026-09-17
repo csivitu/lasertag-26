@@ -1,5 +1,5 @@
 {
-  "id": "3f9c1a2b-4d5e-4f6a-8b7c-9d0e1f2a3b4c",
+  "id": "2b00dbea-1283-4adf-8425-cbe3dfa4641b",
   "prevId": "15f943d4-0a23-4530-8867-a0ee1e6c1ffb",
   "version": "7",
   "dialect": "postgresql",
@@ -290,6 +290,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "is_hidden": {
+          "name": "is_hidden",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {

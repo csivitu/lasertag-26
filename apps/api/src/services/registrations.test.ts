@@ -96,6 +96,7 @@ const mockSlot = {
   endTime: new Date("2026-10-01T11:00:00Z"),
   capacity: 10,
   totalCapacity: 10,
+  isHidden: false,
 };
 
 const mockUser = {

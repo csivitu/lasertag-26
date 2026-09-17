@@ -17,6 +17,7 @@ const baseSlot: Slot = {
   endTime: new Date("2026-03-14T10:00:00.000Z"),
   capacity: 10,
   totalCapacity: 10,
+  isHidden: false,
 };
 
 function makeDeps(overrides: Partial<SlotsDeps> = {}): SlotsDeps {
@@ -25,7 +26,7 @@ function makeDeps(overrides: Partial<SlotsDeps> = {}): SlotsDeps {
     findSlot: mock(async () => baseSlot),
     countActiveBookings: mock(async () => 0),
     insertSlots: mock(async (values: SlotInput[]) =>
-      values.map((v, i) => ({ id: `id-${i}`, ...v, totalCapacity: 10 })),
+      values.map((v, i) => ({ id: `id-${i}`, isHidden: false, ...v, totalCapacity: 10 })),
     ),
     applyUpdate: mock(async (_id: string, patch: SlotPatch) => ({ ...baseSlot, ...patch })),
     removeSlot: mock(async () => {}),

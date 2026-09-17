@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle, ChevronLeft, ChevronRight, EyeOff } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { getStaffRole, type StaffRole } from "@/lib/auth";
 import { usePoll } from "@/lib/use-poll";
@@ -13,6 +13,7 @@ interface SlotItem {
   startTime: string;
   endTime: string;
   capacity: number;
+  isHidden?: boolean;
 }
 
 const EVENT_DATES = [
@@ -63,12 +64,14 @@ export default function SlotsPage() {
   const [singleDate, setSingleDate] = useState(defaultDateStr);
   const [singleStartTime, setSingleStartTime] = useState("14:00");
   const [singleEndTime, setSingleEndTime] = useState("14:30");
+  const [singleIsHidden, setSingleIsHidden] = useState(false);
 
   // Bulk Slots Form State
   const [bulkDate, setBulkDate] = useState(defaultDateStr);
   const [bulkStartTime, setBulkStartTime] = useState("14:00");
   const [bulkEndTime, setBulkEndTime] = useState("18:00");
   const [slotDurationMins, setSlotDurationMins] = useState(30);
+  const [bulkIsHidden, setBulkIsHidden] = useState(false);
 
   const fetchSlots = async (signal?: AbortSignal, silent = false) => {
     if (!silent) setLoading(true);
@@ -212,6 +215,7 @@ export default function SlotsPage() {
         startTime: startTimeUtc,
         endTime: endTimeUtc,
         capacity: 10,
+        isHidden: singleIsHidden,
       }),
     });
 
@@ -251,6 +255,7 @@ export default function SlotsPage() {
       startTime: item.start.toISOString(),
       endTime: item.end.toISOString(),
       capacity: 10,
+      isHidden: bulkIsHidden,
     }));
 
     // Batch endpoint expects a raw JSON array (see bulkCreateSlotsSchema).
@@ -493,6 +498,20 @@ export default function SlotsPage() {
                 </div>
               </div>
 
+              {/* Hidden Slot Toggle */}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="singleIsHidden"
+                  checked={singleIsHidden}
+                  onChange={(e) => setSingleIsHidden(e.target.checked)}
+                  className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                />
+                <label htmlFor="singleIsHidden" className="text-xs text-[#A1A1AA] cursor-pointer flex items-center gap-1.5 select-none font-medium">
+                  <EyeOff className="w-3.5 h-3.5 text-amber-400" /> Mark as Hidden Slot (Admin Only)
+                </label>
+              </div>
+
               <button
                 type="submit"
                 disabled={submittingSingle}
@@ -584,6 +603,20 @@ export default function SlotsPage() {
                   <option value={25}>25 Minutes Each</option>
                   <option value={30}>30 Minutes Each</option>
                 </select>
+              </div>
+
+              {/* Bulk Hidden Toggle */}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="bulkIsHidden"
+                  checked={bulkIsHidden}
+                  onChange={(e) => setBulkIsHidden(e.target.checked)}
+                  className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                />
+                <label htmlFor="bulkIsHidden" className="text-xs text-[#A1A1AA] cursor-pointer flex items-center gap-1.5 select-none font-medium">
+                  <EyeOff className="w-3.5 h-3.5 text-amber-400" /> Mark All as Hidden Slots (Admin Only)
+                </label>
               </div>
 
               {/* Bulk Generation Preview Box */}
@@ -766,6 +799,11 @@ export default function SlotsPage() {
                         <span className="px-2.5 py-0.5 bg-[#09090B] border border-[#27272A] text-xs font-mono text-emerald-400 rounded-md font-semibold">
                           Slot {(safePage - 1) * PAGE_SIZE + idx + 1}
                         </span>
+                        {slot.isHidden && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-xs font-mono text-amber-400 rounded-md font-semibold">
+                            <EyeOff className="w-3 h-3 text-amber-400" /> HIDDEN
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm font-semibold text-[#FAFAFA] flex items-center gap-2 mt-1">
                         <Clock className="w-3.5 h-3.5 text-[#A1A1AA]" />

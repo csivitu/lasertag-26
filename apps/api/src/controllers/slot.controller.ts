@@ -73,6 +73,7 @@ export const slotController = {
     const allSlots = await db
       .select()
       .from(slots)
+      .where(eq(slots.isHidden, false))
       .orderBy(asc(slots.startTime))
       .limit(limit)
       .offset(offset);
@@ -196,6 +197,10 @@ export const slotController = {
 
     if (!targetSlot) {
       throw new AppError(404, "Slot not found.");
+    }
+
+    if (targetSlot.isHidden) {
+      throw new AppError(403, "This slot is not available for public booking.");
     }
 
     if (targetSlot.capacity <= 0) {

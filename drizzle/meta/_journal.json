@@ -26,8 +26,15 @@
     {
       "idx": 3,
       "version": "7",
+      "when": 1789594863873,
+      "tag": "0003_rare_toxin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
       "when": 1789590000000,
-      "tag": "0003_proud_dagger",
+      "tag": "0004_proud_dagger",
       "breakpoints": true
     }
   ]
