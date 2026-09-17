@@ -74,6 +74,7 @@ export const slotIdSchema = z.object({ params: slotIdParams });
 export const slotResponseSchema = createSelectSchema(slots).extend({
   startTime: z.iso.datetime(),
   endTime: z.iso.datetime(),
+  bookedCount: z.number().int().optional(),
 });
 
 /**

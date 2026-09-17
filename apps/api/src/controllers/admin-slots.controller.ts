@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 
-import { slotQueries } from "../data/queries";
+import { getSlotBookingsWithUsers, slotQueries } from "../data/queries";
+import { NotFoundError } from "../errors";
 import { makeSlotsService, type SlotInput, type SlotPatch } from "../services/slots";
 
 const slots = makeSlotsService(slotQueries);
@@ -10,6 +11,13 @@ type SlotIdParams = { slot_id: string };
 export const listSlots = async (_req: Request, res: Response) => {
   res.json(await slots.list());
 };
+
+export const getSlotBookings = async (req: Request<SlotIdParams>, res: Response) => {
+  const data = await getSlotBookingsWithUsers(req.params.slot_id);
+  if (!data) throw new NotFoundError("Slot not found");
+  res.json(data);
+};
+
 
 export const createSlot = async (
   req: Request<unknown, unknown, SlotInput>,
