@@ -19,7 +19,6 @@ export default function Ghosts() {
                         fill
                         draggable={false}
                         className={`${styles.fitImg} select-none`}
-                        priority
                     />
                 </div>
             ))}

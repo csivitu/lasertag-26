@@ -3,7 +3,7 @@ export function HeroTitle() {
   const WORD_GAP = "mr-[0.12em]";
   return (
     <h1 aria-label="LASERTAG" className="m-0 w-full overflow-visible text-center">
-      <span aria-hidden className="inline-block pr-[0.05em] [letter-spacing:-0.027em]">
+      <span aria-hidden className="inline-block whitespace-nowrap pr-[0.05em] [letter-spacing:-0.027em]">
         {"LASERTAG".split("").map((ch, i) => (
           <span
             key={i}

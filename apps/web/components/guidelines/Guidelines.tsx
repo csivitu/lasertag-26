@@ -24,7 +24,7 @@ export function Guidelines() {
           <div className="hidden min-h-0 items-center justify-center lg:flex lg:h-full">
             <ArcadeScene />
           </div>
-          <div className="flex flex-col gap-4 sm:gap-5 lg:min-h-0 lg:flex-1 lg:gap-[1.2svh] xl:gap-[1.8svh] lg:overflow-hidden lg:h-full">
+          <div className="flex flex-col gap-4 sm:gap-5 lg:min-h-0 lg:flex-1 lg:gap-[1.1svh] xl:gap-[1.5svh] lg:overflow-hidden lg:h-full">
             {ruleCards.map((card) => (
               <RuleCard key={card.id} {...card} />
             ))}

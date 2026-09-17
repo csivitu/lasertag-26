@@ -174,6 +174,12 @@ export function SpaceInvadersScreen() {
   const bulletIdCounterRef = useRef<number>(0);
   const particleIdCounterRef = useRef<number>(0);
 
+  // Visibility and off-screen sleep tracking (sleeps after 30s off-screen)
+  const shouldRunRef = useRef<boolean>(false);
+  const sleepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animationFrameIdRef = useRef<number | null>(null);
+  const gameLoopRef = useRef<(() => void) | null>(null);
+
   // Synchronize ref with state
   useEffect(() => {
     gameStatusRef.current = gameStatus;
@@ -285,6 +291,12 @@ export function SpaceInvadersScreen() {
   }, []);
 
   const firePlayerBullet = useCallback(() => {
+    if (!shouldRunRef.current) {
+      shouldRunRef.current = true;
+      if (animationFrameIdRef.current === null && gameLoopRef.current) {
+        animationFrameIdRef.current = requestAnimationFrame(gameLoopRef.current);
+      }
+    }
 
     if (gameStatusRef.current === 'idle') {
       setGameStatus('playing');
@@ -387,15 +399,56 @@ export function SpaceInvadersScreen() {
     firePlayerBullet();
   };
 
+  // IntersectionObserver: sleep loop until Guidelines is near.
+  // When leaving Guidelines, allow a 30s grace period before sleeping so player progress isn't interrupted.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          // Entered Guidelines view: cancel any pending sleep timer
+          if (sleepTimeoutRef.current) {
+            clearTimeout(sleepTimeoutRef.current);
+            sleepTimeoutRef.current = null;
+          }
+          shouldRunRef.current = true;
+          // Wake up loop if it was asleep
+          if (animationFrameIdRef.current === null && gameLoopRef.current) {
+            animationFrameIdRef.current = requestAnimationFrame(gameLoopRef.current);
+          }
+        } else {
+          // Left Guidelines view: sleep after 30s off-screen
+          if (shouldRunRef.current && !sleepTimeoutRef.current) {
+            sleepTimeoutRef.current = setTimeout(() => {
+              shouldRunRef.current = false;
+              sleepTimeoutRef.current = null;
+            }, 30000);
+          }
+        }
+      },
+      {
+        rootMargin: '250px',
+        threshold: 0,
+      }
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (sleepTimeoutRef.current) {
+        clearTimeout(sleepTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Main 60fps Game Loop using Canvas
   useEffect(() => {
-    let animationFrameId: number;
-
     const gameLoop = () => {
-      // Hidden tab: keep the rAF chain + all ref state alive, skip the
-      // update/draw work (no paint, no sounds, no setState). Nothing resets.
-      if (typeof document !== 'undefined' && document.hidden) {
-        animationFrameId = requestAnimationFrame(gameLoop);
+      // If sleeping or tab is hidden, stop requesting frames (0% CPU/GPU)
+      if (!shouldRunRef.current || (typeof document !== 'undefined' && document.hidden)) {
+        animationFrameIdRef.current = null;
         return;
       }
       const now = performance.now();
@@ -641,12 +694,21 @@ export function SpaceInvadersScreen() {
         }
       }
 
-      animationFrameId = requestAnimationFrame(gameLoop);
+      animationFrameIdRef.current = requestAnimationFrame(gameLoop);
     };
 
-    animationFrameId = requestAnimationFrame(gameLoop);
+    gameLoopRef.current = gameLoop;
+
+    if (shouldRunRef.current) {
+      animationFrameIdRef.current = requestAnimationFrame(gameLoop);
+    }
+
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      gameLoopRef.current = null;
+      if (animationFrameIdRef.current !== null) {
+        cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
+      }
     };
   }, [handlePlayerHit, spawnExplosion]);
 

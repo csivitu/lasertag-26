@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function ProfileTeamTitle() {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 text-center mb-3 lg:mb-0 select-none">
+    <div className="flex flex-col items-center justify-center gap-2 sm:gap-3 text-center pt-4 sm:pt-6 lg:pt-8 mb-3 lg:mb-0 select-none">
       {/* PLAYER PROFILE */}
       <div className="relative w-[min(92vw,650px)] aspect-[707/88]">
         <Image

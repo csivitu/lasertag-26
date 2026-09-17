@@ -2,12 +2,10 @@ import IconsLowerRight from "./IconsLowerRight";
 import TextLowerLeft from "./TextLowerLeft";
 import SvgUpperLeft from "./SvgUpperLeft";
 import TextUpperRight from "./TextUpperRight";
-import { Starfield } from "@/components/hero/Starfield";
 
 export default function Footer() {
 	return (
-		<div id="footer" className="relative w-full overflow-hidden bg-black text-neutral-400">
-			<Starfield />
+		<div id="footer" className="relative w-full overflow-hidden bg-transparent text-neutral-400">
 			<section className="relative z-10 mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 items-center gap-6 px-4 pt-6 pb-2 sm:gap-8 sm:px-8 sm:pt-10 sm:pb-4 lg:grid-cols-2">
 				<div className="order-2 flex w-full items-center justify-center lg:order-1">
 					<SvgUpperLeft />

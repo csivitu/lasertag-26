@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+ 
 
 
 import {
@@ -49,19 +49,6 @@ export default function IconsLowerRight() {
 				style={{ "--icon-accent": "var(--purple)" } as React.CSSProperties}
 			>
 				<FaLinkedin size={22} />
-			</a>
-			<a
-				href="https://csivit.com/"
-				target="_blank"
-				rel="noreferrer"
-				className="block rounded transition-all hover:drop-shadow-[0_0_8px_var(--icon-accent)]"
-				style={{ "--icon-accent": "var(--yellow)" } as React.CSSProperties}
-			>
-				<img
-					src="/footer/divsectionxqghtcontainer.svg"
-					alt="CSI-VIT website"
-					className="block h-10 w-10"
-				/>
 			</a>
 		</div>
 	);
