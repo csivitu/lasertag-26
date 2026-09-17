@@ -2,7 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle, ChevronLeft, ChevronRight, EyeOff } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Clock,
+  CalendarDays,
+  RefreshCw,
+  Layers,
+  Filter,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  EyeOff,
+  Users,
+  X,
+  Loader2,
+  UserCheck,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { getStaffRole, type StaffRole } from "@/lib/auth";
 import { usePoll } from "@/lib/use-poll";
@@ -14,8 +30,35 @@ interface SlotItem {
   startTime: string;
   endTime: string;
   capacity: number;
+  totalCapacity?: number;
+  bookedCount?: number;
   isHidden?: boolean;
 }
+
+interface SlotBookingUser {
+  id: string;
+  name: string;
+  email: string;
+  regNumber: string | null;
+  phNumber: string | null;
+}
+
+interface SlotBookingItem {
+  bookingId: string;
+  type: "individual" | "team";
+  status: "reserved" | "confirmed" | "cancelled";
+  teamCode: string | null;
+  confirmedAt: string | null;
+  isCheckedIn: boolean;
+  checkedInAt: string | null;
+  user: SlotBookingUser;
+}
+
+interface SlotBookingsResponse {
+  slot: SlotItem;
+  bookings: SlotBookingItem[];
+}
+
 
 const EVENT_DATES = [
   { label: "18th Sep", val: "2026-09-18" },
@@ -74,6 +117,43 @@ export default function SlotsPage() {
   const [bulkEndTime, setBulkEndTime] = useState("18:00");
   const [slotDurationMins, setSlotDurationMins] = useState(30);
   const [bulkIsHidden, setBulkIsHidden] = useState(false);
+
+  // Booked Players Modal State
+  const [activeSlotModal, setActiveSlotModal] = useState<SlotItem | null>(null);
+  const [slotBookings, setSlotBookings] = useState<SlotBookingItem[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [bookingsError, setBookingsError] = useState<string | null>(null);
+
+  const handleOpenSlotBookings = async (slot: SlotItem) => {
+    setActiveSlotModal(slot);
+    setSlotBookings([]);
+    setBookingsError(null);
+    setLoadingBookings(true);
+
+    const res = await apiFetch<SlotBookingsResponse>(`/admin/slots/${slot.id}/bookings`);
+    if (res.success && res.data) {
+      setSlotBookings(res.data.bookings || []);
+    } else {
+      setBookingsError(res.error || "Failed to load bookings for this slot.");
+    }
+    setLoadingBookings(false);
+  };
+
+  const handleCloseSlotBookings = () => {
+    setActiveSlotModal(null);
+    setSlotBookings([]);
+    setBookingsError(null);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && activeSlotModal) {
+        handleCloseSlotBookings();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeSlotModal]);
 
   const fetchSlots = async (signal?: AbortSignal, silent = false) => {
     if (!silent) setLoading(true);
@@ -792,43 +872,71 @@ export default function SlotsPage() {
                 return (
                   <div
                     key={slot.id || idx}
-                    className="p-4 bg-[#141417] border border-[#27272A] hover:border-[#3F3F46] rounded-2xl flex items-center justify-between gap-3 transition-all"
+                    className="p-3.5 sm:p-4 bg-[#141417] border border-[#27272A] hover:border-[#3F3F46] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all"
                   >
-                    {canManageSlots && (
-                      <input
-                        type="checkbox"
-                        checked={selected.has(slot.id)}
-                        onChange={() => toggleSelect(slot.id)}
-                        aria-label="Select slot"
-                        className="w-4 h-4 shrink-0 accent-emerald-500 cursor-pointer [color-scheme:dark]"
-                      />
-                    )}
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 bg-[#09090B] border border-[#27272A] text-xs font-mono text-emerald-400 rounded-md font-semibold">
-                          Slot {(safePage - 1) * PAGE_SIZE + idx + 1}
-                        </span>
-                        {slot.isHidden && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-xs font-mono text-amber-400 rounded-md font-semibold">
-                            <EyeOff className="w-3 h-3 text-amber-400" /> HIDDEN
+                    <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                      {canManageSlots && (
+                        <input
+                          type="checkbox"
+                          checked={selected.has(slot.id)}
+                          onChange={() => toggleSelect(slot.id)}
+                          aria-label="Select slot"
+                          className="mt-1 sm:mt-0 w-4 h-4 shrink-0 accent-emerald-500 cursor-pointer [color-scheme:dark]"
+                        />
+                      )}
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2.5 py-0.5 bg-[#09090B] border border-[#27272A] text-xs font-mono text-emerald-400 rounded-md font-semibold">
+                            Slot {(safePage - 1) * PAGE_SIZE + idx + 1}
                           </span>
-                        )}
+                          {slot.isHidden && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-xs font-mono text-amber-400 rounded-md font-semibold">
+                              <EyeOff className="w-3 h-3 text-amber-400" /> HIDDEN
+                            </span>
+                          )}
+                          <span
+                            className={`px-2.5 py-0.5 border text-xs font-mono rounded-md font-semibold ${
+                              (slot.bookedCount ?? 0) >= (slot.totalCapacity ?? 10)
+                                ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                                : (slot.bookedCount ?? 0) > 0
+                                ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400"
+                                : "bg-[#09090B] border-[#27272A] text-[#71717A]"
+                            }`}
+                          >
+                            {slot.bookedCount ?? 0} / {slot.totalCapacity ?? 10} Booked
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-[#FAFAFA] flex items-center gap-2 mt-1">
+                          <Clock className="w-3.5 h-3.5 text-[#A1A1AA] shrink-0" />
+                          <span>{startFormatted} - {endFormatted}</span>
+                        </p>
                       </div>
-                      <p className="text-sm font-semibold text-[#FAFAFA] flex items-center gap-2 mt-1">
-                        <Clock className="w-3.5 h-3.5 text-[#A1A1AA]" />
-                        {startFormatted} - {endFormatted}
-                      </p>
                     </div>
 
-                    {canManageSlots && (
+                    <div className="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#27272A]/60 sm:border-transparent">
                       <button
-                        onClick={() => handleDeleteSlot(slot.id)}
-                        className="p-2 text-[#71717A] hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all"
-                        title="Delete Slot (super admin only)"
+                        type="button"
+                        onClick={() => handleOpenSlotBookings(slot)}
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#1F1F23] hover:bg-[#27272A] border border-[#27272A] hover:border-[#3F3F46] text-xs text-[#FAFAFA] font-medium rounded-xl transition-all cursor-pointer"
+                        title="View booked players"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Users className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        <span>View Players</span>
+                        <span className="ml-0.5 px-1.5 py-0.2 bg-[#09090B] border border-[#27272A] rounded-full text-[10px] text-cyan-400 font-mono">
+                          {slot.bookedCount ?? 0}
+                        </span>
                       </button>
-                    )}
+
+                      {canManageSlots && (
+                        <button
+                          onClick={() => handleDeleteSlot(slot.id)}
+                          className="p-2 text-[#71717A] hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all shrink-0"
+                          title="Delete Slot (super admin only)"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -857,6 +965,162 @@ export default function SlotsPage() {
           )}
         </div>
       </div>
+
+      {/* Booked Players Modal */}
+      {activeSlotModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCloseSlotBookings();
+          }}
+        >
+          <div
+            className="bg-[#141417] border border-[#27272A] rounded-2xl w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Modal Header */}
+            <div className="p-3.5 sm:p-5 border-b border-[#27272A] flex items-center justify-between gap-3 bg-[#18181C]">
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-cyan-400 shrink-0" />
+                    <h3 className="text-sm font-semibold text-[#FAFAFA] tracking-tight truncate">
+                      Slot Booked Players
+                    </h3>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 border text-xs font-mono rounded-md font-semibold ${
+                      (activeSlotModal.bookedCount ?? 0) >= (activeSlotModal.totalCapacity ?? 10)
+                        ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                        : (activeSlotModal.bookedCount ?? 0) > 0
+                        ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400"
+                        : "bg-[#09090B] border-[#27272A] text-[#71717A]"
+                    }`}
+                  >
+                    {activeSlotModal.bookedCount ?? 0} / {activeSlotModal.totalCapacity ?? 10} Booked
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-[#A1A1AA] flex items-center gap-1.5 font-mono">
+                  <Clock className="w-3.5 h-3.5 text-[#71717A] shrink-0" />
+                  <span className="truncate">
+                    {activeSlotModal.startTime
+                      ? istDateTimeFormat.format(new Date(activeSlotModal.startTime))
+                      : "N/A"}{" "}
+                    -{" "}
+                    {activeSlotModal.endTime
+                      ? istTimeFormat.format(new Date(activeSlotModal.endTime))
+                      : "N/A"}
+                  </span>
+                </p>
+              </div>
+
+              <button
+                onClick={handleCloseSlotBookings}
+                className="p-1.5 text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#27272A] rounded-xl transition-all cursor-pointer shrink-0"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-3 sm:p-5 overflow-y-auto flex-1 space-y-3">
+              {loadingBookings ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-2 text-[#71717A]">
+                  <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+                  <span className="text-xs font-mono">Loading booked players...</span>
+                </div>
+              ) : bookingsError ? (
+                <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-400 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{bookingsError}</span>
+                </div>
+              ) : slotBookings.length === 0 ? (
+                <div className="py-12 text-center text-[#71717A] space-y-1">
+                  <Users className="w-8 h-8 mx-auto text-[#3F3F46] mb-2" />
+                  <p className="text-xs font-medium text-[#A1A1AA]">No players have booked this slot yet.</p>
+                  <p className="text-[11px] text-[#71717A]">When participants register or choose this slot, they will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="text-xs text-[#71717A] font-mono flex items-center justify-between pb-1 border-b border-[#27272A]">
+                    <span>PLAYER DETAILS ({slotBookings.length})</span>
+                    <span>TYPE / STATUS</span>
+                  </div>
+                  {slotBookings.map((b, pIdx) => (
+                    <div
+                      key={b.bookingId || pIdx}
+                      className="p-3 bg-[#09090B] border border-[#27272A] hover:border-[#3F3F46] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-all"
+                    >
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-semibold text-[#FAFAFA] break-words">
+                            {b.user.name || "Unknown Player"}
+                          </span>
+                          {b.user.regNumber && (
+                            <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[11px] rounded-md font-bold">
+                              {b.user.regNumber}
+                            </span>
+                          )}
+                          {!b.user.regNumber && (
+                            <span className="px-2 py-0.5 bg-[#1F1F23] text-[#71717A] font-mono text-[10px] rounded-md">
+                              NO REG NO
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 sm:gap-3 text-[11px] font-mono text-[#71717A] flex-wrap break-all">
+                          <span>{b.user.email}</span>
+                          {b.user.phNumber && (
+                            <>
+                              <span className="hidden sm:inline">•</span>
+                              <span>{b.user.phNumber}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-start sm:self-center pt-1 sm:pt-0">
+                        {b.type === "team" ? (
+                          <span className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 font-mono text-[11px] rounded-md font-medium">
+                            Team {b.teamCode ? `(${b.teamCode})` : ""}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono text-[11px] rounded-md font-medium">
+                            Solo
+                          </span>
+                        )}
+
+                        {b.isCheckedIn ? (
+                          <span className="px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono text-[11px] rounded-md font-semibold flex items-center gap-1">
+                            <UserCheck className="w-3 h-3" /> Checked In
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-[11px] rounded-md font-medium">
+                            {b.status === "confirmed" ? "Confirmed" : "Reserved"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 sm:p-4 border-t border-[#27272A] bg-[#18181C] flex items-center justify-end">
+              <button
+                type="button"
+                onClick={handleCloseSlotBookings}
+                className="px-4 py-2 bg-[#27272A] hover:bg-[#3F3F46] text-[#FAFAFA] text-xs font-semibold rounded-xl transition-all border border-[#3F3F46] cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

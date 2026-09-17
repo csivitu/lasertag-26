@@ -113,4 +113,56 @@ export const slotPaths = {
       },
     },
   },
+  "/admin/slots/{slot_id}/bookings": {
+    get: {
+      summary: "List all bookings and users for a slot",
+      tags: ["Slots"],
+      parameters: [slotIdParam],
+      responses: {
+        200: {
+          description: "Slot details with participant list",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  slot: { $ref: "#/components/schemas/Slot" },
+                  bookings: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        bookingId: { type: "string" },
+                        type: { type: "string" },
+                        status: { type: "string" },
+                        teamCode: { type: "string", nullable: true },
+                        confirmedAt: { type: "string", format: "date-time", nullable: true },
+                        isCheckedIn: { type: "boolean" },
+                        checkedInAt: { type: "string", format: "date-time", nullable: true },
+                        user: {
+                          type: "object",
+                          properties: {
+                            id: { type: "string" },
+                            name: { type: "string" },
+                            email: { type: "string" },
+                            regNumber: { type: "string", nullable: true },
+                            phNumber: { type: "string", nullable: true },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: responses.error("slot_id is not a valid UUID"),
+        401: responses.unauthorized,
+        403: responses.forbidden,
+        404: responses.error("Slot not found"),
+      },
+    },
+  },
 };
+

@@ -51,7 +51,7 @@ export const paymentPaths = {
     post: {
       summary: "Bulk-verify participants from an xlsx/csv list",
       description:
-        "Multipart upload (field 'file'). Every row is stored in the verified-participants allowlist (reg number first, email fallback) and signed-up matches are flipped to paid. Additive only. ?dryRun=true previews without writing. Super admin only.",
+        "Multipart upload (field 'file'). Every row is verified individually and stored in the verified-participants allowlist (reg number first, email fallback) and signed-up matches are flipped to paid. Additive only — already-listed rows are left untouched, nothing is ever updated or deleted. Single-row DB errors land in `failed` while the rest still apply. ?dryRun=true previews without writing. Super admin only.",
       tags: ["Payments"],
       responses: {
         200: {
@@ -84,7 +84,7 @@ export const paymentPaths = {
   "/admin/payments/allowlist": {
     get: {
       summary: "List verified-participant allowlist entries",
-      description: "Newest first, capped at 500 rows.",
+      description: "Newest first. Supports ?q= (reg/email/name search), ?limit= (1-500), ?offset=. Returns { data, total, limit, offset }.",
       tags: ["Payments"],
       responses: {
         200: {

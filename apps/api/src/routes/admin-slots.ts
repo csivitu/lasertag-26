@@ -4,10 +4,11 @@ import {
   createSlot,
   createSlots,
   deleteSlot,
+  getSlotBookings,
   listSlots,
   updateSlot,
 } from "../controllers/admin-slots.controller";
-import { requireSuperAdmin } from "../middlewares/auth.middleware";
+import { requireAdmin, requireSuperAdmin } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate";
 import {
   bulkCreateSlotsSchema,
@@ -18,10 +19,13 @@ import {
 
 export const slotsRouter = Router();
 
-slotsRouter.get("/", requireSuperAdmin, listSlots);
-// Super admin only: list, create, update, delete. Plain admins have no
-// slot-manager access (frontend hides the page; this enforces it).
+// Staff access (admin and super_admin): view slots and slot bookings
+slotsRouter.get("/", requireAdmin, listSlots);
+slotsRouter.get("/:slot_id/bookings", requireAdmin, validate(slotIdSchema), getSlotBookings);
+
+// Super admin only: create, update, delete
 slotsRouter.post("/", requireSuperAdmin, validate(createSlotSchema), createSlot);
 slotsRouter.post("/bulk", requireSuperAdmin, validate(bulkCreateSlotsSchema), createSlots);
 slotsRouter.patch("/:slot_id", requireSuperAdmin, validate(patchSlotSchema), updateSlot);
 slotsRouter.delete("/:slot_id", requireSuperAdmin, validate(slotIdSchema), deleteSlot);
+

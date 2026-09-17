@@ -2,7 +2,7 @@ import type { slots } from "@lasertag-26/database";
 
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 
-export type Slot = typeof slots.$inferSelect;
+export type Slot = typeof slots.$inferSelect & { bookedCount?: number };
 export type SlotInput = { startTime: Date; endTime: Date; capacity: number; isHidden?: boolean };
 export type SlotPatch = Partial<SlotInput>;
 
