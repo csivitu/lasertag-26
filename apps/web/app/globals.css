@@ -32,6 +32,52 @@
   --color-guideline-cyan: #02cfe9;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
+/* ── 80s Arcade Custom Scrollbar (Pure Flat Rectangle) ── */
+::-webkit-scrollbar {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-track-piece {
+  background: #08080d !important;
+  border-left: 2px solid rgba(229, 52, 158, 0.3) !important;
+  border-radius: 0 !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-pink) !important;
+  border-radius: 0 !important;
+  /* Crisp 90-degree 80s arcade rectangular pixel-bevel */
+  box-shadow: inset 2px 2px 0 #fe95f6, inset -2px -2px 0 #5c0840 !important;
+  border: 1.5px solid #08080d !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #f742ab !important;
+  box-shadow: inset 2px 2px 0 #ffbdfa, inset -2px -2px 0 #3b004e, 0 0 10px rgba(229, 52, 158, 0.8) !important;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--color-brand-yellow) !important;
+  box-shadow: inset 2px 2px 0 #fffa90, inset -2px -2px 0 #876200 !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: #08080d !important;
+  border-radius: 0 !important;
+}
+
 html,
 body {
   overflow-x: clip;

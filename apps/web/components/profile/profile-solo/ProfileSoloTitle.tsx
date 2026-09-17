@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function ProfileSoloTitle() {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 text-center mb-4 lg:mb-0">
+    <div className="flex flex-col items-center justify-center gap-3 text-center pt-4 sm:pt-6 lg:pt-8 mb-4 lg:mb-0">
       <div className="relative w-[min(90vw,650px)] aspect-[707/88]">
         <Image
           src="/profile/profile-solo/PLAYER PROFILE.svg"
