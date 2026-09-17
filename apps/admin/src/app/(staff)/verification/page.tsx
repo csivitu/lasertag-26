@@ -195,7 +195,7 @@ export default function VerificationPage() {
 
   const fetchAllowlist = async () => {
     setAllowlistLoading(true);
-    const res = await apiFetch<{ data?: { id: string; regNumber: string | null; email: string | null; name: string | null; source: string }[] }>("/admin/payments/allowlist?limit=200");
+    const res = await apiFetch<{ data?: { id: string; regNumber: string | null; email: string | null; name: string | null; source: string }[] }>("/admin/payments/allowlist?limit=500");
     if (res.success && res.data) {
       const list = Array.isArray(res.data) ? res.data : res.data.data ?? [];
       setAllowlist(list);
