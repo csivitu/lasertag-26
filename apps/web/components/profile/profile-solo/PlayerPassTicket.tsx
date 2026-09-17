@@ -34,7 +34,7 @@ export function PlayerPassTicket() {
   );
 
   return (
-    <div className="w-full max-w-[1100px] mx-auto px-2">
+    <div className="w-full max-w-[960px] mx-auto px-2">
       {/* MOBILE TICKET (< lg) */}
       <div className="lg:hidden relative w-full max-w-sm mx-auto border-[3px] border-[#FEDC02] rounded-[1.5rem] bg-[#0b0b10] flex flex-col shadow-2xl">
         {/* Details Section */}
@@ -98,7 +98,7 @@ export function PlayerPassTicket() {
       </div>
 
       {/* DESKTOP TICKET (>= lg) */}
-      <div className="hidden lg:block relative w-full aspect-[1100/533] min-h-[460px] select-none">
+      <div className="hidden lg:block relative w-full aspect-[1100/533] min-h-[400px] select-none">
         {/* Outer yellow border ticket frame (Group 628.svg) */}
         <div className="absolute inset-0 pointer-events-none z-20">
           <Image
