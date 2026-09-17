@@ -15,7 +15,7 @@ export function PlayerPassStubRight() {
   );
 
   return (
-    <div className="flex flex-col items-center justify-between h-full py-8 px-7 select-none">
+    <div className="flex flex-col items-center justify-between h-full py-5 sm:py-6 px-4 sm:px-6 select-none">
       {/* SCAN TO PLAY Title */}
       <h3
         className="text-[#23eff1] font-mono font-bold text-sm tracking-wider uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] translate-x-6"
@@ -26,7 +26,7 @@ export function PlayerPassStubRight() {
 
       {/* QR Code Container */}
       <div className="relative p-2 sm:p-2.5 bg-white rounded-md shadow-lg border-2 border-black my-auto translate-x-6">
-        <QrCode className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32" value={qrToken} />
+        <QrCode className="w-24 h-24 sm:w-28 sm:h-28 md:w-28 md:h-28" value={qrToken} />
       </div>
 
       {/* CHANGE SLOT Button */}

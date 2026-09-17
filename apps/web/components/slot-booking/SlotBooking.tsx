@@ -283,7 +283,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
   // }
 
   return (
-    <main className="relative isolate min-h-screen w-full overflow-x-hidden bg-[#08080d] text-white flex flex-col justify-between pb-8 select-none">
+    <main className="relative isolate min-h-screen w-full overflow-x-hidden bg-[#08080d] text-white flex flex-col justify-between pb-4 lg:pb-6 select-none">
       {/* Starfield BG */}
       <Starfield />
 
@@ -292,12 +292,12 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
 
       <div className="slot-booking-screen relative z-10 flex flex-1 flex-col items-center justify-between w-full">
         {/* ── SLOT BOOKING title ── */}
-        <div className="relative z-10 text-center leading-none mt-2">
+        <div className="relative z-10 text-center leading-none mt-1">
           <h1 className="slot-title m-0">SLOT BOOKING</h1>
         </div>
 
       {/* ── Current booking badge + single date (side-by-side on desktop) ── */}
-      <div className="slot-current-row relative z-10 my-2">
+      <div className="slot-current-row relative z-10 my-1">
         {!isLoading && dates.length === 1 && (
           <div className="slot-date-box slot-date-static" aria-current="page">
             <span className="slot-date-day">{dates[0].day}</span>

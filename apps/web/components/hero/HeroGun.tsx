@@ -100,7 +100,7 @@ export function HeroGun() {
   return (
     <div
       ref={gunRef}
-      className="pointer-events-none absolute bottom-[2vw] left-[clamp(-110px,-16vw,-56px)] aspect-[4096/3650] w-[clamp(650px,50vw+460px,960px)] [--gun-rot:8deg] [--gun-tx:0vw] [transform:translateX(var(--gun-tx,0vw))_scaleX(-1)_rotate(var(--gun-rot))] lg:bottom-[1vh] lg:left-[-6vw] lg:h-[min(145vh,1400px,73vw)] lg:w-auto lg:[--gun-rot:22.52deg]"
+      className="pointer-events-none absolute bottom-[1vw] left-[clamp(-110px,-16vw,-56px)] aspect-[4096/3650] w-[clamp(670px,50vw+480px,980px)] [--gun-rot:8deg] [--gun-tx:0vw] [transform:translateX(var(--gun-tx,0vw))_scaleX(-1)_rotate(var(--gun-rot))] [@media(max-height:780px)]:bottom-[-3svh] [@media(max-height:680px)]:bottom-[-6svh] [@media(max-height:600px)]:bottom-[-10svh] lg:bottom-[1vh] lg:left-[-6vw] lg:h-[min(145vh,1400px,73vw)] lg:w-auto lg:[--gun-rot:22.52deg]"
     >
       <Image
         src="/hero/gun-only.webp"
