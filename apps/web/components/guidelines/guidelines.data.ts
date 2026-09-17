@@ -12,6 +12,7 @@ export const ruleCards: RuleCardData[] = [
     accent: "pink",
     items: [
       "Reserve your time on the CSI LaserTag website — sign in solo to book your slot.",
+      "Bring your VIT Student ID to get in. No ID = No entry!",
       // DEPRECATED: team feature disabled — restore team copy below.
       // "Reserve your time on the CSI LaserTag website — sign in solo or create a team.",
       // "For Team, share the team code with up to 5 friends (must be registered on the graVITas website). Only the team leader can book a slot for the entire team.",
@@ -21,7 +22,6 @@ export const ruleCards: RuleCardData[] = [
     id: 2,
     accent: "cyan",
     items: [
-      "Bring your VIT Student ID to get in. No ID = No entry!",
       "Show up 30 minutes before your game time! Latecomers won't be allowed to play.",
       "If you miss your slot, it's gone for good! No rescheduling will be allowed.",
       "Only those on the official list can play. Make sure your name's on there!",

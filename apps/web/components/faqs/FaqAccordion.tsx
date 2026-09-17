@@ -39,7 +39,7 @@ export function FaqAccordion({ onToggle: onToggleCallback, onActiveChange }: { o
                                 aria-hidden
                             />
                         )}
-                        <div className="flex w-5 shrink-0 justify-center pt-2 sm:w-6 lg:pt-2.5">
+                        <div className="flex w-5 shrink-0 justify-center pt-1.5 sm:w-6 sm:pt-1.5 lg:pt-1.5">
                             <span
                                 data-color={entry.color}
                                 className={`relative z-10 flex size-5 items-center justify-center rounded-full border-2 bg-ink sm:size-6 ${DOT_RING[entry.color]}${openIndex === index ? " faq-dot--open" : ""}`}
