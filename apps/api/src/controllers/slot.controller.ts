@@ -345,13 +345,12 @@ export const slotController = {
       if (changedSlot && (prev.slotChangeCount ?? 0) >= MAX_SLOT_CHANGES) {
         throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
       }
-      // If slot changed, restore 1 capacity to the old slot (atomic).
-      if (changedSlot) {
-        await releaseSlotSeat(prev.slotId);
-      }
 
       const qrToken = prev.qrToken || generateQrToken();
 
+      // Optimistic concurrency: only move if the row is still on the slot we
+      // read. A parallel move already changed it → 0 rows back → 409 so the
+      // loser retries instead of double-releasing seats / double-counting.
       const [updatedBooking] = await db
         .update(bookings)
         .set({
@@ -366,8 +365,18 @@ export const slotController = {
           // consume from the change allowance.
           slotChangeCount: changedSlot ? (prev.slotChangeCount ?? 0) + 1 : (prev.slotChangeCount ?? 0),
         })
-        .where(eq(bookings.id, prev.id))
+        .where(and(eq(bookings.id, prev.id), eq(bookings.slotId, prev.slotId)))
         .returning();
+
+      if (!updatedBooking) {
+        throw new AppError(409, "Your booking just changed — please try again.");
+      }
+
+      // If slot changed, restore 1 capacity to the old slot (atomic).
+      // Runs only after the move committed, so a lost race never releases.
+      if (changedSlot) {
+        await releaseSlotSeat(prev.slotId);
+      }
 
       return updatedBooking;
     };
@@ -416,23 +425,33 @@ export const slotController = {
         // Lost a race: a parallel request created the active booking first
         // (one-active-per-user index). Move that row instead of duplicating;
         // the seat claimed above becomes its seat, so it must not be released.
-        const rivals = await db
-          .select()
-          .from(bookings)
-          .where(
-            and(
-              eq(bookings.userId, user_id),
-              inArray(bookings.status, ["reserved", "confirmed"])
-            )
-          );
-        const winner = rivals[0];
-        if (winner) {
-          await healStrays(rivals.slice(1));
-          activeBooking = await moveBookingToSlot(winner);
-          if (winner.slotId === slot_id) {
-            // Same-slot double submit: the claimed seat is spare, give it back.
+        try {
+          const rivals = await db
+            .select()
+            .from(bookings)
+            .where(
+              and(
+                eq(bookings.userId, user_id),
+                inArray(bookings.status, ["reserved", "confirmed"])
+              )
+            );
+          const winner = rivals[0];
+          if (winner) {
+            await healStrays(rivals.slice(1));
+            activeBooking = await moveBookingToSlot(winner);
+            if (winner.slotId === slot_id) {
+              // Same-slot double submit: the claimed seat is spare, give it back.
+              await releaseSlotSeat(slot_id);
+            }
+          }
+        } catch (recoveryErr) {
+          // Recovery failed (e.g. lost the move race): the seat claimed above
+          // is spare — without this it leaks, inflating capacity forever.
+          // The rethrow skips the outer refund below, so this runs exactly once.
+          if (needsSeat) {
             await releaseSlotSeat(slot_id);
           }
+          throw recoveryErr;
         }
       }
       if (!activeBooking) {
