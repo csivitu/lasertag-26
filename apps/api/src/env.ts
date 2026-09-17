@@ -21,6 +21,12 @@ const emptyToUndefined = (val: unknown) => {
   return val;
 };
 
+// Dashboard editors and copy-paste love smuggling in edge whitespace, which
+// would silently desync login comparisons and seed hashes. Staff credential
+// fields carry no meaningful surrounding whitespace, so trim them at load.
+const trimmedString = (val: unknown) =>
+  typeof val === "string" ? val.trim() : val;
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.preprocess(
@@ -54,23 +60,23 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().optional()),
   GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
   SUPER_ADMIN_EMAIL: z.preprocess(
-    emptyToUndefined,
+    (val) => trimmedString(emptyToUndefined(val)),
     z.string().default("superadmin@lasertag.local"),
   ),
   // Staff passwords select the account at login — public defaults would hand
   // both roles to anyone reading the repo. Required in production.
   SUPER_ADMIN_PASSWORD: z.preprocess(
-    emptyToUndefined,
+    (val) => trimmedString(emptyToUndefined(val)),
     process.env.NODE_ENV === "production"
       ? z.string({ error: "SUPER_ADMIN_PASSWORD is required in production" }).min(8, "SUPER_ADMIN_PASSWORD must be at least 8 characters")
       : z.string().default("super30admin"),
   ),
   ADMIN_EMAIL: z.preprocess(
-    emptyToUndefined,
+    (val) => trimmedString(emptyToUndefined(val)),
     z.string().default("admin@lasertag.local"),
   ),
   ADMIN_PASSWORD: z.preprocess(
-    emptyToUndefined,
+    (val) => trimmedString(emptyToUndefined(val)),
     process.env.NODE_ENV === "production"
       ? z.string({ error: "ADMIN_PASSWORD is required in production" }).min(8, "ADMIN_PASSWORD must be at least 8 characters")
       : z.string().default("admin12345"),

@@ -10,7 +10,11 @@ import { makeAdminAuthService } from "../services/adminAuth";
 const adminAuth = makeAdminAuthService({ ...credentialQueries, ...userQueries });
 
 export const adminLogin = async (req: Request, res: Response) => {
-  const { password } = req.body;
+  // Trimmed: mobile keyboards/autofill love appending a trailing space, and
+  // staff passwords carry no meaningful edge whitespace (env vars are
+  // trimmed at load too), so an exact match on raw input would reject
+  // correct passwords for invisible reasons.
+  const password = typeof req.body?.password === "string" ? req.body.password.trim() : "";
   // Password-only login: the password itself selects the account.
   // Emails stay server-side (seeded from env) — staff never see them.
   const email =
