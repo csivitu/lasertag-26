@@ -9,6 +9,10 @@ export function PlayerPassStubRight() {
   const router = useRouter();
   const { profile } = useUserProfile();
   const qrToken = profile?.activeRegistration?.qrToken ?? null;
+  const changesLeft = Math.max(
+    0,
+    3 - (profile?.activeRegistration?.slotChangeCount ?? 0)
+  );
 
   return (
     <div className="flex flex-col items-center justify-between h-full py-8 px-7 select-none">
@@ -34,8 +38,8 @@ export function PlayerPassStubRight() {
           className="w-full"
           labelClassName="text-[10px] sm:text-[11px] cursor-pointer"
         />
-        <p className="font-pixel text-[8px] tracking-wider text-white/50 uppercase text-center leading-relaxed">
-          (Max 3 slot changes allowed)
+        <p className="font-pixel text-[8px] tracking-wider text-white uppercase text-center leading-relaxed">
+          {changesLeft}/3 CHANGES LEFT
         </p>
       </div>
     </div>

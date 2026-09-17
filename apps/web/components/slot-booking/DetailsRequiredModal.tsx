@@ -202,7 +202,7 @@ export function DetailsRequiredModal({
               type="submit"
               label={status === "saving" ? "SAVING..." : "SAVE & CONTINUE"}
               interaction="simple"
-              className="w-[220px]"
+              className="w-[280px]"
               labelClassName="text-[13px]"
               disabled={status === "saving"}
             />

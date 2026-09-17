@@ -311,12 +311,6 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
               ? `${booking.day}${getOrdinalSuffix(booking.day)} ${booking.month.toUpperCase()} ${booking.time}`
               : "SELECT A TIME SLOT"}
           </span>
-          {profile?.activeRegistration && (
-            <span className="slot-current-label" style={{ marginTop: "4px" }}>
-              SLOT CHANGES LEFT:{" "}
-              {Math.max(0, 3 - (profile.activeRegistration.slotChangeCount ?? 0))}/3
-            </span>
-          )}
         </div>
       </div>
 
@@ -370,6 +364,7 @@ export function SlotBooking({ activeDay = "18" }: SlotBookingProps) {
               ? selectedSlot
               : undefined
           }
+          bookedSlotId={profile?.activeRegistration?.slotId}
           slots={slots}
           isLoading={isLoading}
           onPageChange={selectPage}
