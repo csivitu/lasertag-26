@@ -12,27 +12,32 @@ function Pager({
   page,
   totalPages,
   onPage,
+  status,
+  forceShow,
 }: {
   page: number;
   totalPages: number;
   onPage: (p: number) => void;
+  status?: string;
+  forceShow?: boolean;
 }) {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1 && !forceShow) return null;
+  const navDisabled = totalPages <= 1;
   return (
     <div className="px-6 py-3 border-t border-[#27272A] flex items-center justify-between bg-[#09090B]">
       <button
         onClick={() => onPage(Math.max(1, page - 1))}
-        disabled={page <= 1}
+        disabled={navDisabled || page <= 1}
         className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
       >
         <ChevronLeft className="w-3.5 h-3.5" /> Prev
       </button>
       <span className="text-[11px] font-mono text-[#71717A]">
-        Page {page} of {totalPages}
+        {status ?? `Page ${page} of ${totalPages}`}
       </span>
       <button
         onClick={() => onPage(Math.min(totalPages, page + 1))}
-        disabled={page >= totalPages}
+        disabled={navDisabled || page >= totalPages}
         className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
       >
         Next <ChevronRight className="w-3.5 h-3.5" />
@@ -162,6 +167,13 @@ export default function VerificationPage() {
   const allowTotalPages = Math.max(1, Math.ceil(allowTotal / PAGE_SIZE));
   const safeAllowPage = Math.min(allowPage, allowTotalPages);
   const pagedAllowlist = allowlist;
+  const allowRangeStart = allowTotal === 0 ? 0 : (safeAllowPage - 1) * PAGE_SIZE + 1;
+  const allowRangeEnd = Math.min(safeAllowPage * PAGE_SIZE, allowTotal);
+  const allowStatus = allowlistLoading
+    ? "Loading verified list…"
+    : allowTotal === 0
+      ? "No verified entries loaded — press Refresh."
+      : `Showing ${allowRangeStart}–${allowRangeEnd} of ${allowTotal}`;
 
   const applyImportSuccess = (data: ImportSummary) => {
     // Prefer the server's fresh total; fall back to a local refetch below.
@@ -221,8 +233,11 @@ export default function VerificationPage() {
     );
     if (res.success && res.data) {
       if (Array.isArray(res.data)) {
-        // Back-compat: very old API shape returned a bare array.
+        // `apiFetch` unwraps the `{ data, total }` envelope into `data`, so
+        // the server-side total lives on `raw`, not on the array itself.
         setAllowlist(res.data as unknown as { id: string; regNumber: string | null; email: string | null; name: string | null; source: string }[]);
+        const rawTotal = (res.raw as { total?: unknown } | undefined)?.total;
+        if (typeof rawTotal === "number") setAllowTotal(rawTotal);
       } else {
         setAllowlist(res.data.data ?? []);
         if (typeof res.data.total === "number") setAllowTotal(res.data.total);
@@ -476,10 +491,7 @@ export default function VerificationPage() {
       <div className="bg-[#141417] border border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
         <div className="px-6 py-3.5 border-b border-[#27272A] flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
           <h2 className="text-xs font-bold text-[#FAFAFA] uppercase tracking-wider">
-            Verified list <span className="text-[#71717A]">({allowTotal})</span>{" "}
-            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 normal-case">
-              additive only — uploads never delete
-            </span>
+            Verified list <span className="text-[#71717A]">({allowTotal})</span>
           </h2>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -542,6 +554,8 @@ export default function VerificationPage() {
         <Pager
           page={safeAllowPage}
           totalPages={allowTotalPages}
+          forceShow
+          status={allowStatus}
           onPage={(p) => {
             setAllowPage(p);
             fetchAllowlist(p, allowSearch);
