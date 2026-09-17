@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Clock, CalendarDays, RefreshCw, Layers, Filter, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { getStaffRole, type StaffRole } from "@/lib/auth";
 import { usePoll } from "@/lib/use-poll";
+
+const PAGE_SIZE = 10;
 
 interface SlotItem {
   id: string;
@@ -52,6 +54,7 @@ export default function SlotsPage() {
   const canManageSlots = role === "super_admin";
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deletingSelected, setDeletingSelected] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Default date
   const defaultDateStr = "2026-09-18";
@@ -371,6 +374,15 @@ export default function SlotsPage() {
     [slotList, filterDate],
   );
 
+  // Reset to first page whenever the result set changes
+  useEffect(() => {
+    setPage(1);
+  }, [filterDate, slotList.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSlots.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedSlots = filteredSlots.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Page Header */}
@@ -688,7 +700,7 @@ export default function SlotsPage() {
                   type="checkbox"
                   checked={selected.size === filteredSlots.length}
                   onChange={toggleSelectAll}
-                  className="w-4 h-4 accent-emerald-500 cursor-pointer"
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer [color-scheme:dark]"
                 />
                 Select all ({filteredSlots.length})
               </label>
@@ -726,7 +738,7 @@ export default function SlotsPage() {
             </div>
           ) : (
             <div className="space-y-2.5">
-              {filteredSlots.map((slot, idx) => {
+              {pagedSlots.map((slot, idx) => {
                 const startFormatted = slot.startTime
                   ? istDateTimeFormat.format(new Date(slot.startTime))
                   : "N/A";
@@ -746,13 +758,13 @@ export default function SlotsPage() {
                         checked={selected.has(slot.id)}
                         onChange={() => toggleSelect(slot.id)}
                         aria-label="Select slot"
-                        className="w-4 h-4 shrink-0 accent-emerald-500 cursor-pointer"
+                        className="w-4 h-4 shrink-0 accent-emerald-500 cursor-pointer [color-scheme:dark]"
                       />
                     )}
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="px-2.5 py-0.5 bg-[#09090B] border border-[#27272A] text-xs font-mono text-emerald-400 rounded-md font-semibold">
-                          Slot {idx + 1}
+                          Slot {(safePage - 1) * PAGE_SIZE + idx + 1}
                         </span>
                       </div>
                       <p className="text-sm font-semibold text-[#FAFAFA] flex items-center gap-2 mt-1">
@@ -773,6 +785,27 @@ export default function SlotsPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+          {filteredSlots.length > PAGE_SIZE && (
+            <div className="p-3 bg-[#141417] border border-[#27272A] rounded-2xl flex items-center justify-between">
+              <button
+                onClick={() => setPage(Math.max(1, safePage - 1))}
+                disabled={safePage <= 1}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" /> Prev
+              </button>
+              <span className="text-[11px] font-mono text-[#71717A]">
+                Page {safePage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                disabled={safePage >= totalPages}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+              >
+                Next <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
         </div>

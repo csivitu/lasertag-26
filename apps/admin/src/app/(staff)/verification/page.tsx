@@ -1,8 +1,43 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, XCircle, Search, RefreshCw, ShieldCheck, Upload, FileSpreadsheet } from "lucide-react";
+import { CheckCircle2, XCircle, Search, RefreshCw, ShieldCheck, Upload, FileSpreadsheet, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
+
+const PAGE_SIZE = 10;
+
+function Pager({
+  page,
+  totalPages,
+  onPage,
+}: {
+  page: number;
+  totalPages: number;
+  onPage: (p: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="px-6 py-3 border-t border-[#27272A] flex items-center justify-between bg-[#09090B]">
+      <button
+        onClick={() => onPage(Math.max(1, page - 1))}
+        disabled={page <= 1}
+        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+      >
+        <ChevronLeft className="w-3.5 h-3.5" /> Prev
+      </button>
+      <span className="text-[11px] font-mono text-[#71717A]">
+        Page {page} of {totalPages}
+      </span>
+      <button
+        onClick={() => onPage(Math.min(totalPages, page + 1))}
+        disabled={page >= totalPages}
+        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-mono text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+      >
+        Next <ChevronRight className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
 
 interface PaymentRow {
   id: string;
@@ -50,6 +85,8 @@ export default function VerificationPage() {
     { id: string; regNumber: string | null; email: string | null; name: string | null; source: string }[]
   >([]);
   const [allowlistLoading, setAllowlistLoading] = useState(false);
+  const [allowPage, setAllowPage] = useState(1);
+  const [page, setPage] = useState(1);
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -99,6 +136,19 @@ export default function VerificationPage() {
 
     return matchesFilter && matchesSearch;
   });
+
+  // Reset to first page whenever the result set changes
+  useEffect(() => {
+    setPage(1);
+  }, [filter, search, payments.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPayments.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedPayments = filteredPayments.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const allowTotalPages = Math.max(1, Math.ceil(allowlist.length / PAGE_SIZE));
+  const safeAllowPage = Math.min(allowPage, allowTotalPages);
+  const pagedAllowlist = allowlist.slice((safeAllowPage - 1) * PAGE_SIZE, safeAllowPage * PAGE_SIZE);
 
   const runImport = async (dryRun: boolean) => {
     const file = fileRef.current?.files?.[0];
@@ -351,7 +401,8 @@ export default function VerificationPage() {
             {allowlistLoading ? "Loading..." : "Refresh"}
           </button>
         </div>
-        <table className="w-full text-left text-xs text-[#FAFAFA]">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px] text-left text-xs text-[#FAFAFA]">
           <thead className="bg-[#09090B] text-[#71717A] font-mono uppercase border-b border-[#27272A]">
             <tr>
               <th className="px-6 py-3">Reg No</th>
@@ -374,7 +425,7 @@ export default function VerificationPage() {
                 </td>
               </tr>
             ) : (
-              allowlist.slice(0, 50).map((e) => (
+              pagedAllowlist.map((e) => (
                 <tr key={e.id} className="hover:bg-[#1C1C21] transition-colors">
                   <td className="px-6 py-2.5 font-mono text-xs text-emerald-400">{e.regNumber || "—"}</td>
                   <td className="px-6 py-2.5 font-mono text-[11px] text-[#A1A1AA]">{e.email || "—"}</td>
@@ -385,6 +436,8 @@ export default function VerificationPage() {
             )}
           </tbody>
         </table>
+        </div>
+        <Pager page={safeAllowPage} totalPages={allowTotalPages} onPage={setAllowPage} />
       </div>
 
       {/* Control Bar: Search + Filter Tabs */}
@@ -419,7 +472,8 @@ export default function VerificationPage() {
 
       {/* Table Section */}
       <div className="bg-[#141417] border border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left text-xs text-[#FAFAFA]">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px] text-left text-xs text-[#FAFAFA]">
           <thead className="bg-[#09090B] text-[#71717A] font-mono uppercase border-b border-[#27272A]">
             <tr>
               <th className="px-6 py-3.5">Transaction ID</th>
@@ -442,7 +496,7 @@ export default function VerificationPage() {
                 </td>
               </tr>
             ) : (
-              filteredPayments.map((p) => (
+              pagedPayments.map((p) => (
                 <tr key={p.id} className="hover:bg-[#1C1C21] transition-colors">
                   <td className="px-6 py-4 font-mono text-xs text-emerald-400">
                     {p.id}
@@ -481,6 +535,10 @@ export default function VerificationPage() {
             )}
           </tbody>
         </table>
+        </div>
+        {!loading && filteredPayments.length > 0 && (
+          <Pager page={safePage} totalPages={totalPages} onPage={setPage} />
+        )}
       </div>
     </div>
   );
