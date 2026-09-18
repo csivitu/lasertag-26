@@ -118,3 +118,25 @@ export const reserveSlotSchema = z.object({
 
 export type ReserveSlotInput = z.infer<typeof reserveSlotSchema>["params"] &
   z.infer<typeof reserveSlotSchema>["body"];
+
+/**
+ * Super-admin manual booking into a hidden slot.
+ * Reg numbers are user-typed at onboarding — normalize to UPPER the same
+ * way the paid-import does so the lookup is case-insensitive.
+ */
+export const manualBookSlotSchema = z.object({
+  params: slotIdParams,
+  body: z.object({
+    regNumber: z
+      .string()
+      .trim()
+      .min(1, "regNumber is required")
+      .max(50)
+      .transform((value) => value.toUpperCase()),
+  }),
+});
+
+export type ManualBookSlotInput = {
+  slot_id: string;
+  regNumber: string;
+};

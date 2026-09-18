@@ -25,8 +25,10 @@ export function PlayerPassTicket() {
   const rawDate = profile?.activeRegistration?.slot?.slotDate;
   const rawTime = profile?.activeRegistration?.slot?.slotTime;
 
+  // Hidden-slot bookings stay secret on the pass — time shows as ----.
+  const isHiddenSlot = profile?.activeRegistration?.slot?.isHidden === true;
   const slotDate = formatPassDate(rawDate);
-  const slotTime = formatPassTime(rawTime);
+  const slotTime = isHiddenSlot ? "----" : formatPassTime(rawTime);
   const qrToken = profile?.activeRegistration?.qrToken ?? null;
   const changesLeft = Math.max(
     0,

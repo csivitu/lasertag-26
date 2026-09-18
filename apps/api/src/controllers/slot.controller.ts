@@ -1,6 +1,6 @@
 import { db } from "@lasertag-26/database";
 import { slots, bookings, user, teams, teamMembers } from "@lasertag-26/database/schema";
-import { asc, eq, and, inArray, lt, gt } from "drizzle-orm";
+import { asc, eq, and, inArray, lt, gt, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 
 import { claimSlotSeat, isIdentityAllowlisted, releaseSlotSeat } from "../data/queries";
@@ -557,5 +557,178 @@ export const slotController = {
     }
 
     return activeBooking;
+  },
+
+  /**
+   * Super-admin manual booking into a HIDDEN slot by reg number.
+   *
+   * Same seat/capacity invariants as the public flow (atomic claim, seat
+   * refund on failure, one-active-per-user), but bypasses the isHidden gate
+   * — that is the whole point. Signed-up users only (no placeholder rows),
+   * verified (paid or allowlisted) only, and anyone already holding an
+   * active booking elsewhere is rejected instead of moved.
+   */
+  async manualBookSlot(input: { slot_id: string; regNumber: string }) {
+    const regNumber = input.regNumber.trim().toUpperCase();
+    if (!regNumber) {
+      throw new AppError(400, "regNumber is required.");
+    }
+
+    const [targetSlot] = await db
+      .select()
+      .from(slots)
+      .where(eq(slots.id, input.slot_id));
+
+    if (!targetSlot) {
+      throw new AppError(404, "Slot not found.");
+    }
+
+    if (!targetSlot.isHidden) {
+      throw new AppError(
+        400,
+        "Only hidden slots accept manual booking. Visible slots use the public booking flow.",
+      );
+    }
+
+    if (targetSlot.capacity <= 0) {
+      throw new AppError(409, "Selected slot is already fully booked.");
+    }
+
+    const [targetUser] = await db
+      .select()
+      .from(user)
+      .where(sql`upper(${user.regNumber}) = ${regNumber}`);
+
+    if (!targetUser) {
+      throw new AppError(404, "No signed-up user found for this reg number.");
+    }
+
+    if (!targetUser.paid && !(await isAllowlistedSafe(targetUser))) {
+      throw new AppError(
+        403,
+        "Only verified (paid) participants can be added to hidden slots.",
+      );
+    }
+
+    const userInTeam = await db
+      .select()
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, targetUser.id))
+      .limit(1);
+
+    if (userInTeam.length > 0) {
+      throw new AppError(
+        400,
+        "This participant is part of a team and cannot take an individual hidden-slot booking.",
+      );
+    }
+
+    const existingActive = await db
+      .select({ id: bookings.id, slotId: bookings.slotId })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.userId, targetUser.id),
+          inArray(bookings.status, ["reserved", "confirmed"]),
+        ),
+      );
+
+    if (existingActive.length > 0) {
+      throw new AppError(
+        409,
+        "Participant already has an active booking and cannot be added again.",
+      );
+    }
+
+    // Lifetime change allowance still applies — cancel + rebook must not reset it.
+    const history = await db
+      .select({ slotChangeCount: bookings.slotChangeCount })
+      .from(bookings)
+      .where(eq(bookings.userId, targetUser.id));
+    const used = history.length
+      ? Math.max(...history.map((b) => b.slotChangeCount ?? 0))
+      : 0;
+    if (used >= MAX_SLOT_CHANGES) {
+      throw new AppError(409, `Slot change limit reached (max ${MAX_SLOT_CHANGES} changes).`);
+    }
+
+    const claimed = await claimSlotSeat(input.slot_id);
+    if (!claimed) {
+      throw new AppError(409, "Selected slot is already fully booked.");
+    }
+
+    const bookingId = `BKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const qrToken = generateQrToken();
+
+    let newBooking;
+    try {
+      const [inserted] = await db
+        .insert(bookings)
+        .values({
+          id: bookingId,
+          type: "individual",
+          status: "confirmed",
+          userId: targetUser.id,
+          teamCode: null,
+          slotId: input.slot_id,
+          qrToken,
+          confirmedAt: new Date(),
+          confirmationEmailSent: false,
+          slotChangeCount: used,
+        })
+        .returning();
+      newBooking = inserted;
+    } catch (err) {
+      await releaseSlotSeat(input.slot_id);
+      throw err;
+    }
+
+    if (!newBooking) {
+      await releaseSlotSeat(input.slot_id);
+      throw new AppError(500, "Failed to create booking.");
+    }
+
+    await db
+      .update(user)
+      .set({ paid: true, qrToken })
+      .where(eq(user.id, targetUser.id));
+
+    // Same confirmation mail as a normal booking, non-blocking.
+    const IST = "Asia/Kolkata";
+    const slotStartDate = new Date(targetSlot.startTime);
+    const slotEndDate = new Date(targetSlot.endTime);
+    const slotDateStr = slotStartDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: IST,
+    });
+    const formatHour = (d: Date) =>
+      d.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: IST,
+      });
+    void sendBookingConfirmationEmail({
+      bookingId: newBooking.id,
+      userId: targetUser.id,
+      userName: targetUser.name,
+      userEmail: targetUser.email,
+      regNumber: targetUser.regNumber,
+      type: "individual",
+      teamCode: null,
+      qrToken,
+      newSlot: {
+        slotDate: slotDateStr,
+        slotTime: `${formatHour(slotStartDate)} - ${formatHour(slotEndDate)}`,
+      },
+      passUrl: `${process.env.WEB_ORIGIN || "http://localhost:3000"}/profile`,
+    }).catch((emailErr) => {
+      console.error("[Mailer] Background manual-booking email dispatch error:", emailErr);
+    });
+
+    return newBooking;
   },
 };

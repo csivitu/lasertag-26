@@ -35,6 +35,7 @@ export interface ActiveRegistrationData {
     startTime: string;
     endTime: string;
     capacity: number;
+    isHidden?: boolean;
     slotDate: string;
     slotTime: string;
   };

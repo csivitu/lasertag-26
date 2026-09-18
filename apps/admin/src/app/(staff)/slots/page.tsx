@@ -18,6 +18,7 @@ import {
   X,
   Loader2,
   UserCheck,
+  UserPlus,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { getStaffRole, type StaffRole } from "@/lib/auth";
@@ -124,10 +125,29 @@ export default function SlotsPage() {
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingsError, setBookingsError] = useState<string | null>(null);
 
+  // Manual-add state (hidden slots, super_admin only)
+  const [addReg, setAddReg] = useState("");
+  const [addPreview, setAddPreview] = useState<{
+    name: string;
+    email: string;
+    phone: string | null;
+    paid: boolean;
+  } | null>(null);
+  const [addLookingUp, setAddLookingUp] = useState(false);
+  const [addSubmitting, setAddSubmitting] = useState(false);
+  const [addMsg, setAddMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  const resetAddState = () => {
+    setAddReg("");
+    setAddPreview(null);
+    setAddMsg(null);
+  };
+
   const handleOpenSlotBookings = async (slot: SlotItem) => {
     setActiveSlotModal(slot);
     setSlotBookings([]);
     setBookingsError(null);
+    resetAddState();
     setLoadingBookings(true);
 
     const res = await apiFetch<SlotBookingsResponse>(`/admin/slots/${slot.id}/bookings`);
@@ -143,6 +163,74 @@ export default function SlotsPage() {
     setActiveSlotModal(null);
     setSlotBookings([]);
     setBookingsError(null);
+    resetAddState();
+  };
+
+  // Best-effort preview: the registrations search only covers users WITH a
+  // booking, so a miss here means nothing — the Add call below checks the
+  // signed-up users table directly and is the source of truth.
+  const handleLookupAddReg = async () => {
+    const q = addReg.trim();
+    if (!q || !activeSlotModal) return;
+    setAddLookingUp(true);
+    setAddPreview(null);
+    setAddMsg(null);
+    const res = await apiFetch<
+      { regNo: string; user: { name: string; email: string; phone: string | null; paid: boolean } }[]
+    >(`/admin/registrations?q=${encodeURIComponent(q)}&limit=10`);
+    setAddLookingUp(false);
+    if (!res.success || !res.data) {
+      setAddMsg({ kind: "err", text: res.error || "Lookup failed. You can still try Add below." });
+      return;
+    }
+    const list = Array.isArray(res.data) ? res.data : [];
+    const exact =
+      list.find((r) => r.regNo?.toLowerCase() === q.toLowerCase()) ?? list[0] ?? null;
+    if (!exact) {
+      setAddMsg({
+        kind: "err",
+        text: "No booking found — press Add to slot anyway.",
+      });
+      return;
+    }
+    setAddPreview({
+      name: exact.user.name,
+      email: exact.user.email,
+      phone: exact.user.phone,
+      paid: exact.user.paid,
+    });
+  };
+
+  const handleManualAdd = async () => {
+    const regNumber = addReg.trim();
+    if (!regNumber || !activeSlotModal) return;
+    setAddSubmitting(true);
+    setAddMsg(null);
+    const res = await apiFetch(`/admin/slots/${activeSlotModal.id}/manual-book`, {
+      method: "POST",
+      body: JSON.stringify({ regNumber }),
+    });
+    setAddSubmitting(false);
+    if (!res.success) {
+      setAddMsg({ kind: "err", text: res.error || "Could not add participant." });
+      return;
+    }
+    setAddMsg({ kind: "ok", text: `${regNumber.toUpperCase()} added to this hidden slot.` });
+    setAddReg("");
+    setAddPreview(null);
+    // Refresh bookings + slot counts silently.
+    void fetchSlots(undefined, true);
+    const refreshed = await apiFetch<SlotBookingsResponse>(
+      `/admin/slots/${activeSlotModal.id}/bookings`,
+    );
+    if (refreshed.success && refreshed.data) {
+      setSlotBookings(refreshed.data.bookings || []);
+      setActiveSlotModal((prev) =>
+        prev
+          ? { ...prev, bookedCount: refreshed.data!.bookings?.length ?? prev.bookedCount }
+          : prev,
+      );
+    }
   };
 
   useEffect(() => {
@@ -1026,6 +1114,78 @@ export default function SlotsPage() {
 
             {/* Modal Body */}
             <div className="p-3 sm:p-5 overflow-y-auto flex-1 space-y-3">
+              {/* Manual add — hidden slots only, super_admin only */}
+              {activeSlotModal.isHidden && canManageSlots && (
+                <div className="p-3 bg-[#09090B] border border-amber-500/30 rounded-xl space-y-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <UserPlus className="w-3.5 h-3.5 text-amber-400" />
+                    <h4 className="text-xs font-semibold text-[#FAFAFA]">
+                      Add participant to this hidden slot
+                    </h4>
+                  </div>
+                  <p className="text-[11px] font-mono text-[#71717A]">
+                    Verified + signed-up users only. Already-booked participants are rejected,
+                    never moved.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={addReg}
+                      onChange={(e) => setAddReg(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void handleLookupAddReg();
+                      }}
+                      placeholder="Enter reg no (e.g. 24BCE1234)"
+                      className="flex-1 bg-[#141417] border border-[#27272A] rounded-xl px-3 py-2 text-xs text-[#FAFAFA] font-mono placeholder:text-[#71717A] focus:outline-none focus:border-amber-500/50"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void handleLookupAddReg()}
+                        disabled={addLookingUp || !addReg.trim()}
+                        className="px-3 py-2 bg-[#27272A] hover:bg-[#3F3F46] border border-[#3F3F46] text-[#FAFAFA] text-xs font-medium rounded-xl transition-all disabled:opacity-50"
+                      >
+                        {addLookingUp ? "Finding..." : "Find"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleManualAdd()}
+                        disabled={addSubmitting || !addReg.trim()}
+                        className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold rounded-xl transition-all disabled:opacity-50"
+                      >
+                        {addSubmitting ? "Adding..." : "Add to slot"}
+                      </button>
+                    </div>
+                  </div>
+                  {addPreview && (
+                    <div className="p-2.5 bg-[#141417] border border-[#27272A] rounded-xl text-xs">
+                      <p className="font-semibold text-[#FAFAFA]">{addPreview.name}</p>
+                      <p className="font-mono text-[11px] text-[#A1A1AA]">
+                        {addPreview.email}
+                        {addPreview.phone ? ` • ${addPreview.phone}` : ""}
+                      </p>
+                      <span
+                        className={`inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-mono border ${
+                          addPreview.paid
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                            : "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                        }`}
+                      >
+                        {addPreview.paid ? "Paid / verified" : "Not marked paid"}
+                      </span>
+                    </div>
+                  )}
+                  {addMsg && (
+                    <p
+                      className={`text-[11px] font-mono ${
+                        addMsg.kind === "ok" ? "text-emerald-400" : "text-amber-300"
+                      }`}
+                    >
+                      {addMsg.text}
+                    </p>
+                  )}
+                </div>
+              )}
               {loadingBookings ? (
                 <div className="py-12 flex flex-col items-center justify-center gap-2 text-[#71717A]">
                   <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />

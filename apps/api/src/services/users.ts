@@ -50,6 +50,7 @@ export type UserProfileDto = {
       startTime: Date;
       endTime: Date;
       capacity: number;
+      isHidden: boolean;
       slotDate: string;
       slotTime: string;
     };
@@ -166,6 +167,7 @@ export const userService = {
         startTime: activeReg.slot.startTime,
         endTime: activeReg.slot.endTime,
         capacity: activeReg.slot.capacity,
+        isHidden: activeReg.slot.isHidden,
         slotDate,
         slotTime,
       };
