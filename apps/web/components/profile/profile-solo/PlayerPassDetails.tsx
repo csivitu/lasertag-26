@@ -18,8 +18,10 @@ export function PlayerPassDetails() {
   const rawDate = profile?.activeRegistration?.slot?.slotDate;
   const rawTime = profile?.activeRegistration?.slot?.slotTime;
 
+  // Hidden-slot bookings stay secret on the pass — time shows as ----.
+  const isHiddenSlot = profile?.activeRegistration?.slot?.isHidden === true;
   const slotDate = formatPassDate(rawDate);
-  const slotTime = formatPassTime(rawTime);
+  const slotTime = isHiddenSlot ? "----" : formatPassTime(rawTime);
 
   return (
     <div className="flex flex-col justify-between h-full py-4 px-2 sm:px-6 select-none">

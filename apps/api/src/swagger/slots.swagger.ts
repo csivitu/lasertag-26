@@ -113,6 +113,35 @@ export const slotPaths = {
       },
     },
   },
+  "/admin/slots/{slot_id}/manual-book": {
+    post: {
+      summary: "Manually add a verified participant to a hidden slot",
+      description:
+        "Super admin only. Body { regNumber }: participant must have signed up and be verified (paid or allowlisted). Rejects already-booked participants instead of moving them; hidden slots only.",
+      tags: ["Slots"],
+      parameters: [slotIdParam],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["regNumber"],
+              properties: { regNumber: { type: "string" } },
+            },
+          },
+        },
+      },
+      responses: {
+        201: { description: "The created booking" },
+        400: responses.error("Invalid input, team member, or slot is not hidden"),
+        401: responses.unauthorized,
+        403: responses.forbidden,
+        404: responses.error("Slot or signed-up user not found"),
+        409: responses.error("Slot full, already booked, or change limit reached"),
+      },
+    },
+  },
   "/admin/slots/{slot_id}/bookings": {
     get: {
       summary: "List all bookings and users for a slot",

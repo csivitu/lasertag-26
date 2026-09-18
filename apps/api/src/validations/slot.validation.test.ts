@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   bulkCreateSlotsSchema,
+  manualBookSlotSchema,
   slotIdSchema,
   slotInputSchema,
 } from "./slot.validation";
@@ -61,6 +62,30 @@ describe("bulkCreateSlotsSchema", () => {
   test("accepts a non-empty array of valid slots", () => {
     const result = bulkCreateSlotsSchema.parse({ body: [validInput, validInput] });
     expect(result.body).toHaveLength(2);
+  });
+});
+
+describe("manualBookSlotSchema", () => {
+  const slotId = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+
+  test("uppercases the reg number for case-insensitive matching", () => {
+    const result = manualBookSlotSchema.parse({
+      params: { slot_id: slotId },
+      body: { regNumber: " 24bce1234 " },
+    });
+    expect(result.body.regNumber).toBe("24BCE1234");
+  });
+
+  test("rejects a blank reg number", () => {
+    expect(() =>
+      manualBookSlotSchema.parse({ params: { slot_id: slotId }, body: { regNumber: "   " } }),
+    ).toThrow();
+  });
+
+  test("rejects a non-UUID slot_id", () => {
+    expect(() =>
+      manualBookSlotSchema.parse({ params: { slot_id: "nope" }, body: { regNumber: "24BCE1234" } }),
+    ).toThrow();
   });
 });
 
