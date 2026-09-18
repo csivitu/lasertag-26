@@ -7,7 +7,7 @@ const API_BASE_URL = "/api";
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<{ success: boolean; data?: T; message?: string; error?: string; status?: number }> {
+): Promise<{ success: boolean; data?: T; message?: string; error?: string; status?: number; raw?: unknown }> {
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   
   const headers = new Headers(options.headers || {});
@@ -47,6 +47,10 @@ export async function apiFetch<T>(
       data: (json.data ?? json) as T | undefined,
       message: typeof json.message === "string" ? json.message : undefined,
       status: res.status,
+      // Full envelope: `data` above unwraps `json.data`, which drops sibling
+      // fields like `total` on paged list responses. Consumers that need the
+      // envelope (list totals) read `raw`.
+      raw: json,
     };
   } catch (err: unknown) {
     return {
