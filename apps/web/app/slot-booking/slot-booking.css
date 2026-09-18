@@ -412,10 +412,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .slot-card:nth-child(n + 15) {
-    display: none;
-  }
-
   .slot-card {
     padding: 10px 14px;
   }
